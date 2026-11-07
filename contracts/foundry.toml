@@ -4,8 +4,31 @@ test = "test"
 script = "script"
 out = "out"
 libs = ["lib"]
-# The compiler version and evm_version are pinned when PostAnchor is implemented (later block).
+remappings = [
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "forge-std/=lib/forge-std/src/",
+]
+
 # CREATE2 gives the same address on all three chains only if the init code is byte-identical,
-# so both settings must be identical for every deployment (ADR-009).
+# so these settings must stay identical for every deployment (ADR-009).
+solc_version = "0.8.30"
+# Cancun is supported by Ethereum Sepolia, Base Sepolia and Arbitrum Sepolia; Prague adds no opcode this contract needs.
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+# Metadata hash and CBOR are excluded so comment-only changes do not move the CREATE2 address.
+bytecode_hash = "none"
+cbor_metadata = false
 
 # bench/ holds the baselines B0, B1, B2 and the ours-lite variant (ADR-001). They are measured, never deployed as product.
+
+[fuzz]
+runs = 1000
+
+[invariant]
+runs = 256
+depth = 128
+fail_on_revert = true
+
+[fmt]
+line_length = 140
