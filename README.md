@@ -190,8 +190,9 @@ Template: [ADR-000](docs/decisions/ADR-000-template.md).
 Available now (requires Foundry and Node 20 or later; clone with `--recurse-submodules`, or run `git submodule update --init --recursive`):
 
 ```bash
-# Contract tests: unit, fuzz and invariants I1 to I6 (ADR-009)
-cd contracts && forge test
+# Install the TypeScript workspace, then run every test (packages/core with vitest, contracts with Foundry)
+pnpm install
+pnpm test
 
 # Gas benchmark: local node with mainnet rules, no backend needed (ADR-001)
 node packages/bench/src/gas-bench.mjs

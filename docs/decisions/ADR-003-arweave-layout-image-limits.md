@@ -34,7 +34,7 @@ ADR-002 puts every byte on Arweave, paid by the platform and permanent. Two forc
 1. EXIF and XMP removal, WebP re-encoding.
 2. NFC normalisation of username and caption (username also lowercase, charset `[a-z0-9_]`).
 
-The server only checks and rejects. For metadata this means parsing the RIFF chunks of the WebP. The RIFF chunk parser lives in `packages/core` and is used both by the client (to strip) and by the server (to detect), so the two sides cannot disagree on what counts as metadata. The server check is an **allowlist** of chunk types needed to render a still image (`VP8 `, `VP8L`, `VP8X`, `ALPH`): an `EXIF` or `XMP ` chunk is rejected, and so is any other chunk type (for example `ICCP` or animation chunks), which avoids a denylist that misses a new metadata carrier. The exact allowlist is fixed when `packages/core` is implemented.
+The server only checks and rejects. For metadata this means parsing the RIFF chunks of the WebP. The RIFF chunk parser lives in `packages/core` and is used both by the client (to strip) and by the server (to detect), so the two sides cannot disagree on what counts as metadata. The server check is an **allowlist** of chunk types needed to render a still image (`VP8 `, `VP8L`, `VP8X`, `ALPH`): an `EXIF` or `XMP ` chunk is rejected, and so is any other chunk type (for example `ICCP` or animation chunks), which avoids a denylist that misses a new metadata carrier. Implemented in [`packages/core/src/webp.ts`](../../packages/core/src/webp.ts): the allowlist is exactly those four chunks, the VP8X animation flag is rejected, and stripping also clears the ICC, EXIF and XMP flags of VP8X (tests in `packages/core/test/webp.test.ts`).
 
 **Server-side validation is mandatory** (never trust the client):
 
@@ -80,4 +80,4 @@ Follow-ups:
 
 - Turbo free-tier threshold 105 KiB and 10 MiB lifetime allowance (Verified 2026-11-07: https://docs.ar.io/build/upload/turbo-credits/).
 - Turbo list price and per-KiB derivation: ADR-002 Evidence.
-- To verify: whether headers and tags count toward the size threshold; the final WebP chunk allowlist against the WebP container specification.
+- To verify: whether headers and tags count toward the size threshold; the parser against real encoder output (the tests use synthetic containers), once the web app produces WebP files.

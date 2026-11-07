@@ -11,7 +11,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | Phase | Scope | Status |
 | ----- | ----- | ------ |
 | Block B | Documentation-first scaffold: repo, README, ADRs, efficiency and threat model, diagrams | Done (2026-11-07) |
-| Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | In progress: contract, tests, gas and USD benchmark done; `packages/core` and verifier next |
+| Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | In progress: contract, tests, gas and USD benchmark, `packages/core` done; verifier next |
 | Tier 2 | Minimal pipeline: backend, Postgres, Turbo uploads, anchoring on the 3 testnets | Not started |
 | Tier 3 | Minimal web: compose, per-stage status, Verify page | Not started |
 
@@ -51,11 +51,12 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 
 ### `packages/core`
 
-- [ ] EIP-712 types and domains: `Post`, `PublishIntent` ("Phi Posts"), `Receipt` / `Deadline` ("Phi Receipts")
-- [ ] `postHash`, `imageHash`, leaf encoding, Merkle helpers on `@openzeppelin/merkle-tree`, with fixtures shared with the Solidity tests
-- [ ] Schemas: post JSON, manifest, proof bundle, trusted keys
-- [ ] Username and caption normalisation (NFC, `[a-z0-9_]`)
-- [ ] WebP RIFF chunk parser: strip in the client, detect with an allowlist on the server ([ADR-003](docs/decisions/ADR-003-arweave-layout-image-limits.md))
+- [x] EIP-712 types and domains: `Post`, `PublishIntent` ("Phi Posts"), `Receipt` / `Deadline` ("Phi Receipts"), checked against an independent encoding written from the specification ([packages/core/src/eip712.ts](packages/core/src/eip712.ts))
+- [x] `postHash`, `imageHash`, `sigCommit`, leaf encoding, Merkle helpers on `@openzeppelin/merkle-tree`; the generated fixture is verified by `contracts/test/CoreFixture.t.sol` against `PostAnchor`
+- [x] Schemas: post JSON, manifest, proof bundle, signed receipt, trusted keys (zod); `config/trusted-keys.json` validated in the tests
+- [x] Username and caption normalisation (NFC, `[a-z0-9_]`, 3 to 30 characters, 1,000 code points)
+- [x] WebP RIFF chunk parser: strip in the client, detect with an allowlist on the server ([ADR-003](docs/decisions/ADR-003-arweave-layout-image-limits.md))
+- [x] Trusted-key window checks (`isTrustedKey`), zero-address placeholders never trusted
 
 ### `packages/verifier`
 
@@ -104,3 +105,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | 2026-11-07 | Block B completed: scaffold, ADR-001 to ADR-019, efficiency and threat model, six diagrams. Roadmap created. |
 | 2026-11-07 | Tier 1 contract work: `PostAnchor`, 16 tests (I1 to I6), CREATE2 script, gas benchmark with five variants and the calldata probe. Openfort research folded into ADR-011 (EOA account type, recovery modes). |
 | 2026-11-07 | Benchmark completed in money: Arbitrum gas proxy, L1 data fee oracles, USD per post. Finding: image storage is 96% or more of the end-to-end cost from N = 100 on. |
+| 2026-11-07 | `packages/core` implemented: EIP-712, Merkle, schemas, normalisation, WebP parser, trusted keys; 40 vitest tests and a cross-implementation fixture checked by Foundry. |

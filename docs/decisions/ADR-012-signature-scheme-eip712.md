@@ -35,7 +35,7 @@ The user signs `PublishIntent`. `postHash` is the content identity used everywhe
 
 Everything inside the hash must reach its final form in the client, before signing (shared constraint with [ADR-003](ADR-003-arweave-layout-image-limits.md)):
 
-- `username` and `caption` are normalised to NFC; `username` is lowercase with charset `[a-z0-9_]`.
+- `username` and `caption` are normalised to NFC; `username` is lowercase with charset `[a-z0-9_]` and 3 to 30 characters (design parameter, `packages/core`).
 - The image reaches its final bytes (WebP, no EXIF or XMP chunks) before `imageHash` is computed.
 - The server recomputes `imageHash` and `postHash` and compares. It never normalises or transforms: it rejects.
 - `packages/core` exposes the same normalisation and hashing functions to web, backend and verifier, so the three cannot drift.
