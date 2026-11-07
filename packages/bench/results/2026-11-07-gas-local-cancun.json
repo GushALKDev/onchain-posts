@@ -1,0 +1,329 @@
+{
+  "schema": "phi.bench.gas/1",
+  "date": "2026-11-07",
+  "environment": {
+    "anvil": "anvil Version: 1.7.1",
+    "forge": "forge Version: 1.7.1",
+    "cast": "cast Version: 1.7.1",
+    "node": "v24.22.1",
+    "hardfork": "cancun",
+    "solc": "0.8.30",
+    "compileEvmVersion": "cancun"
+  },
+  "method": [
+    "Local anvil node with cancun rules (no EIP-7623 calldata floor), proxy for Arbitrum execution gas; gasUsed read from real receipts.",
+    "Excludes the L1 data fee charged by L2s on top of execution gas.",
+    "B0 and B1 send one transaction per post; 10 sampled posts give the per-post cost for every N.",
+    "Roots, manifest IDs and post hashes are deterministic pseudo-random 32-byte values (sha256 of a counter), so reruns reproduce the same numbers; gas does not depend on whether a root is a real Merkle root.",
+    "B0 username \"ana_example\"; captions of 100 and 1000 ASCII bytes."
+  ],
+  "variants": {
+    "B0_short_caption": {
+      "description": "B0 naive storage, caption 100 bytes",
+      "model": "one transaction per post",
+      "samples": 10,
+      "gasPerPost": {
+        "mean": 181675,
+        "min": 181665,
+        "max": 181677
+      },
+      "calldataBytesPerPost": 356,
+      "logDataBytesPerPost": 0,
+      "byBatchSize": {
+        "1": {
+          "transactions": 1,
+          "gasPerPost": 181675
+        },
+        "10": {
+          "transactions": 10,
+          "gasPerPost": 181675
+        },
+        "100": {
+          "transactions": 100,
+          "gasPerPost": 181675
+        },
+        "500": {
+          "transactions": 500,
+          "gasPerPost": 181675
+        },
+        "1000": {
+          "transactions": 1000,
+          "gasPerPost": 181675
+        }
+      }
+    },
+    "B0_long_caption": {
+      "description": "B0 naive storage, caption 1000 bytes",
+      "model": "one transaction per post",
+      "samples": 10,
+      "gasPerPost": {
+        "mean": 817418,
+        "min": 817400,
+        "max": 817424
+      },
+      "calldataBytesPerPost": 1252,
+      "logDataBytesPerPost": 0,
+      "byBatchSize": {
+        "1": {
+          "transactions": 1,
+          "gasPerPost": 817418
+        },
+        "10": {
+          "transactions": 10,
+          "gasPerPost": 817418
+        },
+        "100": {
+          "transactions": 100,
+          "gasPerPost": 817418
+        },
+        "500": {
+          "transactions": 500,
+          "gasPerPost": 817418
+        },
+        "1000": {
+          "transactions": 1000,
+          "gasPerPost": 817418
+        }
+      }
+    },
+    "B1": {
+      "description": "B1 one event per post",
+      "model": "one transaction per post",
+      "samples": 10,
+      "gasPerPost": {
+        "mean": 22922,
+        "min": 22911,
+        "max": 22923
+      },
+      "calldataBytesPerPost": 36,
+      "logDataBytesPerPost": 0,
+      "byBatchSize": {
+        "1": {
+          "transactions": 1,
+          "gasPerPost": 22922
+        },
+        "10": {
+          "transactions": 10,
+          "gasPerPost": 22922
+        },
+        "100": {
+          "transactions": 100,
+          "gasPerPost": 22922
+        },
+        "500": {
+          "transactions": 500,
+          "gasPerPost": 22922
+        },
+        "1000": {
+          "transactions": 1000,
+          "gasPerPost": 22922
+        }
+      }
+    },
+    "B2": {
+      "description": "B2 hash list in one event per batch",
+      "model": "one transaction per batch",
+      "byBatchSize": {
+        "1": {
+          "transactions": 1,
+          "gasPerBatch": 24342,
+          "gasPerPost": 24342,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 62,
+          "logDataBytes": 96,
+          "onChainBytesPerPost": 196
+        },
+        "10": {
+          "transactions": 1,
+          "gasPerBatch": 31296,
+          "gasPerPost": 3130,
+          "calldataBytes": 388,
+          "zeroCalldataBytes": 63,
+          "logDataBytes": 384,
+          "onChainBytesPerPost": 77
+        },
+        "100": {
+          "transactions": 1,
+          "gasPerBatch": 100833,
+          "gasPerPost": 1008,
+          "calldataBytes": 3268,
+          "zeroCalldataBytes": 75,
+          "logDataBytes": 3264,
+          "onChainBytesPerPost": 65
+        },
+        "500": {
+          "transactions": 1,
+          "gasPerBatch": 410288,
+          "gasPerPost": 821,
+          "calldataBytes": 16068,
+          "zeroCalldataBytes": 127,
+          "logDataBytes": 16064,
+          "onChainBytesPerPost": 64
+        },
+        "1000": {
+          "transactions": 1,
+          "gasPerBatch": 798020,
+          "gasPerPost": 798,
+          "calldataBytes": 32068,
+          "zeroCalldataBytes": 189,
+          "logDataBytes": 32064,
+          "onChainBytesPerPost": 64
+        }
+      }
+    },
+    "ours_lite": {
+      "description": "ours-lite: root in an event, no storage",
+      "model": "one transaction per batch",
+      "byBatchSize": {
+        "1": {
+          "transactions": 1,
+          "gasPerBatch": 24629,
+          "gasPerPost": 24629,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 31,
+          "logDataBytes": 64,
+          "onChainBytesPerPost": 164
+        },
+        "10": {
+          "transactions": 1,
+          "gasPerBatch": 24629,
+          "gasPerPost": 2463,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 31,
+          "logDataBytes": 64,
+          "onChainBytesPerPost": 16
+        },
+        "100": {
+          "transactions": 1,
+          "gasPerBatch": 24629,
+          "gasPerPost": 246,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 31,
+          "logDataBytes": 64,
+          "onChainBytesPerPost": 2
+        },
+        "500": {
+          "transactions": 1,
+          "gasPerBatch": 24641,
+          "gasPerPost": 49,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 30,
+          "logDataBytes": 64,
+          "onChainBytesPerPost": 0
+        },
+        "1000": {
+          "transactions": 1,
+          "gasPerBatch": 24629,
+          "gasPerPost": 25,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 31,
+          "logDataBytes": 64,
+          "onChainBytesPerPost": 0
+        }
+      }
+    },
+    "ours": {
+      "description": "ours: PostAnchor, root + one storage slot",
+      "model": "one transaction per batch",
+      "byBatchSize": {
+        "1": {
+          "transactions": 1,
+          "gasPerBatch": 47058,
+          "gasPerPost": 47058,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 31,
+          "logDataBytes": 64,
+          "onChainBytesPerPost": 164
+        },
+        "10": {
+          "transactions": 1,
+          "gasPerBatch": 47058,
+          "gasPerPost": 4706,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 31,
+          "logDataBytes": 64,
+          "onChainBytesPerPost": 16
+        },
+        "100": {
+          "transactions": 1,
+          "gasPerBatch": 47058,
+          "gasPerPost": 471,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 31,
+          "logDataBytes": 64,
+          "onChainBytesPerPost": 2
+        },
+        "500": {
+          "transactions": 1,
+          "gasPerBatch": 47070,
+          "gasPerPost": 94,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 30,
+          "logDataBytes": 64,
+          "onChainBytesPerPost": 0
+        },
+        "1000": {
+          "transactions": 1,
+          "gasPerBatch": 47070,
+          "gasPerPost": 47,
+          "calldataBytes": 100,
+          "zeroCalldataBytes": 30,
+          "logDataBytes": 64,
+          "onChainBytesPerPost": 0
+        }
+      }
+    }
+  },
+  "crossovers": {
+    "ours_vs_B1": {
+      "n": 3,
+      "rule": "smallest N with ours per batch / N < B1 per post",
+      "oursGas": 47063,
+      "b1Gas": 22922
+    },
+    "ours_lite_vs_B1": {
+      "n": 2,
+      "rule": "smallest N with ours-lite per batch / N < B1 per post",
+      "oursLiteGas": 24631,
+      "b1Gas": 22922
+    },
+    "ours_vs_B2": {
+      "n": 31,
+      "constantGas": 47063,
+      "probes": {
+        "16": 35928,
+        "24": 42109,
+        "28": 45194,
+        "30": 46718,
+        "31": 47528,
+        "32": 48326,
+        "63": 72219,
+        "125": 120147,
+        "250": 216824,
+        "500": 410384
+      },
+      "rule": "smallest N with ours per batch < B2 per batch (measured probes)"
+    },
+    "ours_lite_vs_B2": {
+      "n": 2,
+      "constantGas": 24631,
+      "probes": {
+        "1": 24342,
+        "2": 25104,
+        "4": 26664,
+        "8": 29736,
+        "16": 35928,
+        "32": 48326,
+        "63": 72207,
+        "125": 120171,
+        "250": 216728,
+        "500": 410204
+      },
+      "rule": "smallest N with ours-lite per batch < B2 per batch (measured probes)"
+    },
+    "storageSlotPrice": {
+      "gas": 22432,
+      "rule": "ours per batch minus ours-lite per batch"
+    }
+  }
+}

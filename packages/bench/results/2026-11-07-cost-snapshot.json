@@ -1,0 +1,529 @@
+{
+  "schema": "phi.bench.cost/1",
+  "date": "2026-11-07",
+  "inputs": {
+    "gasPrague": "2026-11-07-gas-local-prague.json",
+    "gasCancun": "2026-11-07-gas-local-cancun.json"
+  },
+  "sources": {
+    "rpc": {
+      "ethereum": "https://ethereum-rpc.publicnode.com",
+      "base": "https://mainnet.base.org",
+      "arbitrum": "https://arb1.arbitrum.io/rpc"
+    },
+    "chainlinkEthUsd": "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
+    "baseGasPriceOracle": "0x420000000000000000000000000000000000000F getL1Fee(bytes)",
+    "arbitrumNodeInterface": "0x00000000000000000000000000000000000000C8 gasEstimateL1Component(address,bool,bytes)",
+    "turbo": "https://turbo.ardrive.io/v1/rates"
+  },
+  "assumptions": {
+    "imageBytes": 97280,
+    "postJsonBytes": "1400 (Estimate)",
+    "manifestEntryBytes": "209 (Estimate)",
+    "arbitrumExecutionGas": "cancun-rules gas (no EIP-7623 floor), cross-checked against eth_estimateGas with state override on Arbitrum One",
+    "storage": "Turbo list price; the free tier (items up to 105 KiB, 10 MiB lifetime allowance per wallet) is ignored"
+  },
+  "snapshot": {
+    "ethUsd": 2233.09,
+    "ethUsdUpdatedAt": "2026-11-07T17:20:11.000Z",
+    "ethereum": {
+      "block": 26364588,
+      "timestamp": "2026-11-07T17:51:35.000Z",
+      "baseFeeWei": "63693352",
+      "priorityFeeWei": "1779"
+    },
+    "base": {
+      "block": 54417631,
+      "timestamp": "2026-11-07T17:51:41.000Z",
+      "baseFeeWei": "5000000",
+      "priorityFeeWei": "1000000"
+    },
+    "arbitrum": {
+      "block": 522149300,
+      "timestamp": "2026-11-07T17:51:41.000Z",
+      "baseFeeWei": "20072000",
+      "priorityFeeWei": "0"
+    }
+  },
+  "storage": {
+    "usdPerGiB": 71.410142372786,
+    "perDataItemFeeWinc": 6275347,
+    "perDataItemFeeUsd": 0.000030769233814306474,
+    "imageUsd": 0.006500461015040307,
+    "imagePriceEndpointUsd": 0.006500461015040307,
+    "postJsonUsd": 0.0001238774647733085,
+    "manifestSharePerPostUsd": {
+      "1": 0.00005464484876816506,
+      "10": 0.00001797424043293482,
+      "100": 0.000014307179599411796,
+      "500": 0.000013981218662582331,
+      "1000": 0.000013940473545478648
+    }
+  },
+  "anchoring": {
+    "ours": {
+      "1": {
+        "usdPerPost": {
+          "ethereum": 0.006693386867670049,
+          "base": 0.0006317378314516446,
+          "arbitrum": 0.0021239180708148005
+        },
+        "inputs": {
+          "gasPrague": 47058,
+          "gasCancun": 47058,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "550508995",
+          "arbitrumL1Gas": 327
+        }
+      },
+      "10": {
+        "usdPerPost": {
+          "ethereum": 0.0006693386867670048,
+          "base": 0.00006317378314516445,
+          "arbitrum": 0.00021238732482323203
+        },
+        "inputs": {
+          "gasPrague": 47058,
+          "gasCancun": 47058,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "550508995",
+          "arbitrumL1Gas": 326
+        }
+      },
+      "100": {
+        "usdPerPost": {
+          "ethereum": 0.00006693386867670048,
+          "base": 0.000006317378314516446,
+          "arbitrum": 0.000021239180708148004
+        },
+        "inputs": {
+          "gasPrague": 47058,
+          "gasCancun": 47058,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "550508995",
+          "arbitrumL1Gas": 327
+        }
+      },
+      "500": {
+        "usdPerPost": {
+          "ethereum": 0.000013390187422382131,
+          "base": 0.0000012637972278632893,
+          "arbitrum": 0.00000424891188360912
+        },
+        "inputs": {
+          "gasPrague": 47070,
+          "gasCancun": 47070,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "550508995",
+          "arbitrumL1Gas": 327
+        }
+      },
+      "1000": {
+        "usdPerPost": {
+          "ethereum": 0.0000066950937111910655,
+          "base": 6.319269560374876e-7,
+          "arbitrum": 0.00000212445594180456
+        },
+        "inputs": {
+          "gasPrague": 47070,
+          "gasCancun": 47070,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "563200873",
+          "arbitrumL1Gas": 327
+        }
+      }
+    },
+    "ours_lite": {
+      "1": {
+        "usdPerPost": {
+          "ethereum": 0.003503154089928293,
+          "base": 0.0003312219777916446,
+          "arbitrum": 0.00111859236837088
+        },
+        "inputs": {
+          "gasPrague": 24629,
+          "gasCancun": 24629,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "550508995",
+          "arbitrumL1Gas": 327
+        }
+      },
+      "10": {
+        "usdPerPost": {
+          "ethereum": 0.0003503154089928293,
+          "base": 0.000033122197779164464,
+          "arbitrum": 0.00011185923683708801
+        },
+        "inputs": {
+          "gasPrague": 24629,
+          "gasCancun": 24629,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "550508995",
+          "arbitrumL1Gas": 327
+        }
+      },
+      "100": {
+        "usdPerPost": {
+          "ethereum": 0.000035031540899282935,
+          "base": 0.0000033122197779164463,
+          "arbitrum": 0.0000111859236837088
+        },
+        "inputs": {
+          "gasPrague": 24629,
+          "gasCancun": 24629,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "550508995",
+          "arbitrumL1Gas": 327
+        }
+      },
+      "500": {
+        "usdPerPost": {
+          "ethereum": 0.000007009721866898621,
+          "base": 6.628222047549752e-7,
+          "arbitrum": 0.0000022381708335563202
+        },
+        "inputs": {
+          "gasPrague": 24641,
+          "gasCancun": 24641,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "563200873",
+          "arbitrumL1Gas": 326
+        }
+      },
+      "1000": {
+        "usdPerPost": {
+          "ethereum": 0.000003503154089928293,
+          "base": 3.3125031989748763e-7,
+          "arbitrum": 0.0000011185923683708802
+        },
+        "inputs": {
+          "gasPrague": 24629,
+          "gasCancun": 24629,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "563200873",
+          "arbitrumL1Gas": 327
+        }
+      }
+    },
+    "B2": {
+      "1": {
+        "usdPerPost": {
+          "ethereum": 0.0034623320823839584,
+          "base": 0.0003271888732307381,
+          "arbitrum": 0.00110572828719912
+        },
+        "inputs": {
+          "gasPrague": 24342,
+          "gasCancun": 24342,
+          "calldataBytes": 100,
+          "baseL1FeeWei": "466444501",
+          "arbitrumL1Gas": 327
+        }
+      },
+      "10": {
+        "usdPerPost": {
+          "ethereum": 0.0004925665927736278,
+          "base": 0.000046756459727251545,
+          "arbitrum": 0.000143490533293224
+        },
+        "inputs": {
+          "gasPrague": 34630,
+          "gasCancun": 31296,
+          "calldataBytes": 388,
+          "baseL1FeeWei": "1600095416",
+          "arbitrumL1Gas": 717
+        }
+      },
+      "100": {
+        "usdPerPost": {
+          "ethereum": 0.00021260158423873563,
+          "base": 0.00002032139518289915,
+          "arbitrum": 0.00004726093096691201
+        },
+        "inputs": {
+          "gasPrague": 149470,
+          "gasCancun": 100833,
+          "calldataBytes": 3268,
+          "baseL1FeeWei": "13192367746",
+          "arbitrumL1Gas": 4607
+        }
+      },
+      "500": {
+        "usdPerPost": {
+          "ethereum": 0.00018772718465910756,
+          "base": 0.000017979232017103462,
+          "arbitrum": 0.000038730476359648325
+        },
+        "inputs": {
+          "gasPrague": 659910,
+          "gasCancun": 410288,
+          "calldataBytes": 16068,
+          "baseL1FeeWei": "66179812346",
+          "arbitrumL1Gas": 21754
+        }
+      },
+      "1000": {
+        "usdPerPost": {
+          "ethereum": 0.00018463068603806167,
+          "base": 0.000017686769477316866,
+          "arbitrum": 0.00003771134530180056
+        },
+        "inputs": {
+          "gasPrague": 1298050,
+          "gasCancun": 798020,
+          "calldataBytes": 32068,
+          "baseL1FeeWei": "132011979059",
+          "arbitrumL1Gas": 43327
+        }
+      }
+    },
+    "B1": {
+      "1": {
+        "usdPerPost": {
+          "ethereum": 0.003260355599063557,
+          "base": 0.0003081869606049499,
+          "arbitrum": 0.00103813583281928
+        },
+        "inputs": {
+          "gasPrague": 22922,
+          "gasCancun": 22922,
+          "calldataBytes": 36,
+          "baseL1FeeWei": "477198288",
+          "arbitrumL1Gas": 239
+        }
+      },
+      "10": {
+        "usdPerPost": {
+          "ethereum": 0.003260355599063557,
+          "base": 0.0003081869606049499,
+          "arbitrum": 0.00103813583281928
+        },
+        "inputs": {
+          "gasPrague": 22922,
+          "gasCancun": 22922,
+          "calldataBytes": 36,
+          "baseL1FeeWei": "477198288",
+          "arbitrumL1Gas": 239
+        }
+      },
+      "100": {
+        "usdPerPost": {
+          "ethereum": 0.003260355599063557,
+          "base": 0.0003081869606049499,
+          "arbitrum": 0.00103813583281928
+        },
+        "inputs": {
+          "gasPrague": 22922,
+          "gasCancun": 22922,
+          "calldataBytes": 36,
+          "baseL1FeeWei": "477198288",
+          "arbitrumL1Gas": 239
+        }
+      },
+      "500": {
+        "usdPerPost": {
+          "ethereum": 0.003260355599063557,
+          "base": 0.0003081869606049499,
+          "arbitrum": 0.00103813583281928
+        },
+        "inputs": {
+          "gasPrague": 22922,
+          "gasCancun": 22922,
+          "calldataBytes": 36,
+          "baseL1FeeWei": "477198288",
+          "arbitrumL1Gas": 239
+        }
+      },
+      "1000": {
+        "usdPerPost": {
+          "ethereum": 0.003260355599063557,
+          "base": 0.0003081869606049499,
+          "arbitrum": 0.00103813583281928
+        },
+        "inputs": {
+          "gasPrague": 22922,
+          "gasCancun": 22922,
+          "calldataBytes": 36,
+          "baseL1FeeWei": "477198288",
+          "arbitrumL1Gas": 239
+        }
+      }
+    },
+    "B0_short_caption": {
+      "1": {
+        "usdPerPost": {
+          "ethereum": 0.025840899723404226,
+          "base": 0.002435829647310138,
+          "arbitrum": 0.00816497126972176
+        },
+        "inputs": {
+          "gasPrague": 181675,
+          "gasCancun": 181675,
+          "calldataBytes": 356,
+          "baseL1FeeWei": "738838475",
+          "arbitrumL1Gas": 487
+        }
+      },
+      "10": {
+        "usdPerPost": {
+          "ethereum": 0.025840899723404226,
+          "base": 0.002435829647310138,
+          "arbitrum": 0.00816497126972176
+        },
+        "inputs": {
+          "gasPrague": 181675,
+          "gasCancun": 181675,
+          "calldataBytes": 356,
+          "baseL1FeeWei": "738838475",
+          "arbitrumL1Gas": 487
+        }
+      },
+      "100": {
+        "usdPerPost": {
+          "ethereum": 0.025840899723404226,
+          "base": 0.002435829647310138,
+          "arbitrum": 0.00816497126972176
+        },
+        "inputs": {
+          "gasPrague": 181675,
+          "gasCancun": 181675,
+          "calldataBytes": 356,
+          "baseL1FeeWei": "738838475",
+          "arbitrumL1Gas": 487
+        }
+      },
+      "500": {
+        "usdPerPost": {
+          "ethereum": 0.025840899723404226,
+          "base": 0.002435829647310138,
+          "arbitrum": 0.00816497126972176
+        },
+        "inputs": {
+          "gasPrague": 181675,
+          "gasCancun": 181675,
+          "calldataBytes": 356,
+          "baseL1FeeWei": "738838475",
+          "arbitrumL1Gas": 487
+        }
+      },
+      "1000": {
+        "usdPerPost": {
+          "ethereum": 0.025840899723404226,
+          "base": 0.002435829647310138,
+          "arbitrum": 0.00816497126972176
+        },
+        "inputs": {
+          "gasPrague": 181675,
+          "gasCancun": 181675,
+          "calldataBytes": 356,
+          "baseL1FeeWei": "738838475",
+          "arbitrumL1Gas": 487
+        }
+      }
+    },
+    "B0_long_caption": {
+      "1": {
+        "usdPerPost": {
+          "ethereum": 0.11626705143858887,
+          "base": 0.010953946802206146,
+          "arbitrum": 0.036660883258799286
+        },
+        "inputs": {
+          "gasPrague": 817418,
+          "gasCancun": 817418,
+          "calldataBytes": 1252,
+          "baseL1FeeWei": "778756112",
+          "arbitrumL1Gas": 493
+        }
+      },
+      "10": {
+        "usdPerPost": {
+          "ethereum": 0.11626705143858887,
+          "base": 0.010953946802206146,
+          "arbitrum": 0.036660883258799286
+        },
+        "inputs": {
+          "gasPrague": 817418,
+          "gasCancun": 817418,
+          "calldataBytes": 1252,
+          "baseL1FeeWei": "778756112",
+          "arbitrumL1Gas": 493
+        }
+      },
+      "100": {
+        "usdPerPost": {
+          "ethereum": 0.11626705143858887,
+          "base": 0.010953946802206146,
+          "arbitrum": 0.036660883258799286
+        },
+        "inputs": {
+          "gasPrague": 817418,
+          "gasCancun": 817418,
+          "calldataBytes": 1252,
+          "baseL1FeeWei": "778756112",
+          "arbitrumL1Gas": 493
+        }
+      },
+      "500": {
+        "usdPerPost": {
+          "ethereum": 0.11626705143858887,
+          "base": 0.010953946802206146,
+          "arbitrum": 0.036660883258799286
+        },
+        "inputs": {
+          "gasPrague": 817418,
+          "gasCancun": 817418,
+          "calldataBytes": 1252,
+          "baseL1FeeWei": "778756112",
+          "arbitrumL1Gas": 493
+        }
+      },
+      "1000": {
+        "usdPerPost": {
+          "ethereum": 0.11626705143858887,
+          "base": 0.010953946802206146,
+          "arbitrum": 0.036660883258799286
+        },
+        "inputs": {
+          "gasPrague": 817418,
+          "gasCancun": 817418,
+          "calldataBytes": 1252,
+          "baseL1FeeWei": "778756112",
+          "arbitrumL1Gas": 493
+        }
+      }
+    }
+  },
+  "endToEnd": {
+    "1": {
+      "ethereum": 0.013372370196251829,
+      "base": 0.007310721160033425,
+      "arbitrum": 0.00880290139939658,
+      "allThreeChains": 0.016237315796054603
+    },
+    "10": {
+      "ethereum": 0.0073116514070135545,
+      "base": 0.006705486503391715,
+      "arbitrum": 0.006854700045069782,
+      "allThreeChains": 0.007623160995847821
+    },
+    "100": {
+      "ethereum": 0.006705579528089728,
+      "base": 0.006644963037727544,
+      "arbitrum": 0.006659884840121175,
+      "allThreeChains": 0.006761750446311216
+    },
+    "500": {
+      "ethereum": 0.00665170988589858,
+      "base": 0.006639583495704061,
+      "arbitrum": 0.006642568610359808,
+      "allThreeChains": 0.006685185032335217
+    },
+    "1000": {
+      "ethereum": 0.006644974047070285,
+      "base": 0.006638910880315131,
+      "arbitrum": 0.006640403409300898,
+      "allThreeChains": 0.006675611377059084
+    }
+  }
+}

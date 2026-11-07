@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Gas benchmark (ADR-001). Deploys PostAnchor and the baselines B0, B1, B2 and ours-lite on a local anvil node
 // with Ethereum L1 rules (Prague hardfork), sends real transactions and reads gasUsed from the receipts.
-// The L1 data fee that L2s charge on top is NOT included; it is added later from mainnet oracles.
+// The L1 data fee that L2s charge on top is NOT included; cost-snapshot.mjs adds it from mainnet oracles.
 //
-// Usage: node src/gas-bench.mjs   (requires anvil, forge and cast on PATH)
+// Usage: node src/gas-bench.mjs [--hardfork prague|cancun]   (requires anvil, forge and cast on PATH)
+//   prague (default): Ethereum mainnet and Base rules, including the EIP-7623 calldata floor.
+//   cancun: standard calldata pricing without the floor, used as the proxy for Arbitrum execution gas.
 
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -17,7 +19,8 @@ const repoRoot = path.resolve(here, '../../..');
 const contractsDir = path.join(repoRoot, 'contracts');
 const resultsDir = path.resolve(here, '../results');
 
-const HARDFORK = 'prague';
+const hardforkFlag = process.argv.indexOf('--hardfork');
+const HARDFORK = hardforkFlag === -1 ? 'prague' : process.argv[hardforkFlag + 1];
 const BATCH_SIZES = [1, 10, 100, 500, 1000];
 // B0 and B1 send one transaction per post and every post costs the same, so a sample replaces N transactions.
 const PER_POST_SAMPLES = 10;
@@ -184,7 +187,9 @@ async function main() {
         compileEvmVersion: 'cancun',
       },
       method: [
-        'Local anvil node with Ethereum L1 rules (Prague, including the EIP-7623 calldata floor); gasUsed read from real receipts.',
+        HARDFORK === 'prague'
+          ? 'Local anvil node with Ethereum mainnet rules (Prague, including the EIP-7623 calldata floor); gasUsed read from real receipts.'
+          : `Local anvil node with ${HARDFORK} rules (no EIP-7623 calldata floor), proxy for Arbitrum execution gas; gasUsed read from real receipts.`,
         'Excludes the L1 data fee charged by L2s on top of execution gas.',
         `B0 and B1 send one transaction per post; ${PER_POST_SAMPLES} sampled posts give the per-post cost for every N.`,
         'Roots, manifest IDs and post hashes are deterministic pseudo-random 32-byte values (sha256 of a counter), so reruns reproduce the same numbers; gas does not depend on whether a root is a real Merkle root.',
@@ -197,7 +202,7 @@ async function main() {
     mkdirSync(resultsDir, { recursive: true });
     const outFile = path.join(resultsDir, `${date}-gas-local-${HARDFORK}.json`);
     writeFileSync(outFile, `${JSON.stringify(result, null, 2)}\n`);
-    console.log(`Gas per post (L1 rules, ${HARDFORK}), written to ${path.relative(repoRoot, outFile)}\n`);
+    console.log(`Gas per post (${HARDFORK} rules), written to ${path.relative(repoRoot, outFile)}\n`);
     console.log(markdownTable(variants));
     console.log(`\nCrossovers: ${Object.entries(crossovers).map(([k, v]) => `${k}=${v.n ?? v.gas}`).join(', ')}`);
   } finally {
