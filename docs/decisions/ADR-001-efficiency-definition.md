@@ -83,14 +83,16 @@ Stated openly: **for batches below 20 posts on L1, a plain hash list (B2) is che
 | Arbitrum Sepolia | 21,000 | 37,364 | 25,340 | Same as Arbitrum One |
 | Ethereum Sepolia | 15,000 | 79,896 | 79,896 | A different schedule from mainnet: lower intrinsic gas, zero bytes priced like non-zero bytes. Which upgrade introduced it: To verify |
 
-Consequences for the crossovers: on Base the floor applies to execution gas as on L1, and the per-byte L1 data fee comes on top, so constant-size calldata wins at least as early as on L1. On Arbitrum there is no floor, so B2's execution cost per post is closer to the original 770 Estimate and its crossover with ours will be later than on L1, before adding the L1 component: to be measured on Arbitrum.
+Consequences for the crossovers: on Base the floor applies to execution gas as on L1, and the per-byte L1 data fee comes on top, so constant-size calldata wins at least as early as on L1. On Arbitrum there is no floor: measured under cancun rules (`node packages/bench/src/gas-bench.mjs --hardfork cancun`), B2 costs 798 gas per post at N = 1000, close to the original 770 Estimate, and ours beats it from **N >= 31**; the L1 component (about 43 L2 gas per post for B2, 327 per batch for ours) moves that slightly earlier. `eth_estimateGas` with a state override on Arbitrum One confirms the local numbers within the client's estimation margin (docs/efficiency.md).
 
 **Money.**
 
 - Gas is measured with real transactions under mainnet rules: for Ethereum, on a local node with the Prague hardfork, which the probe above shows matches mainnet. **Changed on 2026-11-07:** this ADR originally said "measured on the testnets", but Ethereum Sepolia currently prices gas differently from mainnet (probe above), so Sepolia gas would misstate mainnet cost. The testnets remain the place for inclusion latency and end-to-end runs (Tier 2). Price is taken from mainnet on a stated date, because testnet fees are not representative.
-- Ethereum: gasUsed x mainnet base fee at the snapshot (the priority fee is stated separately with the snapshot).
-- L2s: L2 execution gas x L2 mainnet base fee, plus the L1 data fee obtained with read-only `eth_call` to mainnet oracles: the Base GasPriceOracle and the Arbitrum NodeInterface. Exact method names To verify (candidates to check: `getL1Fee(bytes)` on the GasPriceOracle; `gasEstimateL1Component` on NodeInterface). Base's current stack lineage is To verify (ADR-007), which may change the oracle.
-- Storage is reported twice: inside the Turbo free tier and at list price (ADR-002). Since the free tier is a 10 MiB lifetime allowance per wallet and per subnet (Verified 2026-11-07: https://docs.ar.io/build/upload/turbo-credits/), and every upload is signed by one platform key, **list price is the realistic figure at any scale**; the free-tier column only describes the first uploads.
+- Ethereum: gasUsed x (mainnet base fee + suggested priority fee) at the snapshot.
+- L2s: L2 execution gas x L2 mainnet base fee, plus the L1 data fee obtained with read-only `eth_call` to mainnet oracles: `getL1Fee(bytes)` on the Base GasPriceOracle (`0x420000000000000000000000000000000000000F`, version 1.6.0, Fjord and Isthmus active) and `gasEstimateL1Component(address,bool,bytes)` on the Arbitrum NodeInterface (`0x00000000000000000000000000000000000000C8`). Both confirmed by successful calls on mainnet (Verified 2026-11-07 by `node packages/bench/src/cost-snapshot.mjs`). ETH/USD comes from the Chainlink ETH / USD feed on Ethereum mainnet.
+- Storage is reported twice: inside the Turbo free tier and at list price (ADR-002). The free tier is a 10 MiB lifetime allowance per wallet and per subnet (Verified 2026-11-07: https://docs.ar.io/build/upload/turbo-credits/): enough for the PoC, while list price is the figure for production.
+
+**Measured cost (2026-11-07 snapshot).** Results: [`packages/bench/results/2026-11-07-cost-snapshot.json`](../../packages/bench/results/2026-11-07-cost-snapshot.json). Anchoring with ours costs USD 0.0067 per post at N = 1 and USD 0.000067 at N = 100 on Ethereum (base fee 0.0637 gwei, ETH/USD 2,233.09), USD 0.0000063 on Base and USD 0.000021 on Arbitrum One at N = 100. A post with a 95 KiB image costs USD 0.0068 end to end on all three chains at N = 100, and the image storage (USD 0.0065 at list price) is 96% of it. Full tables in [docs/efficiency.md](../efficiency.md).
 
 **Process.**
 
@@ -121,16 +123,16 @@ Negative:
 
 Follow-ups:
 
-- Confirm the L1 data fee oracle methods on Base and Arbitrum mainnet, and add the money conversion to `packages/bench`.
-- Measure Arbitrum execution gas separately (no EIP-7623 floor there).
 - Identify the gas schedule currently active on Ethereum Sepolia.
+- Rerun the cost snapshot before delivery: USD figures age with gas prices.
 
 ## Evidence
 
 - Gas benchmark: [`packages/bench/results/2026-11-07-gas-local-prague.json`](../../packages/bench/results/2026-11-07-gas-local-prague.json), produced by `node packages/bench/src/gas-bench.mjs` (anvil 1.7.1, solc 0.8.30, evm_version cancun, Prague execution rules).
 - Calldata pricing per chain: [`packages/bench/results/2026-11-07-calldata-floor-probe.json`](../../packages/bench/results/2026-11-07-calldata-floor-probe.json), produced by `node packages/bench/src/calldata-floor-probe.mjs`.
 - EIP-7623 floor formula: confirmed by the exact match above (B2 at N = 10, 100 and 1000); specification at https://eips.ethereum.org/EIPS/eip-7623.
-- Money conversion and L2 measurements (L1 data fee, Arbitrum execution gas): pending.
+- Arbitrum execution-gas proxy: [`packages/bench/results/2026-11-07-gas-local-cancun.json`](../../packages/bench/results/2026-11-07-gas-local-cancun.json), produced by `node packages/bench/src/gas-bench.mjs --hardfork cancun`.
+- USD cost: [`packages/bench/results/2026-11-07-cost-snapshot.json`](../../packages/bench/results/2026-11-07-cost-snapshot.json), produced by `node packages/bench/src/cost-snapshot.mjs`.
 - Turbo list price: USD 73.51 per GiB, `winc` 14986793268274 from https://turbo.ardrive.io/v1/rates; the unit is inferred to be 1 GiB because https://turbo.ardrive.io/v1/price/bytes/1073741824 returned the same `winc` (Verified 2026-11-06). About USD 0.00007 per KiB (Estimate: 73.51 / 1,048,576).
 - Turbo free tier: items up to 105 KiB, 10 MiB lifetime allowance tracked per wallet and per subnet (Verified 2026-11-07: https://docs.ar.io/build/upload/turbo-credits/). The research notes of 2026-11-06 recorded "under 100 KiB" from a page that now returns 404; see ADR-002.
-- To verify: L1 data fee oracle method names on Base and Arbitrum mainnet; Base stack lineage (ADR-007); which upgrade set Ethereum Sepolia's current gas schedule.
+- To verify: Base stack lineage (ADR-007); which upgrade set Ethereum Sepolia's current gas schedule.

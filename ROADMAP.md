@@ -11,7 +11,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | Phase | Scope | Status |
 | ----- | ----- | ------ |
 | Block B | Documentation-first scaffold: repo, README, ADRs, efficiency and threat model, diagrams | Done (2026-11-07) |
-| Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | In progress: contract, tests and gas benchmark done |
+| Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | In progress: contract, tests, gas and USD benchmark done; `packages/core` and verifier next |
 | Tier 2 | Minimal pipeline: backend, Postgres, Turbo uploads, anchoring on the 3 testnets | Not started |
 | Tier 3 | Minimal web: compose, per-stage status, Verify page | Not started |
 
@@ -44,8 +44,8 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] Calldata pricing probe on the six public chains: EIP-7623 floor on Ethereum and Base, none on Arbitrum, Ethereum Sepolia on a different schedule ([packages/bench/src/calldata-floor-probe.mjs](packages/bench/src/calldata-floor-probe.mjs))
 - [x] Dated results in [packages/bench/results](packages/bench/results/)
 - [x] Gas tables in the README and docs/efficiency.md; Estimates in ADR-001, ADR-004, ADR-005 and ADR-009 replaced with measured values
-- [ ] Money conversion: mainnet price snapshot and L1 data fee oracles (confirm method names)
-- [ ] Arbitrum execution gas (no calldata floor there) and the L2 L1-data fee
+- [x] Money conversion: mainnet price snapshot (Chainlink ETH/USD, base fees), L1 data fee oracles confirmed on mainnet, Turbo list price ([packages/bench/src/cost-snapshot.mjs](packages/bench/src/cost-snapshot.mjs))
+- [x] Arbitrum execution gas (cancun-rules proxy, cross-checked with `eth_estimateGas` and state overrides) and the L2 L1-data fee
 - [ ] Identify which upgrade set Ethereum Sepolia's current gas schedule
 - [ ] Apply the revisit criterion of [ADR-005](docs/decisions/ADR-005-commitment-merkle-tree.md) once typical batch sizes are known, and record the outcome
 
@@ -67,12 +67,12 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 
 - [x] PNG export script for the Archify diagrams, versioned in the repo ([docs/diagrams/export-png.mjs](docs/diagrams/export-png.mjs))
 - [ ] Timeline (batching example) and Waterfall (latency breakdown) diagrams from real benchmark data
-- [~] Key benchmark numbers in the README TL;DR (gas done, USD pending)
+- [x] Key benchmark numbers in the README TL;DR (gas and USD)
 
 ### Research (To verify items that can change the design)
 
 - [~] Openfort ([ADR-011](docs/decisions/ADR-011-identity-openfort.md)): resolved from the official docs: EOA account type (plain ECDSA signatures), 2-of-3 OpenSigner shares, recovery modes that keep the platform from reconstructing keys, allowed domains, no co-signer. Still open, to test at the start of Tier 3: a domain without `chainId`, and whether the payload leaves the iframe
-- [ ] Base stack lineage and its L1 data fee oracle ([ADR-007](docs/decisions/ADR-007-chain-selection.md))
+- [~] Base stack lineage ([ADR-007](docs/decisions/ADR-007-chain-selection.md)): Base still exposes the OP Stack `GasPriceOracle` (v1.6.0, Isthmus), used for its L1 data fee; full lineage still open
 - [ ] Turbo: default `anchor` field, behaviour on an existing data item ID, upload rate limits ([ADR-002](docs/decisions/ADR-002-storage-arweave-turbo.md))
 
 ## Tier 2: minimal pipeline (`packages/backend`)
@@ -103,3 +103,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | ---- | ------ |
 | 2026-11-07 | Block B completed: scaffold, ADR-001 to ADR-019, efficiency and threat model, six diagrams. Roadmap created. |
 | 2026-11-07 | Tier 1 contract work: `PostAnchor`, 16 tests (I1 to I6), CREATE2 script, gas benchmark with five variants and the calldata probe. Openfort research folded into ADR-011 (EOA account type, recovery modes). |
+| 2026-11-07 | Benchmark completed in money: Arbitrum gas proxy, L1 data fee oracles, USD per post. Finding: image storage is 96% or more of the end-to-end cost from N = 100 on. |

@@ -12,7 +12,7 @@ Design exercise for EulerPhi (Phi): publish social posts on-chain as efficiently
 - Each leaf commits to the post hash, its Arweave ID and `keccak256(signature)` (`sigCommit`), so an author can prove authorship on demand while posts stay unlinkable.
 - A signed receipt with a per-chain deadline makes omission provable, and a standalone verifier checks any post against public sources only.
 
-Key benchmark numbers (measured 2026-11-07, gas only, Ethereum mainnet rules, [docs/efficiency.md](docs/efficiency.md)): one batch costs **47,058 gas whatever its size** (47 gas per post at N = 1000), against **22,922 gas per post** with one transaction per post; a plain hash list stays cheaper **below 20 posts per batch**. USD figures pending.
+Key benchmark numbers (measured 2026-11-07, gas only, Ethereum mainnet rules, [docs/efficiency.md](docs/efficiency.md)): one batch costs **47,058 gas whatever its size** (47 gas per post at N = 1000), against **22,922 gas per post** with one transaction per post; a plain hash list stays cheaper **below 20 posts per batch**. In money (2026-11-07 snapshot): anchoring costs **USD 0.000067 per post on Ethereum at N = 100**, and a post with a 95 KiB image costs **USD 0.0068 on all three chains**, 96% of it the image storage.
 
 ## 2. Requirements
 
@@ -79,7 +79,7 @@ Details: [ADR-012](docs/decisions/ADR-012-signature-scheme-eip712.md) (signature
 
 ## 6. Efficiency
 
-Efficiency is four metrics, not one: end-to-end cost per post, on-chain bytes per post, gas per batch and per post, and latency per stage (p50 / p95). Gas is measured with real transactions on a local node running Ethereum mainnet rules (Ethereum Sepolia currently prices gas differently from mainnet, so it is not the gas reference); money uses mainnet prices on a stated date, with the L2 L1-data fee read from mainnet oracles. Storage is reported both inside Turbo's free tier and at list price; because the free tier is a 10 MiB lifetime allowance per wallet (Verified 2026-11-07, [ADR-002](docs/decisions/ADR-002-storage-arweave-turbo.md)), list price is the realistic figure. Method: [ADR-001](docs/decisions/ADR-001-efficiency-definition.md); full page: [docs/efficiency.md](docs/efficiency.md).
+Efficiency is four metrics, not one: end-to-end cost per post, on-chain bytes per post, gas per batch and per post, and latency per stage (p50 / p95). Gas is measured with real transactions on a local node running Ethereum mainnet rules (Ethereum Sepolia currently prices gas differently from mainnet, so it is not the gas reference); money uses mainnet prices on a stated date, with the L2 L1-data fee read from mainnet oracles. Storage is reported both inside Turbo's free tier, which covers the PoC (10 MiB lifetime allowance per wallet, Verified 2026-11-07, [ADR-002](docs/decisions/ADR-002-storage-arweave-turbo.md)), and at list price, the production figure. Method: [ADR-001](docs/decisions/ADR-001-efficiency-definition.md); full page: [docs/efficiency.md](docs/efficiency.md).
 
 **Gas per post, Ethereum mainnet rules** (measured 2026-11-07: `node packages/bench/src/gas-bench.mjs`, results in [`packages/bench/results/2026-11-07-gas-local-prague.json`](packages/bench/results/2026-11-07-gas-local-prague.json))
 
@@ -98,7 +98,18 @@ Efficiency is four metrics, not one: end-to-end cost per post, on-chain bytes pe
 - The storage slot that gives on-chain idempotency costs 22,432 gas per batch (ours minus ours-lite).
 - Stated openly: **below 20 posts per batch on L1 a plain hash list is cheaper.** Merkle with a slot is chosen for constant on-chain size at any N, idempotency and contract-level inclusion proofs, not because it is always cheaper ([ADR-005](docs/decisions/ADR-005-commitment-merkle-tree.md) states when to revisit).
 
-**Limitations.** Gas only, under Ethereum mainnet rules: Base applies the same calldata floor, Arbitrum does not, and the L2 L1-data fee and USD conversion are pending. The live demo runs small batches in demo mode and is not the efficiency proof; the benchmark is.
+**USD per post** (snapshot 2026-11-07: `node packages/bench/src/cost-snapshot.mjs`, results in [`packages/bench/results/2026-11-07-cost-snapshot.json`](packages/bench/results/2026-11-07-cost-snapshot.json); ETH/USD 2,233.09, base fee 0.0637 gwei on Ethereum, 0.005 on Base, 0.0201 on Arbitrum One)
+
+| Cost per post | N = 1 | N = 10 | N = 100 | N = 1000 |
+| ------------- | ----- | ------ | ------- | -------- |
+| Anchoring with ours, Ethereum | 0.0067 | 0.00067 | 0.000067 | 0.0000067 |
+| Anchoring with ours, Base | 0.00063 | 0.000063 | 0.0000063 | 0.00000063 |
+| Anchoring with ours, Arbitrum One | 0.0021 | 0.00021 | 0.000021 | 0.0000021 |
+| Post with a 95 KiB image, all three chains (storage at list price + anchoring) | 0.0162 | 0.0076 | 0.0068 | 0.0067 |
+
+The image storage (USD 0.0065 at list price) dominates from N = 100 on: past that point the cost is moved by the image cap and the storage price, not by Merkle versus hash list. Arbitrum's execution gas is measured without the calldata floor (it applies none) and cross-checked on mainnet with `eth_estimateGas`; details in [docs/efficiency.md](docs/efficiency.md).
+
+**Limitations.** Gas is measured on local nodes with each chain's calldata rules and cross-checked with mainnet estimates, not yet on deployed contracts; USD values depend on the snapshot. The live demo runs small batches in demo mode and is not the efficiency proof; the benchmark is.
 
 Planned diagrams, produced at the end from real benchmark data: **Timeline** (batching example) and **Waterfall** (latency breakdown).
 

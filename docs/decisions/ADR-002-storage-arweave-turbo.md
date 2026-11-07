@@ -52,7 +52,7 @@ Positive:
 Negative:
 
 - Trust in Turbo to settle data items to Arweave after making them readable (ADR-008 trust assumption).
-- **The free tier does not cover the platform at scale.** It is a 10 MiB lifetime allowance per wallet and per subnet, and the platform uploads everything with one key, so storage is paid at list price after about 107 images (Estimate: 10 MiB / 95 KiB = 10,240 / 95 = 107.8). Cost risk is tracked in ADR-018.
+- **The free tier covers the PoC, not production.** It is a 10 MiB lifetime allowance per wallet and per subnet, and the platform uploads everything with one key, so in production storage is paid at list price after about 107 images (Estimate: 10 MiB / 95 KiB = 10,240 / 95 = 107.8). Cost risk is tracked in ADR-018.
 - Permanent storage of user content creates moderation and GDPR obligations (ADR-018).
 
 Follow-ups:
@@ -66,4 +66,5 @@ Follow-ups:
 - Turbo free tier: "Items up to 105 KiB are eligible for the free tier, subject to a 10 MiB lifetime allowance tracked per-wallet and per-subnet" (Verified 2026-11-07: https://docs.ar.io/build/upload/turbo-credits/; also "Free uploads under 105 KiB" on https://docs.ar.io/build/upload/). **Stale fact corrected:** the research notes of 2026-11-06 recorded "data items under 100 KiB are free" from https://docs.ardrive.io/docs/turbo/credits, which returned 404 on 2026-11-07. The image target of about 95 KiB (ADR-003) stays under both thresholds.
 - Walrus vs Arweave over time: Arweave costs about USD 68.5 per GB once (Estimate: 73.51 / 1.0737 GB per GiB); Walrus at USD 0.023 per GB per month reaches that after about 2,977 months, about 248 years (Estimate: 68.5 / 0.023). If the Walrus price applies to the encoded size (about 5x), that drops to about 50 years. Which size the price applies to: To verify.
 - Ethereum blob retention: about 18 days (Estimate: 4096 epochs x 32 slots x 12 s = 1,572,864 s = 18.2 days; the 4096-epoch retention parameter To verify against the consensus specs).
-- To verify: whether ANS-104 headers and tags count toward the 105 KiB free-tier threshold; the Turbo per-item flat fee mentioned on the credits page; the three signer key checks above; Turbo upload rate limits (ADR-010).
+- Turbo price on 2026-11-07: USD 71.41 per GiB plus a flat fee per data item of 6,275,347 winc (USD 0.0000308), from https://turbo.ardrive.io/v1/rates (`perDataItemFeeWinc`); the price of a 95 KiB item, USD 0.00650, matches `/v1/price/bytes/97280` fee included (Verified 2026-11-07 by `node packages/bench/src/cost-snapshot.mjs`).
+- To verify: whether ANS-104 headers and tags count toward the 105 KiB free-tier threshold; the three signer key checks above; Turbo upload rate limits (ADR-010).

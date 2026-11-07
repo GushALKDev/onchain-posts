@@ -25,7 +25,7 @@ Chain IDs Verified 2026-11-07 with `eth_chainId` on public RPC endpoints (https:
 
 - Ethereum (L1) shows where batching saves the most money; the two L2s show latency.
 - One codebase: EVM, viem, one contract.
-- Two different rollup stacks (Base and Arbitrum Nitro) give some diversity. Base's current stack lineage is To verify: one source reported Base announcing a move off the OP Stack in 2026, not confirmed. This ADR therefore does not label Base as "OP Stack".
+- Two different rollup stacks (Base and Arbitrum Nitro) give some diversity. Base's current stack lineage is To verify: one source reported Base announcing a move off the OP Stack in 2026, not confirmed. Evidence so far: on 2026-11-07 Base mainnet still exposes the OP Stack `GasPriceOracle` predeploy at `0x420000000000000000000000000000000000000F` (version 1.6.0, `isFjord()` and `isIsthmus()` true), and its RPC reports a `reth/.../base/v1.5.3` client. This ADR still does not label Base as "OP Stack".
 - Testnet fees are not representative: money figures come from mainnet prices and mainnet L1 data fee oracles (ADR-001).
 
 **Solana: considered and discarded for time** given the deadline. How it would fit without rewriting the design:
