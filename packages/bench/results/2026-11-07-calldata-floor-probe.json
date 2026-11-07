@@ -1,0 +1,61 @@
+{
+  "schema": "phi.bench.calldata-probe/1",
+  "date": "2026-11-07",
+  "method": "eth_estimateGas, see header of calldata-floor-probe.mjs",
+  "rows": [
+    {
+      "chain": "Ethereum Sepolia",
+      "rpc": "https://ethereum-sepolia-rpc.publicnode.com",
+      "chainId": 11155111,
+      "client": "reth/v2.10.0-f5192ac/x86_64-unknown-linux-gnu",
+      "empty": 15000,
+      "nonZero1000": 79896,
+      "zero1000": 79896
+    },
+    {
+      "chain": "Base Sepolia",
+      "rpc": "https://sepolia.base.org",
+      "chainId": 84532,
+      "client": "reth/v2.5.2-9e380dd/x86_64-unknown-linux-gnu/base/v1.5.3",
+      "empty": 21000,
+      "nonZero1000": 61825,
+      "zero1000": 31352
+    },
+    {
+      "chain": "Arbitrum Sepolia",
+      "rpc": "https://sepolia-rollup.arbitrum.io/rpc",
+      "chainId": 421614,
+      "client": "nitro/v3.13.0-rc.3+835c51c-20261030T211055Z/linux-amd64/go1.25.12",
+      "empty": 21000,
+      "nonZero1000": 37364,
+      "zero1000": 25340
+    },
+    {
+      "chain": "Ethereum mainnet",
+      "rpc": "https://ethereum-rpc.publicnode.com",
+      "chainId": 1,
+      "client": "Geth/v1.17.9-stable-9dffe6e9/linux-amd64/go1.25.14",
+      "empty": 21000,
+      "nonZero1000": 61825,
+      "zero1000": 31352
+    },
+    {
+      "chain": "Base mainnet",
+      "rpc": "https://mainnet.base.org",
+      "chainId": 8453,
+      "client": "reth/v2.5.2-9e380dd/x86_64-unknown-linux-gnu/base/v1.5.3",
+      "empty": 21000,
+      "nonZero1000": 61825,
+      "zero1000": 31352
+    },
+    {
+      "chain": "Arbitrum One",
+      "rpc": "https://arb1.arbitrum.io/rpc",
+      "chainId": 42161,
+      "client": "nitro/v3.12.3-rc.4+7116cfc-20261028T163253Z/linux-arm64/go1.25.12",
+      "empty": 21353,
+      "nonZero1000": 37657,
+      "zero1000": 25633
+    }
+  ]
+}
