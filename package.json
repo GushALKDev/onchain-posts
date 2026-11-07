@@ -5,7 +5,8 @@
   "description": "Gasless, privacy-preserving publication of social posts on Arweave with Merkle-root anchoring on three EVM chains.",
   "scripts": {
     "verify": "echo \"Not implemented yet (packages/verifier)\" && exit 1",
+    "build": "pnpm --filter @phi/core build",
     "bench": "pnpm --filter @phi/bench gas",
-    "test": "cd contracts && forge test"
+    "test": "pnpm --filter @phi/core test && cd contracts && forge test"
   }
 }

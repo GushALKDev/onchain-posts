@@ -1,5 +1,32 @@
 {
   "name": "@phi/core",
   "private": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "description": "Shared, browser-compatible hashing, EIP-712 types, Merkle helpers, schemas, normalisation and WebP checks for web, backend and verifier.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.check.json",
+    "test": "vitest run",
+    "fixtures": "node scripts/generate-fixtures.ts"
+  },
+  "dependencies": {
+    "@openzeppelin/merkle-tree": "1.0.8",
+    "viem": "2.57.8",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
 }
