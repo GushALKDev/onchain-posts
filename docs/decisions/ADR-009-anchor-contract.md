@@ -1,0 +1,132 @@
+# ADR-009: Anchor contract design
+
+Status: Accepted
+Confidence: High
+Reversibility: One-way door (no proxy: the deployed contract is immutable; a change means a new deployment and a new address)
+Date: 2026-11-07
+
+Design only. The implementation, tests and benchmark come in a later block; nothing here lives in `contracts/src` yet.
+
+## Context
+
+ADR-004 puts one Merkle root per batch on-chain, ADR-005 makes it verifiable by contracts, ADR-008 needs on-chain rejection of duplicates, and requirement A1 forbids any user identity on-chain. The contract must be cheap per batch, trivial to audit, and identical on three chains.
+
+## Decision
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4; // exact version pinned at implementation time
+
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+
+contract PostAnchor {
+    error ZeroRoot();
+    error AlreadyAnchored();
+
+    // sender => root => anchoring timestamp (0 = not anchored)
+    mapping(address => mapping(bytes32 => uint256)) public anchoredAt;
+
+    event BatchAnchored(address indexed sender, bytes32 indexed root, bytes32 manifestId, uint32 count);
+
+    function anchor(bytes32 root, bytes32 manifestId, uint32 count) external {
+        if (root == bytes32(0)) revert ZeroRoot();
+        if (anchoredAt[msg.sender][root] != 0) revert AlreadyAnchored();
+        anchoredAt[msg.sender][root] = block.timestamp;
+        emit BatchAnchored(msg.sender, root, manifestId, count);
+    }
+
+    function verifyPost(address sender, bytes32 root, bytes calldata leafData, bytes32[] calldata proof) external view returns (bool) {
+        if (anchoredAt[sender][root] == 0) return false;
+        bytes32 leaf = keccak256(bytes.concat(keccak256(leafData)));
+        return MerkleProof.verifyCalldata(proof, root, leaf); // OpenZeppelin
+    }
+}
+```
+
+### Decisions and reasons
+
+**Permissionless, records keyed by `msg.sender`.** No owner and no admin functions. Key rotation = start using a new key; old anchors stay valid under the old address. Usable by any app.
+
+- **Many writers are not a problem.** Records are isolated per sender; no shared counter and no loops; other writers pay for their own storage; the indexer filters by the indexed `sender` topic.
+- **Front-running cannot block us.** Anyone who copies a root from the mempool and anchors it first only creates a record under their own address; our relayer's `anchor` still succeeds. With a global `root => timestamp` mapping, the same front-run would make our transaction revert with `AlreadyAnchored` (root squatting).
+- **Only risk: confusion** ("anchored on Phi's contract" by someone else). Every verification must include the trusted sender, and the UI shows it.
+
+**Trusted platform keys are an explicit trust root, kept off-chain** in `config/trusted-keys.json`, versioned in the repo and read by the verifier. Without this file the verifier could only learn the receipt key from the backend, which would break the "untrusted hints" principle (ADR-014).
+
+| Field | Type | Meaning |
+| ----- | ---- | ------- |
+| `role` | `"relayer"` or `"receipt"` | What the key is trusted for |
+| `chainId` | number, or `null` | Chain of a relayer entry; `null` for receipt entries, which are chain-agnostic because the receipt domain has no chainId (ADR-015) |
+| `address` | address | The key's address |
+| `validFrom` | ISO 8601 timestamp in UTC | Start of the validity window |
+| `revokedAt` | ISO 8601 timestamp in UTC, or `null` | End of the validity window |
+| `note` | string | Human description |
+
+- **Relayer entries**: the window is compared with `block.timestamp` of the anchor (unix seconds, UTC), which the chain sets, not the key holder, so revocation excludes later anchors. On Arbitrum the timestamp comes from the sequencer's clock, must not decrease, and must lie between 24 hours earlier and 1 hour later than current time (Verified 2026-11-07: https://docs.arbitrum.io/build-decentralized-apps/arbitrum-vs-ethereum/block-numbers-and-time). A sequencer could therefore backdate within that range; the sequencer is already trusted for soft confirmations (ADR-017), and the exact bounds on Base are To verify.
+- **Receipt entries**: the only timestamp available is the receipt's own `acceptedAt`, which the signer declares. A verifier checks that the signer is listed as a receipt key and that `acceptedAt` falls inside the window. That is a consistency check, **not a bound on a compromised key** (see ADR-015 for the honest limit).
+- **Revocation of a compromised key is purely off-chain**: the contract has no admin. Anchors made by a compromised relayer key before detection remain on-chain and are excluded only by the revocation date. That is a documented limit.
+
+**One storage slot per batch (`anchoredAt`).** It serves on-chain idempotency (ADR-008) and contract readability (`verifyPost`, any other contract can check an anchor). `manifestId` and `count` go only in the event, for off-chain consumers: storing `manifestId` would add another new slot, about 22k gas, almost +50% per batch (Estimate: 20,000 + 2,100 cold, on top of about 47k). The price of this one slot versus an event-only contract is measured as ours-lite in the benchmark (ADR-001). `uint256` is used because the slot holds a single value: a smaller type would save nothing.
+
+**`block.timestamp` instead of `block.number`.** On Arbitrum, `block.number` returns "a value close to (but not necessarily exactly) the block number of the first non-Arbitrum ancestor chain" (Verified 2026-11-07: https://docs.arbitrum.io/build-decentralized-apps/arbitrum-vs-ethereum/block-numbers-and-time; the third-party page https://rpcfree.com/arbitrum-rpc says the same). A timestamp means the same thing on all three chains and is what the trusted-keys windows compare against.
+
+**No sequence counter and no `prevRoot` hash chain.**
+
+- Ordering already exists: block number plus log index.
+- Contract storage is already an immutable ordered history.
+- A hash chain does not detect the omission of a post inside a batch; receipts do (ADR-015).
+- A hash chain creates head-of-line blocking between batches: batch k+1 cannot be built until batch k's root is final.
+- Removing the counter saves one SSTORE per batch, about 5k gas (Estimate: 2,900 for a non-zero to non-zero write + 2,100 cold access).
+
+**`verifyPost` receives the leaf as opaque bytes and double-hashes it**, so the immutable contract does not freeze the leaf format (ADR-014 can version it). Double hashing prevents second-preimage confusion between leaves and internal nodes (64-byte nodes): a 64-byte internal node can never be presented as a leaf, because a leaf is hashed twice.
+
+**No proxy, no pause, not payable.** Nothing to upgrade, nobody to trust with an admin key. Same address on all chains via CREATE2: this needs the same deployer (factory) address on all three chains and byte-identical init code, so the compiler version, optimizer settings and `evm_version` must be identical and supported by all three chains (To verify: availability of the chosen deterministic deployment factory on the three chains, and the highest `evm_version` all three support).
+
+**Gas.** `anchor` costs about 47k per batch regardless of N (Estimate, derivation in ADR-001). To be confirmed with `forge snapshot`.
+
+### Invariants to test (later block)
+
+| ID | Invariant | Test type |
+| -- | --------- | --------- |
+| I1 | A (sender, root) can be anchored once only | Invariant test with handler |
+| I2 | `anchoredAt` never changes once set | Invariant test with handler |
+| I3 | `root == 0` always reverts, so `anchoredAt != 0` means anchored | Fuzz |
+| I4 | Actions of one sender never alter another sender's records | Invariant test with handler |
+| I5 | `verifyPost` returns true if and only if the leaf is in the tree of an anchored root | Fuzz |
+| I6 | The contract cannot receive ETH through any call: no payable function, no `receive` or `fallback`, so every call with value reverts | Unit + fuzz |
+
+Note on I6: ETH force-sent via `SELFDESTRUCT` (or as a block reward recipient) cannot be prevented by any contract. It is harmless here because no logic reads `address(this).balance`.
+
+## Alternatives considered
+
+| Option | Pros | Cons | Why not chosen |
+| ------ | ---- | ---- | -------------- |
+| Immutable single relayer (address fixed at deploy) | Only our key can write | Rotation requires a redeploy and a new address (and a new EIP-712 domain, ADR-012) | Rotation is a normal operation |
+| Owner-managed allowlist of relayers | On-chain list of trusted senders | Admin key = more attack surface and more trust; an owner can also be compromised | Off-chain trusted-keys file with per-sender records gives the same verification without an admin |
+| Global `root => timestamp` mapping | Slightly simpler | Root squatting by front-running (see above); one sender's mistake affects all | Per-sender isolation |
+| Store `manifestId` on-chain | Lookup from state | About +22k gas per batch (Estimate) | Event is enough for off-chain consumers |
+| Event only (ours-lite) | About 22k less per batch (Estimate) | No on-chain idempotency, no contract-readable anchor | Measured in the benchmark; ADR-005 revisit criterion |
+| Upgradeable proxy | Fixable | Admin key, storage-layout risk, more audit surface | Nothing in this contract justifies it |
+
+## Consequences
+
+Positive:
+
+- A contract of two functions and one mapping, with no privileged role.
+- Retries and duplicates are safe (I1); other writers cannot interfere (I4, front-running).
+
+Negative:
+
+- Trust in the platform keys lives off-chain, and so does revocation.
+- A compromised relayer key's earlier anchors stay valid on-chain; only the revocation date in `config/trusted-keys.json` excludes later ones.
+
+Follow-ups:
+
+- Implement with the repository's Solidity conventions (custom errors, NatSpec, headers) and Foundry invariant tests I1 to I6.
+- Pin the compiler and `evm_version`; choose the CREATE2 factory.
+
+## Evidence
+
+- Gas: Estimates in ADR-001; pending `forge snapshot`.
+- Arbitrum `block.number` and `block.timestamp` semantics: Verified 2026-11-07 (link above).
+- To verify: CREATE2 factory availability and common `evm_version` on the three chains; timestamp bounds on Base.

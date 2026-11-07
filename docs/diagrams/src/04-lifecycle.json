@@ -1,0 +1,199 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Post lifecycle: per post, then per (post, chain)",
+    "locale": "en",
+    "output": "docs/diagrams/html/04-lifecycle.html",
+    "quality_profile": "showcase"
+  },
+  "mainPath": [
+    "received",
+    "stored",
+    "queued",
+    "batched",
+    "submitted",
+    "anchored",
+    "settled"
+  ],
+  "states": [
+    {
+      "id": "received",
+      "type": "start",
+      "label": "RECEIVED",
+      "tag": "receipt issued"
+    },
+    {
+      "id": "stored",
+      "type": "active",
+      "label": "STORED",
+      "tag": "on Arweave"
+    },
+    {
+      "id": "queued",
+      "type": "waiting",
+      "label": "QUEUED",
+      "tag": "per (post, chain)"
+    },
+    {
+      "id": "batched",
+      "type": "active",
+      "label": "BATCHED(root)",
+      "tag": "manifest uploaded"
+    },
+    {
+      "id": "submitted",
+      "type": "active",
+      "label": "SUBMITTED",
+      "tag": "txHash"
+    },
+    {
+      "id": "anchored",
+      "type": "active",
+      "label": "ANCHORED (soft)",
+      "tag": "= Published"
+    },
+    {
+      "id": "settled",
+      "type": "success",
+      "label": "SETTLED (safe)",
+      "tag": "= Settled"
+    },
+    {
+      "id": "retrying",
+      "type": "waiting",
+      "label": "RETRYING",
+      "tag": "check receipt first"
+    },
+    {
+      "id": "failed",
+      "type": "failure",
+      "label": "FAILED",
+      "tag": "alert, terminal"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "received-stored",
+      "from": "received",
+      "to": "stored",
+      "label": "store"
+    },
+    {
+      "id": "stored-queued",
+      "from": "stored",
+      "to": "queued",
+      "label": "queue"
+    },
+    {
+      "id": "queued-batched",
+      "from": "queued",
+      "to": "batched",
+      "label": "flush"
+    },
+    {
+      "id": "batched-submitted",
+      "from": "batched",
+      "to": "submitted",
+      "label": "send"
+    },
+    {
+      "id": "submitted-anchored",
+      "from": "submitted",
+      "to": "anchored",
+      "label": "mined"
+    },
+    {
+      "id": "anchored-settled",
+      "from": "anchored",
+      "to": "settled",
+      "label": "safe"
+    },
+    {
+      "id": "received-retry-upload",
+      "from": "received",
+      "to": "received",
+      "label": "upload retry",
+      "variant": "dashed"
+    },
+    {
+      "id": "submitted-retrying",
+      "from": "submitted",
+      "to": "retrying",
+      "label": "stuck / unknown",
+      "variant": "dashed"
+    },
+    {
+      "id": "submitted-reverted",
+      "from": "submitted",
+      "to": "failed",
+      "label": "reverted",
+      "variant": "security"
+    },
+    {
+      "id": "retrying-resend",
+      "from": "retrying",
+      "to": "submitted",
+      "label": "resend"
+    },
+    {
+      "id": "retrying-rebatch",
+      "from": "retrying",
+      "to": "batched",
+      "label": "re-batch, same nonce",
+      "variant": "emphasis"
+    },
+    {
+      "id": "retrying-landed",
+      "from": "retrying",
+      "to": "anchored",
+      "label": "landed"
+    },
+    {
+      "id": "retrying-failed",
+      "from": "retrying",
+      "to": "failed",
+      "label": "deadline risk",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Scope",
+      "items": [
+        "RECEIVED and STORED are tracked per post; an upload retry checks existing uploads first",
+        "From QUEUED on, state is tracked per (post, chain); SUBMITTED carries the txHash",
+        "ANCHORED (soft) is the Published stage the receipt's anchorBy refers to; SETTLED (safe) is the chain's safe head"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Three failure types",
+      "items": [
+        "Stuck / dropped (never mined): resend with the same nonce and higher gas",
+        "Reverted (mined but reverted, e.g. duplicate root): bug or attack, alert, no blind retry",
+        "Unknown (RPC timeout): check the original tx receipt first; if it landed, go to ANCHORED; duplicates are blocked on-chain",
+        "Deadline risk: a retry that cannot complete before anchorBy raises an alert"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Re-batch rule",
+      "items": [
+        "A long-stuck batch may be re-batched with newer posts (new root and manifest)",
+        "The new tx MUST reuse the stuck tx's nonce, so only one version can land",
+        "The old manifest becomes a harmless orphan on Arweave"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Idempotency",
+      "items": [
+        "The contract rejects an already anchored (sender, root)",
+        "No post enters a batch unless it is stored on Arweave",
+        "Retries must complete before each chain's receipt anchorBy"
+      ]
+    }
+  ]
+}

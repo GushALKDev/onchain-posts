@@ -1,0 +1,451 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Phi on-chain posts: system architecture",
+    "locale": "en",
+    "output": "docs/diagrams/html/01-architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "ana",
+      "type": "external",
+      "label": "Ana (user)",
+      "sublabel": "browser",
+      "icon": "person",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "Web app",
+      "sublabel": "Vite + React, @phi/core, verifier lib",
+      "pos": [
+        330,
+        40
+      ],
+      "size": [
+        214,
+        64
+      ]
+    },
+    {
+      "id": "openfort",
+      "type": "security",
+      "label": "Openfort",
+      "sublabel": "email login, signer EOA",
+      "pos": [
+        680,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "Postgres",
+      "sublabel": "DB + job queue (SKIP LOCKED)",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        176,
+        64
+      ],
+      "tag": "HMAC addr, enc. sig"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API",
+      "sublabel": "validate, receipt, GET /proof",
+      "pos": [
+        330,
+        230
+      ],
+      "size": [
+        214,
+        64
+      ],
+      "tag": "flush-now: demo only"
+    },
+    {
+      "id": "keystore",
+      "type": "security",
+      "label": "Key store (outside DB)",
+      "sublabel": "KMS / simulator",
+      "pos": [
+        680,
+        230
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "relayer, receipt, Arweave, enc."
+    },
+    {
+      "id": "storage",
+      "type": "backend",
+      "label": "Storage worker",
+      "sublabel": "image, then post JSON",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        176,
+        64
+      ]
+    },
+    {
+      "id": "batcher",
+      "type": "backend",
+      "label": "Batcher x3",
+      "sublabel": "per chain: Tmax / Nmax, tree",
+      "pos": [
+        360,
+        430
+      ],
+      "size": [
+        184,
+        64
+      ]
+    },
+    {
+      "id": "anchor",
+      "type": "backend",
+      "label": "Anchor worker x3",
+      "sublabel": "nonce mgr, gas bump, retry",
+      "pos": [
+        690,
+        430
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "tracker",
+      "type": "backend",
+      "label": "Tracker + indexer",
+      "sublabel": "soft / safe, proof bundles",
+      "pos": [
+        1000,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "turbo",
+      "type": "cloud",
+      "label": "Turbo bundler",
+      "sublabel": "ANS-104 bundles",
+      "pos": [
+        40,
+        640
+      ],
+      "size": [
+        176,
+        64
+      ]
+    },
+    {
+      "id": "eth",
+      "type": "cloud",
+      "label": "Ethereum Sepolia",
+      "sublabel": "PostAnchor",
+      "pos": [
+        490,
+        640
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "base",
+      "type": "cloud",
+      "label": "Base Sepolia",
+      "sublabel": "PostAnchor",
+      "pos": [
+        705,
+        640
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "arb",
+      "type": "cloud",
+      "label": "Arbitrum Sepolia",
+      "sublabel": "PostAnchor",
+      "pos": [
+        920,
+        640
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "arweave",
+      "type": "database",
+      "label": "Arweave",
+      "sublabel": "image, post JSON, manifest",
+      "pos": [
+        40,
+        840
+      ],
+      "size": [
+        176,
+        64
+      ]
+    },
+    {
+      "id": "verifier",
+      "type": "frontend",
+      "label": "Verifier (library + CLI)",
+      "sublabel": "public sources only",
+      "pos": [
+        690,
+        840
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "trusted",
+      "type": "security",
+      "label": "config/trusted-keys.json",
+      "sublabel": "relayer + receipt keys",
+      "pos": [
+        960,
+        840
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Platform backend (one process + Postgres in the PoC)",
+      "wraps": [
+        "postgres",
+        "api",
+        "keystore",
+        "tracker",
+        "storage",
+        "batcher",
+        "anchor"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EVM testnets (same CREATE2 address)",
+      "wraps": [
+        "eth",
+        "base",
+        "arb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ana-web",
+      "from": "ana",
+      "to": "web",
+      "label": "compose, sign",
+      "variant": "emphasis"
+    },
+    {
+      "id": "web-openfort",
+      "from": "web",
+      "to": "openfort",
+      "label": "sign EIP-712",
+      "variant": "security"
+    },
+    {
+      "id": "web-api",
+      "from": "web",
+      "to": "api",
+      "label": "intent + sig",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-web",
+      "from": "api",
+      "to": "web",
+      "label": "signed receipt"
+    },
+    {
+      "id": "api-postgres",
+      "from": "api",
+      "to": "postgres",
+      "label": "jobs + state"
+    },
+    {
+      "id": "api-keystore",
+      "from": "api",
+      "to": "keystore",
+      "label": "sign receipt",
+      "variant": "security"
+    },
+    {
+      "id": "storage-turbo",
+      "from": "storage",
+      "to": "turbo",
+      "label": "data items (platform key)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "storage-batcher",
+      "from": "storage",
+      "to": "batcher",
+      "label": "enqueue if stored"
+    },
+    {
+      "id": "batcher-turbo",
+      "from": "batcher",
+      "to": "turbo",
+      "label": "manifest"
+    },
+    {
+      "id": "batcher-anchor",
+      "from": "batcher",
+      "to": "anchor",
+      "label": "root + manifestId"
+    },
+    {
+      "id": "keystore-anchor",
+      "from": "keystore",
+      "to": "anchor",
+      "label": "sign tx",
+      "variant": "security"
+    },
+    {
+      "id": "anchor-eth",
+      "from": "anchor",
+      "to": "eth"
+    },
+    {
+      "id": "anchor-base",
+      "from": "anchor",
+      "to": "base",
+      "label": "anchor(root)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "anchor-arb",
+      "from": "anchor",
+      "to": "arb"
+    },
+    {
+      "id": "tracker-arb",
+      "from": "tracker",
+      "to": "arb",
+      "label": "poll soft / safe",
+      "variant": "dashed"
+    },
+    {
+      "id": "turbo-arweave",
+      "from": "turbo",
+      "to": "arweave",
+      "label": "bundle tx"
+    },
+    {
+      "id": "verifier-eth",
+      "from": "verifier",
+      "to": "eth"
+    },
+    {
+      "id": "verifier-base",
+      "from": "verifier",
+      "to": "base",
+      "label": "events, anchoredAt"
+    },
+    {
+      "id": "verifier-arb",
+      "from": "verifier",
+      "to": "arb"
+    },
+    {
+      "id": "verifier-arweave",
+      "from": "verifier",
+      "to": "arweave",
+      "label": "GET by ID"
+    },
+    {
+      "id": "verifier-trusted",
+      "from": "verifier",
+      "to": "trusted",
+      "label": "trust root",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Publish path",
+      "items": [
+        "Browser normalises, strips EXIF/XMP and signs EIP-712 over the final bytes",
+        "API validates and returns a signed receipt (Accepted) with one anchorBy per chain",
+        "Storage worker uploads image, then post JSON, with the platform Arweave key",
+        "Only stored posts enter a chain queue; all workers claim jobs from Postgres"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Anchoring",
+      "items": [
+        "One queue per chain; flush at Nmax (default 500) or Tmax (defaults: 30 s on L2s, 300 s on Ethereum, tunable)",
+        "One tx per batch and chain anchors a Merkle root; nothing per post on-chain",
+        "Batch identity is (chainId, sender, root); the relayer sends every tx",
+        "Tracker polls soft and safe heads on all 3 chains and updates proof bundles"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Verification",
+      "items": [
+        "Verifier uses only an Arweave gateway, public RPCs and config/trusted-keys.json",
+        "GET /proof/:postHash hints from the API are untrusted and re-checked",
+        "The web Verify page imports the same library: a convenience, not the independent path"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Privacy",
+      "items": [
+        "The user address and signature appear nowhere on-chain or on Arweave",
+        "Openfort knows email and address; whether it sees intents: To verify",
+        "Postgres stores HMAC(address) and signatures encrypted with an external key"
+      ]
+    }
+  ]
+}

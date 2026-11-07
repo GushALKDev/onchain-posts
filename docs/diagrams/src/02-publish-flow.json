@@ -1,0 +1,304 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Publish flow: Ana posts caption + photo on Base and Arbitrum",
+    "locale": "en",
+    "output": "docs/diagrams/html/02-publish-flow.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "async (queue or polling)"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "ana",
+      "type": "external",
+      "label": "Ana",
+      "sublabel": "user",
+      "icon": "person"
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "Web app",
+      "sublabel": "browser"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API",
+      "sublabel": "validate + receipt"
+    },
+    {
+      "id": "storage",
+      "type": "backend",
+      "label": "Storage worker",
+      "sublabel": "platform key"
+    },
+    {
+      "id": "arweave",
+      "type": "cloud",
+      "label": "Turbo / Arweave",
+      "sublabel": "permanent data"
+    },
+    {
+      "id": "batcher",
+      "type": "backend",
+      "label": "Batcher + anchor",
+      "sublabel": "one per chain"
+    },
+    {
+      "id": "chains",
+      "type": "cloud",
+      "label": "Base + Arbitrum",
+      "sublabel": "PostAnchor"
+    },
+    {
+      "id": "tracker",
+      "type": "backend",
+      "label": "Tracker",
+      "sublabel": "soft / safe"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 365,
+      "label": "1. Compose and sign (browser)"
+    },
+    {
+      "from": 375,
+      "to": 545,
+      "label": "2. Accept (receipt)"
+    },
+    {
+      "from": 555,
+      "to": 705,
+      "label": "3. Store on Arweave"
+    },
+    {
+      "from": 715,
+      "to": 920,
+      "label": "4. Batch and anchor (per chain)"
+    },
+    {
+      "from": 930,
+      "to": 1170,
+      "label": "5. Status and proof bundle"
+    }
+  ],
+  "messages": [
+    {
+      "id": "compose",
+      "from": "ana",
+      "to": "web",
+      "y": 180,
+      "label": "caption + photo, chains: Base, Arbitrum",
+      "variant": "emphasis",
+      "note": "Compress to WebP (max 1080 px), strip EXIF/XMP, NFC-normalise username and caption"
+    },
+    {
+      "id": "review-intent",
+      "from": "web",
+      "to": "ana",
+      "y": 275,
+      "label": "EIP-712 PublishIntent over final bytes",
+      "variant": "return"
+    },
+    {
+      "id": "sign",
+      "from": "ana",
+      "to": "web",
+      "y": 310,
+      "label": "sign (Openfort embedded signer)",
+      "variant": "security",
+      "note": "Signature kept locally in IndexedDB"
+    },
+    {
+      "id": "submit",
+      "from": "web",
+      "to": "api",
+      "y": 395,
+      "label": "POST intent + signature",
+      "variant": "emphasis",
+      "note": "Recompute imageHash and postHash, check normalisation and no metadata chunks; reject on any mismatch"
+    },
+    {
+      "id": "receipt",
+      "from": "api",
+      "to": "web",
+      "y": 485,
+      "label": "signed receipt = Accepted",
+      "variant": "return",
+      "note": "One anchorBy per chain (Phi Receipts domain)"
+    },
+    {
+      "id": "store-job",
+      "from": "api",
+      "to": "storage",
+      "y": 560,
+      "label": "storage job (Postgres queue)",
+      "variant": "dashed"
+    },
+    {
+      "id": "upload-image",
+      "from": "storage",
+      "to": "arweave",
+      "y": 595,
+      "label": "upload image (img123)",
+      "note": "IDs are Illustrative"
+    },
+    {
+      "id": "upload-post",
+      "from": "storage",
+      "to": "arweave",
+      "y": 650,
+      "label": "upload post JSON (post456)"
+    },
+    {
+      "id": "enqueue",
+      "from": "storage",
+      "to": "batcher",
+      "y": 690,
+      "label": "STORED: enqueue Base + Arbitrum",
+      "variant": "dashed"
+    },
+    {
+      "id": "manifest",
+      "from": "batcher",
+      "to": "arweave",
+      "y": 740,
+      "label": "upload manifest (per batch and chain)",
+      "note": "Flush at Tmax (default 30 s, tunable) or Nmax (default 500); Merkle tree built off-chain"
+    },
+    {
+      "id": "anchor",
+      "from": "batcher",
+      "to": "chains",
+      "y": 830,
+      "label": "anchor(root): 1 tx per chain",
+      "variant": "emphasis",
+      "note": "Sent by the relayer key; the user never sends a tx"
+    },
+    {
+      "id": "included",
+      "from": "chains",
+      "to": "batcher",
+      "y": 900,
+      "label": "tx included",
+      "variant": "return"
+    },
+    {
+      "id": "poll",
+      "from": "tracker",
+      "to": "chains",
+      "y": 950,
+      "label": "poll tx, safe head",
+      "variant": "dashed"
+    },
+    {
+      "id": "heads",
+      "from": "chains",
+      "to": "tracker",
+      "y": 980,
+      "label": "soft, then safe",
+      "variant": "return"
+    },
+    {
+      "id": "status-db",
+      "from": "tracker",
+      "to": "api",
+      "y": 1015,
+      "label": "status + proof bundle (via DB)",
+      "variant": "dashed"
+    },
+    {
+      "id": "status-poll",
+      "from": "web",
+      "to": "api",
+      "y": 1050,
+      "label": "GET status, GET /proof/:postHash"
+    },
+    {
+      "id": "status-reply",
+      "from": "api",
+      "to": "web",
+      "y": 1080,
+      "label": "Published, Settled per chain + public bundle",
+      "variant": "return"
+    },
+    {
+      "id": "show",
+      "from": "web",
+      "to": "ana",
+      "y": 1115,
+      "label": "per-chain status, download proof bundle",
+      "variant": "return",
+      "note": "Private copy = public bundle + local signature + intent fields"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "web",
+      "from": 175,
+      "to": 325,
+      "type": "frontend"
+    },
+    {
+      "participant": "api",
+      "from": 390,
+      "to": 565,
+      "type": "backend"
+    },
+    {
+      "participant": "storage",
+      "from": 555,
+      "to": 695,
+      "type": "backend"
+    },
+    {
+      "participant": "batcher",
+      "from": 685,
+      "to": 905,
+      "type": "backend"
+    },
+    {
+      "participant": "tracker",
+      "from": 945,
+      "to": 1020,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "What the user waits for",
+      "items": [
+        "Accepted: the signed receipt, returned right after validation",
+        "Published: the anchoring tx is included (soft confirmation)",
+        "Settled: the chain's safe head covers the tx (minutes on L2s)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Privacy",
+      "items": [
+        "Data items are signed with the platform Arweave key, never the user key",
+        "Only the batch root goes on-chain; the leaf holds keccak256(signature), not the signature"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Values",
+      "items": [
+        "IDs img123 and post456 are Illustrative",
+        "Tmax and Nmax are defaults, tunable per chain from the benchmark"
+      ]
+    }
+  ]
+}

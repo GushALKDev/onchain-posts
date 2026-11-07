@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Privacy: what each actor sees",
+    "locale": "en",
+    "output": "docs/diagrams/html/03-privacy.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "user-linked data (never public)"
+        },
+        "emphasis": {
+          "label": "public record"
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "label": "Client"
+    },
+    {
+      "label": "Platform + identity"
+    },
+    {
+      "label": "Processors"
+    },
+    {
+      "label": "Public record"
+    },
+    {
+      "label": "Observers"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "browser",
+      "type": "frontend",
+      "label": "Ana's browser",
+      "sublabel": "signs, keeps signatures",
+      "tag": "IndexedDB",
+      "stage": 0,
+      "row": 1
+    },
+    {
+      "id": "openfort",
+      "type": "security",
+      "label": "Openfort",
+      "sublabel": "email + address",
+      "tag": "intents: To verify",
+      "stage": 1,
+      "row": 0
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Platform API",
+      "sublabel": "user to signer map",
+      "tag": "sees everything",
+      "stage": 1,
+      "row": 1
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Postgres",
+      "sublabel": "HMAC(addr), enc. sig",
+      "tag": "privacy boundary",
+      "stage": 1,
+      "row": 2
+    },
+    {
+      "id": "relayer",
+      "type": "backend",
+      "label": "Relayer key",
+      "sublabel": "sends every tx",
+      "stage": 2,
+      "row": 1
+    },
+    {
+      "id": "turbo",
+      "type": "cloud",
+      "label": "Turbo",
+      "sublabel": "uploads, backend IP",
+      "stage": 2,
+      "row": 2
+    },
+    {
+      "id": "chains",
+      "type": "cloud",
+      "label": "3 chains",
+      "sublabel": "relayer, root, count",
+      "tag": "no user address",
+      "stage": 3,
+      "row": 1
+    },
+    {
+      "id": "arweave",
+      "type": "database",
+      "label": "Arweave",
+      "sublabel": "image, post, manifest",
+      "tag": "owner = platform key",
+      "stage": 3,
+      "row": 2
+    },
+    {
+      "id": "observer",
+      "type": "external",
+      "label": "Chain observer",
+      "sublabel": "relayer, root, count",
+      "stage": 4,
+      "row": 1
+    },
+    {
+      "id": "users",
+      "type": "external",
+      "label": "Other users",
+      "sublabel": "username, content",
+      "stage": 4,
+      "row": 2
+    },
+    {
+      "id": "reader",
+      "type": "external",
+      "label": "Arweave reader",
+      "sublabel": "image, JSON, manifest",
+      "stage": 4,
+      "row": 3
+    }
+  ],
+  "flows": [
+    {
+      "id": "login-sign",
+      "from": "browser",
+      "to": "openfort",
+      "label": "login, sign req.",
+      "classification": "intent payload: To verify",
+      "variant": "security"
+    },
+    {
+      "id": "intent",
+      "from": "browser",
+      "to": "api",
+      "label": "intent + sig",
+      "classification": "never published",
+      "variant": "security"
+    },
+    {
+      "id": "db-write",
+      "from": "api",
+      "to": "db",
+      "label": "HMAC, enc. sig",
+      "classification": "keys outside DB",
+      "variant": "security"
+    },
+    {
+      "id": "roots",
+      "from": "api",
+      "to": "relayer",
+      "label": "root per chain",
+      "classification": "no user data"
+    },
+    {
+      "id": "uploads",
+      "from": "api",
+      "to": "turbo",
+      "label": "data items",
+      "classification": "platform key"
+    },
+    {
+      "id": "anchor",
+      "from": "relayer",
+      "to": "chains",
+      "label": "root, manifestId",
+      "classification": "sender = relayer",
+      "variant": "emphasis"
+    },
+    {
+      "id": "bundle",
+      "from": "turbo",
+      "to": "arweave",
+      "label": "ANS-104 bundle",
+      "classification": "owner = platform",
+      "variant": "emphasis"
+    },
+    {
+      "id": "read-chain",
+      "from": "chains",
+      "to": "observer",
+      "label": "events",
+      "classification": "public"
+    },
+    {
+      "id": "read-content",
+      "from": "arweave",
+      "to": "users",
+      "label": "username, content",
+      "classification": "public by design"
+    },
+    {
+      "id": "read-arweave",
+      "from": "arweave",
+      "to": "reader",
+      "label": "GET by ID",
+      "classification": "public"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Nowhere public",
+      "items": [
+        "User address, public key and signature are absent from tx sender, events, calldata",
+        "Also absent from the Arweave owner field, Arweave tags and the post JSON",
+        "The leaf holds sigCommit = keccak256(signature); the user can reveal the signature for one post"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Who can link a user to posts",
+      "items": [
+        "Platform: user to signer mapping, stored as HMAC(address) plus externally encrypted signatures",
+        "Openfort: email and address; whether it sees PublishIntent payloads is To verify",
+        "Ana's own browser: signatures in IndexedDB reveal her address if the device is compromised"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Still inferable",
+      "items": [
+        "Username and content (public by design), writing style, image size",
+        "Timing across Arweave and chains, chosen chain set, same postHash on several chains",
+        "IP addresses seen by the relayer API and by Turbo (backend IP)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,469 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Data model: signed content, receipts, commitments and trust root",
+    "locale": "en",
+    "output": "docs/diagrams/html/05-data-model.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid",
+    "gapX": 80,
+    "gapY": 48,
+    "entityW": 270
+  },
+  "entities": [
+    {
+      "id": "PublishIntent",
+      "label": "PublishIntent",
+      "sublabel": "EIP-712, signed by the user",
+      "tag": "user-signed",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "nonce",
+          "type": "bytes32 (random)",
+          "key": "pk"
+        },
+        {
+          "name": "post",
+          "type": "Post (embedded)",
+          "key": "fk",
+          "references": "Post.postHash"
+        },
+        {
+          "name": "chainIds",
+          "type": "uint256[] (1 to 3)"
+        },
+        {
+          "name": "deadline",
+          "type": "uint64"
+        },
+        {
+          "name": "signature",
+          "type": "bytes (private)"
+        }
+      ]
+    },
+    {
+      "id": "Post",
+      "label": "Post",
+      "sublabel": "same content on every chain",
+      "tag": "user-signed",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "postHash",
+          "type": "bytes32 (hashStruct)",
+          "key": "pk"
+        },
+        {
+          "name": "username",
+          "type": "string (NFC)"
+        },
+        {
+          "name": "contentType",
+          "type": "string (\"post\")"
+        },
+        {
+          "name": "caption",
+          "type": "string (max 1000)"
+        },
+        {
+          "name": "imageHash",
+          "type": "bytes32 or 0x0"
+        },
+        {
+          "name": "createdAt",
+          "type": "uint64 (untrusted)"
+        }
+      ]
+    },
+    {
+      "id": "Leaf",
+      "label": "Leaf",
+      "sublabel": "one per post per batch",
+      "tag": "Arweave",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "leafHash",
+          "type": "bytes32 (2x keccak)",
+          "key": "pk"
+        },
+        {
+          "name": "postHash",
+          "type": "bytes32",
+          "key": "fk",
+          "references": "Post.postHash"
+        },
+        {
+          "name": "postArweaveId",
+          "type": "bytes32"
+        },
+        {
+          "name": "sigCommit",
+          "type": "keccak256(sig)"
+        },
+        {
+          "name": "manifestId",
+          "type": "Arweave ID",
+          "key": "fk",
+          "references": "Manifest.manifestId"
+        }
+      ]
+    },
+    {
+      "id": "Manifest",
+      "label": "Manifest",
+      "sublabel": "phi.manifest/1, one per batch and chain",
+      "tag": "Arweave",
+      "row": 0,
+      "col": 3,
+      "attributes": [
+        {
+          "name": "manifestId",
+          "type": "Arweave ID",
+          "key": "pk"
+        },
+        {
+          "name": "chainId",
+          "type": "uint256",
+          "key": "uk"
+        },
+        {
+          "name": "root",
+          "type": "bytes32",
+          "key": "uk"
+        },
+        {
+          "name": "leafEncoding",
+          "type": "bytes32 x 3"
+        },
+        {
+          "name": "leaves",
+          "type": "Leaf[] (sorted)"
+        }
+      ]
+    },
+    {
+      "id": "Receipt",
+      "label": "Receipt",
+      "sublabel": "EIP-712 domain Phi Receipts",
+      "tag": "platform-signed",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "postHash",
+          "type": "bytes32",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "Post.postHash"
+        },
+        {
+          "name": "sigCommit",
+          "type": "bytes32"
+        },
+        {
+          "name": "acceptedAt",
+          "type": "uint64 (signer-set)"
+        },
+        {
+          "name": "deadlines",
+          "type": "Deadline[]"
+        },
+        {
+          "name": "signer",
+          "type": "address",
+          "key": "fk",
+          "references": "TrustedKey.address"
+        }
+      ]
+    },
+    {
+      "id": "ProofBundle",
+      "label": "ProofBundle",
+      "sublabel": "phi.proof/1, untrusted hints",
+      "tag": "hints",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "postHash",
+          "type": "bytes32",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "Post.postHash"
+        },
+        {
+          "name": "postArweaveId",
+          "type": "Arweave ID"
+        },
+        {
+          "name": "imageArweaveId",
+          "type": "Arweave ID"
+        },
+        {
+          "name": "anchors",
+          "type": "Anchor[] (+ proof)"
+        },
+        {
+          "name": "pending",
+          "type": "{chainId, anchorBy}[]"
+        },
+        {
+          "name": "receipt",
+          "type": "Receipt",
+          "key": "fk",
+          "references": "Receipt.postHash"
+        },
+        {
+          "name": "signature",
+          "type": "bytes (private)"
+        },
+        {
+          "name": "intent",
+          "type": "intent fields (private)"
+        }
+      ]
+    },
+    {
+      "id": "Batch",
+      "label": "Batch",
+      "sublabel": "PostAnchor record + event",
+      "tag": "on-chain",
+      "row": 1,
+      "col": 3,
+      "attributes": [
+        {
+          "name": "chainId",
+          "type": "uint256",
+          "key": "pk"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "TrustedKey.address"
+        },
+        {
+          "name": "root",
+          "type": "bytes32",
+          "key": "pk"
+        },
+        {
+          "name": "anchoredAt",
+          "type": "uint256 (timestamp)"
+        },
+        {
+          "name": "manifestId",
+          "type": "bytes32 (event)",
+          "key": "fk",
+          "references": "Manifest.manifestId"
+        },
+        {
+          "name": "count",
+          "type": "uint32 (event)"
+        }
+      ]
+    },
+    {
+      "id": "Deadline",
+      "label": "Deadline",
+      "sublabel": "one per selected chain",
+      "tag": "platform-signed",
+      "row": 2,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "postHash",
+          "type": "bytes32",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "Receipt.postHash"
+        },
+        {
+          "name": "chainId",
+          "type": "uint256",
+          "key": "pk"
+        },
+        {
+          "name": "anchorBy",
+          "type": "uint64 (Published)"
+        }
+      ]
+    },
+    {
+      "id": "TrustedKey",
+      "label": "TrustedKey",
+      "sublabel": "config/trusted-keys.json",
+      "tag": "trust root",
+      "row": 2,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "address",
+          "type": "address",
+          "key": "pk"
+        },
+        {
+          "name": "role",
+          "type": "relayer | receipt"
+        },
+        {
+          "name": "chainId",
+          "type": "uint256 | null"
+        },
+        {
+          "name": "validFrom",
+          "type": "ISO 8601 UTC"
+        },
+        {
+          "name": "revokedAt",
+          "type": "ISO 8601 UTC | null"
+        },
+        {
+          "name": "note",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "intent-post",
+      "from": "PublishIntent",
+      "to": "Post",
+      "label": "wraps",
+      "fromCardinality": "one",
+      "toCardinality": "one"
+    },
+    {
+      "id": "leaf-post",
+      "from": "Leaf",
+      "to": "Post",
+      "label": "commits to",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "leaf-manifest",
+      "from": "Leaf",
+      "to": "Manifest",
+      "label": "listed in",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "batch-manifest",
+      "from": "Batch",
+      "to": "Manifest",
+      "label": "event manifestId",
+      "fromCardinality": "one",
+      "toCardinality": "one"
+    },
+    {
+      "id": "receipt-post",
+      "from": "Receipt",
+      "to": "Post",
+      "label": "acknowledges",
+      "fromCardinality": "one",
+      "toCardinality": "one"
+    },
+    {
+      "id": "deadline-receipt",
+      "from": "Deadline",
+      "to": "Receipt",
+      "label": "deadlines[]",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "identifying": true
+    },
+    {
+      "id": "bundle-post",
+      "from": "ProofBundle",
+      "to": "Post",
+      "label": "hints for",
+      "fromCardinality": "one",
+      "toCardinality": "one"
+    },
+    {
+      "id": "bundle-receipt",
+      "from": "ProofBundle",
+      "to": "Receipt",
+      "label": "embeds",
+      "fromCardinality": "one",
+      "toCardinality": "one",
+      "toOptional": true
+    },
+    {
+      "id": "bundle-batch",
+      "from": "ProofBundle",
+      "to": "Batch",
+      "label": "anchors[]",
+      "fromCardinality": "many",
+      "toCardinality": "many",
+      "toOptional": true
+    },
+    {
+      "id": "receipt-key",
+      "from": "Receipt",
+      "to": "TrustedKey",
+      "label": "signed by receipt key",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "batch-key",
+      "from": "Batch",
+      "to": "TrustedKey",
+      "label": "trusted only if relayer",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "toOptional": true
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Identity rules",
+      "items": [
+        "Batch identity is (chainId, sender, root): the leaf has no chainId, so the same root can appear on two chains",
+        "Manifest is identified by (chainId, root); it carries no batch number",
+        "Only anchoredAt is in contract storage; manifestId and count live in the BatchAnchored event"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "What stays private",
+      "items": [
+        "The user signature is held by the client (IndexedDB) and encrypted at rest by the backend",
+        "Public data carries sigCommit = keccak256(signature) only",
+        "ProofBundle.signature and ProofBundle.intent (chainIds, nonce, deadline) exist only in the user's private copy, never in GET /proof"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Trust",
+      "items": [
+        "ProofBundle and GET /proof/:postHash are untrusted hints; the verifier re-derives everything",
+        "Receipt.acceptedAt is signer-declared: a trusted-keys window check is a consistency check, not a bound on a compromised key",
+        "Relayer windows are compared with block.timestamp"
+      ]
+    }
+  ]
+}

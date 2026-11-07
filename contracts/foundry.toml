@@ -1,0 +1,11 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+# The compiler version and evm_version are pinned when PostAnchor is implemented (later block).
+# CREATE2 gives the same address on all three chains only if the init code is byte-identical,
+# so both settings must be identical for every deployment (ADR-009).
+
+# bench/ holds the baselines B0, B1, B2 and the ours-lite variant (ADR-001). They are measured, never deployed as product.

@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Verification: untrusted hints, independent checks",
+    "locale": "en",
+    "output": "docs/diagrams/html/06-verification.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "fallback or bounded scan"
+        },
+        "security": {
+          "label": "trust-root check"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Anyone (CLI)",
+      "sublabel": "pinned commit",
+      "icon": "person"
+    },
+    {
+      "id": "page",
+      "type": "frontend",
+      "label": "Web Verify page",
+      "sublabel": "convenience only"
+    },
+    {
+      "id": "verifier",
+      "type": "frontend",
+      "label": "Verifier library",
+      "sublabel": "fetch + viem"
+    },
+    {
+      "id": "hints",
+      "type": "backend",
+      "label": "Hints source",
+      "sublabel": "API or bundle file"
+    },
+    {
+      "id": "trusted",
+      "type": "security",
+      "label": "trusted-keys.json",
+      "sublabel": "relayer + receipt"
+    },
+    {
+      "id": "arweave",
+      "type": "cloud",
+      "label": "Arweave gateway",
+      "sublabel": "GET by ID"
+    },
+    {
+      "id": "chains",
+      "type": "cloud",
+      "label": "Public RPCs",
+      "sublabel": "3 chains"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 380,
+      "label": "0. Entry points (same library)"
+    },
+    {
+      "from": 390,
+      "to": 610,
+      "label": "1. Trust root and discovery"
+    },
+    {
+      "from": 620,
+      "to": 785,
+      "label": "2. Content and inclusion"
+    },
+    {
+      "from": 795,
+      "to": 895,
+      "label": "3. Anchors"
+    },
+    {
+      "from": 905,
+      "to": 1180,
+      "label": "4. Receipt, deadlines, omission"
+    }
+  ],
+  "messages": [
+    {
+      "id": "cli-call",
+      "from": "user",
+      "to": "verifier",
+      "y": 180,
+      "label": "verify(postHash, hints?)",
+      "variant": "emphasis",
+      "note": "Independent path: CLI from the public repo at a pinned commit, or with a trusted-keys.json the user supplies"
+    },
+    {
+      "id": "page-call",
+      "from": "page",
+      "to": "verifier",
+      "y": 295,
+      "label": "same library call",
+      "variant": "default",
+      "note": "Not independent: the platform serves this code and its copy of trusted-keys.json"
+    },
+    {
+      "id": "load-keys",
+      "from": "verifier",
+      "to": "trusted",
+      "y": 395,
+      "label": "load relayer + receipt keys",
+      "variant": "security"
+    },
+    {
+      "id": "keys",
+      "from": "trusted",
+      "to": "verifier",
+      "y": 425,
+      "label": "keys + validity windows",
+      "variant": "return"
+    },
+    {
+      "id": "get-hints",
+      "from": "verifier",
+      "to": "hints",
+      "y": 460,
+      "label": "GET /proof/:postHash or bundle"
+    },
+    {
+      "id": "hints-reply",
+      "from": "hints",
+      "to": "verifier",
+      "y": 490,
+      "label": "anchors, pending, receipt",
+      "variant": "return",
+      "note": "Untrusted: every field is re-checked"
+    },
+    {
+      "id": "scan-fallback",
+      "from": "verifier",
+      "to": "chains",
+      "y": 540,
+      "label": "no hints: scan BatchAnchored",
+      "variant": "dashed",
+      "note": "Fallback, slow: trusted relayers only; fetch manifests until the postHash is found"
+    },
+    {
+      "id": "get-content",
+      "from": "verifier",
+      "to": "arweave",
+      "y": 630,
+      "label": "GET post JSON + image",
+      "variant": "emphasis"
+    },
+    {
+      "id": "content",
+      "from": "arweave",
+      "to": "verifier",
+      "y": 660,
+      "label": "bytes",
+      "variant": "return",
+      "note": "Recompute imageHash and postHash"
+    },
+    {
+      "id": "get-manifest",
+      "from": "verifier",
+      "to": "arweave",
+      "y": 705,
+      "label": "GET manifest"
+    },
+    {
+      "id": "leaves",
+      "from": "arweave",
+      "to": "verifier",
+      "y": 735,
+      "label": "leaves",
+      "variant": "return",
+      "note": "Rebuild root (OZ, sorted), check proof"
+    },
+    {
+      "id": "check-anchor",
+      "from": "verifier",
+      "to": "chains",
+      "y": 805,
+      "label": "anchoredAt / verifyPost",
+      "variant": "emphasis"
+    },
+    {
+      "id": "anchor-reply",
+      "from": "chains",
+      "to": "verifier",
+      "y": 835,
+      "label": "timestamp, true / false",
+      "variant": "return",
+      "note": "Sender must be a relayer key for that chain, timestamp inside its window"
+    },
+    {
+      "id": "check-receipt",
+      "from": "verifier",
+      "to": "trusted",
+      "y": 915,
+      "label": "receipt signer (Phi Receipts)",
+      "variant": "security",
+      "note": "Role receipt; acceptedAt in window is a consistency check only"
+    },
+    {
+      "id": "bounded-scan",
+      "from": "verifier",
+      "to": "chains",
+      "y": 990,
+      "label": "bounded scan to anchorBy + margin",
+      "variant": "dashed",
+      "note": "Only chains past anchorBy and absent from hints"
+    },
+    {
+      "id": "scan-manifests",
+      "from": "verifier",
+      "to": "arweave",
+      "y": 1045,
+      "label": "fetch manifests, search postHash",
+      "variant": "dashed"
+    },
+    {
+      "id": "verdict",
+      "from": "verifier",
+      "to": "user",
+      "y": 1085,
+      "label": "verdict per chain",
+      "variant": "return",
+      "note": "anchored | pending inside deadline | deadline passed, not scanned | omitted (scan done, postHash absent)"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "verifier",
+      "from": 175,
+      "to": 1095,
+      "type": "frontend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Principle",
+      "items": [
+        "Untrusted hints, independent verification: hints from GET /proof/:postHash or a proof bundle only say where to look",
+        "Everything is re-derived from an Arweave gateway, public RPCs and config/trusted-keys.json"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Verdicts",
+      "items": [
+        "anchored: inclusion proven under a trusted relayer inside its validity window",
+        "pending inside deadline: not found yet, anchorBy not reached",
+        "deadline passed, not scanned: anchorBy passed, bounded scan not run",
+        "omitted: bounded scan completed and the postHash is absent; never derived from hints alone"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Limits",
+      "items": [
+        "The Verify page is a convenience: the platform serves both the code and its copy of trusted-keys.json",
+        "Receipts make omission provable; sigCommit lets genuine authors prove authorship. Neither prevents the platform from fabricating posts: that requires the per-batch validity proof (future work)."
+      ]
+    }
+  ]
+}
