@@ -5,7 +5,7 @@ Confidence: High
 Reversibility: One-way door (no proxy: the deployed contract is immutable; a change means a new deployment and a new address)
 Date: 2026-11-07
 
-Design only. The implementation, tests and benchmark come in a later block; nothing here lives in `contracts/src` yet.
+Implemented in [`contracts/src/PostAnchor.sol`](../../contracts/src/PostAnchor.sol) with the repository's Solidity conventions (NatSpec, section headers); the logic is identical to the snippet below. Tests: [`contracts/test`](../../contracts/test).
 
 ## Context
 
@@ -66,7 +66,7 @@ contract PostAnchor {
 - **Receipt entries**: the only timestamp available is the receipt's own `acceptedAt`, which the signer declares. A verifier checks that the signer is listed as a receipt key and that `acceptedAt` falls inside the window. That is a consistency check, **not a bound on a compromised key** (see ADR-015 for the honest limit).
 - **Revocation of a compromised key is purely off-chain**: the contract has no admin. Anchors made by a compromised relayer key before detection remain on-chain and are excluded only by the revocation date. That is a documented limit.
 
-**One storage slot per batch (`anchoredAt`).** It serves on-chain idempotency (ADR-008) and contract readability (`verifyPost`, any other contract can check an anchor). `manifestId` and `count` go only in the event, for off-chain consumers: storing `manifestId` would add another new slot, about 22k gas, almost +50% per batch (Estimate: 20,000 + 2,100 cold, on top of about 47k). The price of this one slot versus an event-only contract is measured as ours-lite in the benchmark (ADR-001). `uint256` is used because the slot holds a single value: a smaller type would save nothing.
+**One storage slot per batch (`anchoredAt`).** It serves on-chain idempotency (ADR-008) and contract readability (`verifyPost`, any other contract can check an anchor). `manifestId` and `count` go only in the event, for off-chain consumers: storing `manifestId` would add another new slot, about 22k gas, almost +50% per batch (Estimate: 20,000 + 2,100 cold, on top of 47,058). The price of this one slot versus an event-only contract is 22,432 gas per batch (measured: ours minus ours-lite, ADR-001). `uint256` is used because the slot holds a single value: a smaller type would save nothing.
 
 **`block.timestamp` instead of `block.number`.** On Arbitrum, `block.number` returns "a value close to (but not necessarily exactly) the block number of the first non-Arbitrum ancestor chain" (Verified 2026-11-07: https://docs.arbitrum.io/build-decentralized-apps/arbitrum-vs-ethereum/block-numbers-and-time; the third-party page https://rpcfree.com/arbitrum-rpc says the same). A timestamp means the same thing on all three chains and is what the trusted-keys windows compare against.
 
@@ -80,11 +80,15 @@ contract PostAnchor {
 
 **`verifyPost` receives the leaf as opaque bytes and double-hashes it**, so the immutable contract does not freeze the leaf format (ADR-014 can version it). Double hashing prevents second-preimage confusion between leaves and internal nodes (64-byte nodes): a 64-byte internal node can never be presented as a leaf, because a leaf is hashed twice.
 
-**No proxy, no pause, not payable.** Nothing to upgrade, nobody to trust with an admin key. Same address on all chains via CREATE2: this needs the same deployer (factory) address on all three chains and byte-identical init code, so the compiler version, optimizer settings and `evm_version` must be identical and supported by all three chains (To verify: availability of the chosen deterministic deployment factory on the three chains, and the highest `evm_version` all three support).
+**No proxy, no pause, not payable.** Nothing to upgrade, nobody to trust with an admin key. Same address on all chains via CREATE2: this needs the same deployer (factory) address on all three chains and byte-identical init code.
 
-**Gas.** `anchor` costs about 47k per batch regardless of N (Estimate, derivation in ADR-001). To be confirmed with `forge snapshot`.
+- Factory: the deterministic deployment proxy `0x4e59b44847b379578588920cA78FbF26c0B4956C` that Foundry uses for `new X{salt: s}()`; its code is present and identical on the three testnets (Verified 2026-11-07: `cast code 0x4e59b44847b379578588920cA78FbF26c0B4956C --rpc-url <rpc>` on the public RPCs listed in ADR-007).
+- Compiler settings pinned in `contracts/foundry.toml`: solc 0.8.30, `evm_version = "cancun"` (Prague adds no opcode this contract needs), optimizer 200 runs, `bytecode_hash = "none"` and `cbor_metadata = false` so comment-only changes do not move the address.
+- Predicted address with salt `keccak256("phi-onchain-posts/PostAnchor/v1")`: `0x36b5D5F0D176b96013678FC69C34038897fAF382` on all three chains (simulation, not yet broadcast: `forge script script/DeployPostAnchor.s.sol --rpc-url <rpc>` against each testnet). Whether `cancun` bytecode runs unchanged on the three chains is confirmed only once deployed.
 
-### Invariants to test (later block)
+**Gas.** `anchor` costs 47,058 gas per batch regardless of N (measured with real transactions under mainnet rules, ADR-001; Estimate was about 47k).
+
+### Invariants and tests
 
 | ID | Invariant | Test type |
 | -- | --------- | --------- |
@@ -95,7 +99,9 @@ contract PostAnchor {
 | I5 | `verifyPost` returns true if and only if the leaf is in the tree of an anchored root | Fuzz |
 | I6 | The contract cannot receive ETH through any call: no payable function, no `receive` or `fallback`, so every call with value reverts | Unit + fuzz |
 
-Note on I6: ETH force-sent via `SELFDESTRUCT` (or as a block reward recipient) cannot be prevented by any contract. It is harmless here because no logic reads `address(this).balance`.
+Note on I6: ETH force-sent via `SELFDESTRUCT` (or as a block reward recipient) cannot be prevented by any contract. It is harmless here because no logic reads `address(this).balance` (`test_forcedEtherDoesNotChangeBehaviour`).
+
+Status: all six are implemented and pass (`forge test`: 13 unit and fuzz tests with 1,000 fuzz runs each, 3 invariants with 256 runs x 128 calls). The invariant suite was checked against a mutant: with the `AlreadyAnchored` check removed, I1 and I4 fail (`anchored more than once: 2 > 1`), so they are not vacuous. Extra tests cover front-running by another sender, the single-leaf tree and second-preimage resistance (a 64-byte internal node submitted as a leaf returns false).
 
 ## Alternatives considered
 
@@ -122,11 +128,10 @@ Negative:
 
 Follow-ups:
 
-- Implement with the repository's Solidity conventions (custom errors, NatSpec, headers) and Foundry invariant tests I1 to I6.
-- Pin the compiler and `evm_version`; choose the CREATE2 factory.
+- Broadcast the deployment on the three testnets (needs a funded deployer key) and record the address in the README.
 
 ## Evidence
 
-- Gas: Estimates in ADR-001; pending `forge snapshot`.
+- Gas: measured in ADR-001 (`packages/bench/results/2026-11-07-gas-local-prague.json`).
 - Arbitrum `block.number` and `block.timestamp` semantics: Verified 2026-11-07 (link above).
-- To verify: CREATE2 factory availability and common `evm_version` on the three chains; timestamp bounds on Base.
+- To verify: timestamp bounds on Base; the deployed bytecode on each chain once broadcast.

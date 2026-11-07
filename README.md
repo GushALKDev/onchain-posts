@@ -12,7 +12,7 @@ Design exercise for EulerPhi (Phi): publish social posts on-chain as efficiently
 - Each leaf commits to the post hash, its Arweave ID and `keccak256(signature)` (`sigCommit`), so an author can prove authorship on demand while posts stay unlinkable.
 - A signed receipt with a per-chain deadline makes omission provable, and a standalone verifier checks any post against public sources only.
 
-Key benchmark numbers: **Pending: filled from bench results.**
+Key benchmark numbers (measured 2026-11-07, gas only, Ethereum mainnet rules, [docs/efficiency.md](docs/efficiency.md)): one batch costs **47,058 gas whatever its size** (47 gas per post at N = 1000), against **22,922 gas per post** with one transaction per post; a plain hash list stays cheaper **below 20 posts per batch**. USD figures pending.
 
 ## 2. Requirements
 
@@ -79,26 +79,26 @@ Details: [ADR-012](docs/decisions/ADR-012-signature-scheme-eip712.md) (signature
 
 ## 6. Efficiency
 
-Efficiency is four metrics, not one: end-to-end cost per post, on-chain bytes per post, gas per batch and per post, and latency per stage (p50 / p95). Gas is measured on testnets with Foundry; money uses mainnet prices on a stated date, with the L2 L1-data fee read from mainnet oracles. Storage is reported both inside Turbo's free tier and at list price; because the free tier is a 10 MiB lifetime allowance per wallet (Verified 2026-11-07, [ADR-002](docs/decisions/ADR-002-storage-arweave-turbo.md)), list price is the realistic figure. Method: [ADR-001](docs/decisions/ADR-001-efficiency-definition.md); full page: [docs/efficiency.md](docs/efficiency.md).
+Efficiency is four metrics, not one: end-to-end cost per post, on-chain bytes per post, gas per batch and per post, and latency per stage (p50 / p95). Gas is measured with real transactions on a local node running Ethereum mainnet rules (Ethereum Sepolia currently prices gas differently from mainnet, so it is not the gas reference); money uses mainnet prices on a stated date, with the L2 L1-data fee read from mainnet oracles. Storage is reported both inside Turbo's free tier and at list price; because the free tier is a 10 MiB lifetime allowance per wallet (Verified 2026-11-07, [ADR-002](docs/decisions/ADR-002-storage-arweave-turbo.md)), list price is the realistic figure. Method: [ADR-001](docs/decisions/ADR-001-efficiency-definition.md); full page: [docs/efficiency.md](docs/efficiency.md).
 
-**Gas per post, per chain** (pending: filled from `packages/bench/results/*.json`)
+**Gas per post, Ethereum mainnet rules** (measured 2026-11-07: `node packages/bench/src/gas-bench.mjs`, results in [`packages/bench/results/2026-11-07-gas-local-prague.json`](packages/bench/results/2026-11-07-gas-local-prague.json))
 
 | Variant | What it is | N = 1 | N = 10 | N = 100 | N = 500 | N = 1000 |
 | ------- | ---------- | ----- | ------ | ------- | ------- | -------- |
-| B0 | Content in storage, 1 tx per post | pending | pending | pending | pending | pending |
-| B1 | postHash event, 1 tx per post | pending | pending | pending | pending | pending |
-| B2 | N postHashes in one event per batch | pending | pending | pending | pending | pending |
-| ours-lite | Root in an event, no storage | pending | pending | pending | pending | pending |
-| ours | Root + one storage slot | pending | pending | pending | pending | pending |
+| B0 | Content in storage, 1 tx per post (100-byte caption) | 181,675 | 181,675 | 181,675 | 181,675 | 181,675 |
+| B1 | postHash event, 1 tx per post | 22,922 | 22,922 | 22,922 | 22,922 | 22,922 |
+| B2 | N postHashes in one event per batch | 24,342 | 3,463 | 1,495 | 1,320 | 1,298 |
+| ours-lite | Root in an event, no storage | 24,629 | 2,463 | 246 | 49 | 25 |
+| ours | Root + one storage slot | 47,058 | 4,706 | 471 | 94 | 47 |
 
-**Crossovers** (Estimate, gas only, L1 pricing; derivations in ADR-001):
+**Crossovers** (measured, gas only, mainnet L1 rules; details in [ADR-001](docs/decisions/ADR-001-efficiency-definition.md)):
 
-- ours vs B1: ours costs more at N = 1 (the price of on-chain idempotency and contract readability) and is cheaper from about N = 2.
-- ours vs B2: 47k / N < 21k / N + 770 only from about **N >= 34**. ours-lite vs B2: from **N >= 6** (equal at about N = 5.2).
-- On the L2s the L1 data fee is per byte, so constant-size calldata wins sooner; the benchmark gives the exact crossover.
-- Stated openly: **for small batches on L1 a plain hash list is cheaper.** Merkle is chosen for constant on-chain size at any N and contract-level inclusion proofs, not because it is always cheaper ([ADR-005](docs/decisions/ADR-005-commitment-merkle-tree.md) states when to revisit).
+- ours vs B1: ours costs more at N = 1 and 2 (the price of on-chain idempotency and contract readability) and is cheaper from **N >= 3**.
+- ours vs B2: cheaper from **N >= 20** (estimated at 34 before measuring: B2 pays the EIP-7623 calldata floor, about 1,280 gas per post instead of 770). ours-lite vs B2: from **N >= 2**.
+- The storage slot that gives on-chain idempotency costs 22,432 gas per batch (ours minus ours-lite).
+- Stated openly: **below 20 posts per batch on L1 a plain hash list is cheaper.** Merkle with a slot is chosen for constant on-chain size at any N, idempotency and contract-level inclusion proofs, not because it is always cheaper ([ADR-005](docs/decisions/ADR-005-commitment-merkle-tree.md) states when to revisit).
 
-**Limitations.** The live demo runs small batches in demo mode and is not the efficiency proof; the benchmark is. Money figures depend on a snapshot date. Estimates ignore some ABI and memory-expansion overhead that the benchmark captures.
+**Limitations.** Gas only, under Ethereum mainnet rules: Base applies the same calldata floor, Arbitrum does not, and the L2 L1-data fee and USD conversion are pending. The live demo runs small batches in demo mode and is not the efficiency proof; the benchmark is.
 
 Planned diagrams, produced at the end from real benchmark data: **Timeline** (batching example) and **Waterfall** (latency breakdown).
 
@@ -113,7 +113,7 @@ Interactive version (download and open in a browser): [docs/diagrams/html/03-pri
 | Chain observer | Relayer address, root, manifestId, count, timing | User address, signature, content |
 | Arweave reader | Image, post JSON (with username and caption), manifest (postHash, postArweaveId, sigCommit); owner field = platform key | User address, public key, signature |
 | Turbo | The uploads (same as Arweave), the backend's IP, timing | User address, signature |
-| Openfort | Email and embedded-account address; whether it also sees each `PublishIntent` payload is To verify ([ADR-011](docs/decisions/ADR-011-identity-openfort.md)) | Platform database |
+| Openfort | Email and embedded-account address; signing happens in its iframe, and whether the `PublishIntent` payload ever reaches its servers is To verify ([ADR-011](docs/decisions/ADR-011-identity-openfort.md)) | Platform database |
 | Platform | Everything: user to signer mapping (stored as an HMAC), signatures (encrypted with a key outside the database), request IPs | Nothing is hidden from the platform |
 | Other users | Username and content | Address, public key, signature |
 | The user's own browser | Their signatures in IndexedDB | Other users' data |
@@ -176,7 +176,21 @@ Template: [ADR-000](docs/decisions/ADR-000-template.md).
 
 ## 11. How to run
 
-Not implemented yet. Placeholders:
+Available now (requires Foundry and Node 20 or later; clone with `--recurse-submodules`, or run `git submodule update --init --recursive`):
+
+```bash
+# Contract tests: unit, fuzz and invariants I1 to I6 (ADR-009)
+cd contracts && forge test
+
+# Gas benchmark: local node with mainnet rules, no backend needed (ADR-001)
+node packages/bench/src/gas-bench.mjs
+node packages/bench/src/calldata-floor-probe.mjs
+
+# CREATE2 deployment, same address on the three testnets (needs a funded key to broadcast)
+cd contracts && forge script script/DeployPostAnchor.s.sol --rpc-url <rpc> --broadcast --private-key <key>
+```
+
+Not implemented yet (placeholders):
 
 ```bash
 # Backend + Postgres (+ web) locally
@@ -186,9 +200,6 @@ docker compose up
 # Verify a post from public sources only (optionally with untrusted hints)
 pnpm verify <postHash>
 pnpm verify <postHash> --hints <bundle.json>
-
-# Gas benchmark (Foundry only, no backend needed)
-cd contracts && forge snapshot
 ```
 
 Demo URL: pending.

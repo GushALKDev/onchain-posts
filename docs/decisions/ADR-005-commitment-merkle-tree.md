@@ -14,14 +14,14 @@ ADR-004 puts one 32-byte commitment per batch on-chain. The brief says Merkle tr
 A **binary Merkle tree** over the batch leaves (leaf format in ADR-014), built with OpenZeppelin `StandardMerkleTree` (sorted leaves, double-hashed leaves, sorted-pair internal nodes), matching `MerkleProof.verifyCalldata` in the contract (ADR-009).
 
 - Proof size: ceil(log2(N)) hashes. N = 500: 9 x 32 bytes (Estimate: log2(500) = 8.97).
-- Contract verification: a few thousand gas (Estimate: about 9 keccak256 of 64 bytes plus calldata for 9 x 32 bytes; To verify with `forge snapshot`).
+- Contract verification: 3,637 gas of execution for a 500-leaf tree with a 9-hash proof (measured: `forge test --match-test test_gas_verifyPost_500Leaves`, recorded in `contracts/snapshots/PostAnchor.json`; calldata for the call comes on top).
 - Building the tree: 0 gas, done by the backend.
 
 Worked example (Illustrative): 4 posts with leaves L1..L4. root = H(H(L1, L2), H(L3, L4)); the proof for L1 is [L2, H(L3, L4)]. With OpenZeppelin, H sorts the pair before hashing, so the verifier does not need left/right flags.
 
 **Why Merkle when the brief says it is not required:** chosen for constant on-chain size and contract-level composability (any contract can check that a post was published, without trusting us), not by reflex, and benchmarked against the non-Merkle alternative (B2 and ours-lite in ADR-001).
 
-**Revisit criterion.** If the benchmark shows that typical batch sizes stay below the crossover (about N = 34 vs B2 on L1, Estimate, ADR-001) and contract-level inclusion proofs are not needed, then ours-lite or B2 is the better choice. Choosing Merkle anyway would then be a deliberate trade for composability, and must be described as such in this ADR.
+**Revisit criterion.** If typical batch sizes stay below the crossover (N = 20 vs B2 on L1, measured, ADR-001; it was estimated at 34 before the EIP-7623 calldata floor showed up in the measurement) and contract-level inclusion proofs are not needed, then ours-lite or B2 is the better choice. Choosing Merkle anyway would then be a deliberate trade for composability, and must be described as such in this ADR.
 
 ## Alternatives considered
 
@@ -48,7 +48,7 @@ Positive:
 
 Negative:
 
-- More expensive than B2 below about N = 34 on L1 and than B1 at N = 1 (Estimates, ADR-001).
+- More expensive than B2 below N = 20 on L1 and than B1 below N = 3 (measured, ADR-001).
 - Proof generation depends on the manifest on Arweave.
 - Other implementations must reproduce the OpenZeppelin conventions (sorted leaves, sorted pairs, double-hashed leaves) to get the same root.
 
@@ -61,4 +61,5 @@ Follow-ups:
 
 - Crossover Estimates: ADR-001.
 - OpenZeppelin `StandardMerkleTree` sorts leaves by default, double-hashes them and hashes internal nodes as sorted pairs (Verified 2026-11-07: https://github.com/OpenZeppelin/merkle-tree, README; re-check against the pinned library versions when implementing).
-- To verify: gas of `verifyPost` for N = 500; ZK verification cost by proof system.
+- `verifyPost` gas for N = 500: 3,637 (measured, see Decision).
+- To verify: ZK verification cost by proof system.

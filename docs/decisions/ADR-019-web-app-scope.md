@@ -75,4 +75,4 @@ Follow-ups:
 ## Evidence
 
 - No measurements: this ADR sets scope. The efficiency evidence lives in the benchmark ([ADR-001](ADR-001-efficiency-definition.md)).
-- To verify: the Openfort items listed in [ADR-011](ADR-011-identity-openfort.md) (EIP-712 domain without `chainId`, signer EOA signature exposure), which the compose flow depends on.
+- To verify: the Openfort items still open in [ADR-011](ADR-011-identity-openfort.md) (EIP-712 domain without `chainId`, whether the payload leaves the iframe), tested at the start of Tier 3; the compose flow depends on them.

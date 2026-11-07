@@ -19,18 +19,18 @@ The post hash commits to the image **bytes** (`imageHash = keccak256(image bytes
 
 | Option | Pros | Cons | Why not chosen |
 | ------ | ---- | ---- | -------------- |
-| Caption in storage | Readable from contract state | About 20k gas per new 32-byte word (Estimate: 20,000 SSTORE zero to non-zero, plus 2,100 cold access); a 1,000-byte caption is about 730k gas (ADR-001, B0) | Cost grows with content and is paid on every chain |
+| Caption in storage | Readable from contract state | About 20k gas per new 32-byte word (Estimate: 20,000 SSTORE zero to non-zero, plus 2,100 cold access); a post with a 1,000-byte caption costs 817,418 gas in B0 (measured, ADR-001) | Cost grows with content and is paid on every chain |
 | Caption in event or calldata | Cheaper than storage; readable by indexers | Still linear in caption length (16 gas per non-zero calldata byte + 8 gas per log byte, Estimate) and pays the L1 data fee per byte on L2s | Duplicates data already on Arweave |
 | Hash + Arweave pointer per post | Per-post on-chain lookup | One write per post per chain | No batching benefit |
-| Hash only, per post (B1) | Simple; per-post event | One tx per post per chain: about 25k gas each (Estimate, ADR-001) | Loses batching; ours is cheaper from about N = 2 |
-| Hash list per batch (B2) | Batching; leaves available on-chain | Calldata grows linearly with N; contract-level inclusion needs the whole list | Cheaper than ours below about N = 34 on L1 (Estimate, ADR-001); chosen against in ADR-005 for constant size, with a revisit criterion |
+| Hash only, per post (B1) | Simple; per-post event | One tx per post per chain: 22,922 gas each (measured, ADR-001) | Loses batching; ours is cheaper from N = 3 (measured) |
+| Hash list per batch (B2) | Batching; leaves available on-chain | Calldata grows linearly with N; contract-level inclusion needs the whole list | Cheaper than ours below N = 20 on L1 (measured, ADR-001); chosen against in ADR-005 for constant size, with a revisit criterion |
 | Nothing on-chain | Zero gas | Fails the brief | Not an option |
 
 ## Consequences
 
 Positive:
 
-- On-chain cost per batch is constant at any N (ADR-001: about 47k gas per batch, Estimate).
+- On-chain cost per batch is constant at any N (ADR-001: 47,058 gas per batch, measured).
 - No user data, no content and no per-post identifier is written on-chain, which supports requirement A1 (ADR-013).
 
 Negative:
@@ -40,8 +40,8 @@ Negative:
 
 Follow-ups:
 
-- Confirm the per-batch gas with `forge snapshot` (ADR-001).
+- None at this stage.
 
 ## Evidence
 
-- Gas figures: Estimates derived in ADR-001; pending benchmark results.
+- Gas figures: measured in ADR-001 (`packages/bench/results/2026-11-07-gas-local-prague.json`).

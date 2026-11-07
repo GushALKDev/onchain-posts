@@ -98,4 +98,4 @@ The same chain-agnostic domain pattern (one signature valid across chains, the c
 
 - EIP-712 domain fields are optional: "Protocol designers only need to include the fields that make sense for their signing domain. Unused fields are left out of the struct type." (Verified 2026-11-07: https://eips.ethereum.org/EIPS/eip-712).
 - Tests to add in a later block: `packages/core` unit tests that hash `Post` and `PublishIntent` identically in browser and Node, and a Foundry test that recomputes `hashStruct(Post)` in Solidity against the TypeScript output.
-- To verify: Openfort support for a domain without `chainId` and how it exposes the signer EOA signature ([ADR-011](ADR-011-identity-openfort.md)).
+- To verify: Openfort support for a domain without `chainId` (empirical test in Tier 3; fallback in [ADR-011](ADR-011-identity-openfort.md)). The signer EOA signature question is settled by using Openfort's EOA account type (ADR-011).

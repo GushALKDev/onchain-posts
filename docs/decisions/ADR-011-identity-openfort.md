@@ -16,7 +16,8 @@ Posting needs one thing from identity: a key that signs the EIP-712 `PublishInte
 Users log in with email through Openfort. The embedded account is used ONLY as a signing identity in the posting flow.
 
 - It never sends transactions here: if it did, its address would become the on-chain sender and break A1.
-- The backend verifies the signature of the signer EOA, not of the smart account. This avoids ERC-1271 and ERC-6492 validation and the `eth_call` that an undeployed smart account signature would need per verification ([ADR-010](ADR-010-gasless-relayer.md), bottleneck analysis).
+- **Account type for the PoC: EOA** (`accountType: AccountTypeEnum.EOA`, Openfort's default). Openfort documents that smart and delegated accounts sign with EIP-1271 verification, and does not document a way to obtain the owner EOA signature from them. With an EOA, `signTypedData` returns a plain ECDSA signature, so the backend verifies it with `ecrecover`: no ERC-1271 or ERC-6492 validation and no `eth_call` per verification ([ADR-010](ADR-010-gasless-relayer.md), bottleneck analysis). Smart accounts stay the path for the future universal interface, not for posting.
+- **Recovery mode: passkey, password, or automatic recovery with OTP.** Openfort's OpenSigner docs state that in automatic recovery without OTP the developer backend can reconstruct a user's private key. That would let the platform sign for the user and void the authorship property of `sigCommit` ([ADR-013](ADR-013-author-privacy-sigcommit.md)), so that mode is excluded.
 - The platform lock that the founder wants (accounts usable only on the platform) is documented below and NOT implemented.
 
 Why Openfort and an embedded account:
@@ -29,24 +30,24 @@ Why Openfort and an embedded account:
 Openfort is an actor in the threat model ([threat model](../threat-model.md)), not a footnote:
 
 - It knows the user's email and the account address.
-- Whether it also sees every `PublishIntent` depends on whether the typed-data payload goes through Openfort's servers or stays inside the client-side signer iframe (To verify).
+- Signing happens inside the OpenSigner iframe: "All signing operations happen inside the iFrame. The private key is never exposed to the host application or any external service" (Verified 2026-11-07, see Evidence). The iframe fetches key shares from Openfort's hot storage and Shield; whether the typed-data payload itself is ever sent to Openfort's servers is not documented (To verify, by inspecting the iframe's network traffic in Tier 3).
 - In the worst case Openfort is the only third party able to link email, address and posts.
 
 ### Platform lock: documented, not implemented
 
 | Mechanism | What it achieves | Limit |
 | --------- | ---------------- | ----- |
-| On-chain co-signer (2-of-2: user key + platform key), for example a Safe with two owners or a custom validator | Hard lock: no operation without the platform | Openfort docs checked on 2026-11-06 do not mention co-signer validation (To verify with Openfort) |
+| On-chain co-signer (2-of-2: user key + platform key), for example a Safe with two owners or a custom validator | Hard lock: no operation without the platform | Not documented by Openfort (docs checked 2026-11-06 and 2026-11-07); would need a custom smart account |
 | EIP-7702 delegated EOA | Smart-account features on the user's EOA | Cannot be locked: the root key keeps full control of the EOA |
-| OpenSigner key management | The key is split into shares (device, hot, cold) with Shamir's Secret Sharing | If any 2 of 3 shares reconstruct the key, device + recovery share rebuild it without the platform: a soft lock only. The threshold is To verify (see Evidence) |
-| Login restricted to our domain | Users reach the account only through our app | Enforced by the provider's auth, not by the account |
-| Paymaster policies | Limit what WE sponsor | Do not limit what the account can do; restricting the account needs session keys, permission modules or the co-signer |
+| OpenSigner key management | The key is split into 3 Shamir shares (device, hot, cold); "You need 2 of 3 shares" (Verified 2026-11-07) | Device + cold share rebuild the key without the platform: a soft lock only |
+| Allowed domains per publishable key | Only our origins can use the embedded wallet ("restrict which web origins and native apps can use your publishable key", Verified 2026-11-07) | Enforced by the provider for our publishable key, not by the account; an exported key works anywhere |
+| Paymaster policies and session keys | Limit what WE sponsor; session keys (EIP-7715) restrict permissions by contract, expiry and call limit | Policies do not limit what the account can do; session keys exist only for smart and delegated accounts, not for the EOA chosen above |
 
 ### Fallback for an EIP-712 domain without chainId
 
-The intent domain has no `chainId` ([ADR-012](ADR-012-signature-scheme-eip712.md)). If Openfort rejects such a domain, put a constant `chainId` in the domain as a namespace (for example Ethereum mainnet's, 1), identical on every chain. No contract ever verifies this signature, so any constant works and the replay analysis in ADR-012 does not change. This fallback is written here so that the To verify item cannot block the design.
+The intent domain has no `chainId` ([ADR-012](ADR-012-signature-scheme-eip712.md)). Openfort documents `signTypedData({ domain, types, message, primaryType })` for Ethereum embedded wallets, and its sample code says "Use the connected wallet's chain ID so the domain matches the active chain" (Verified 2026-11-07). Whether a domain without `chainId` is accepted is not documented: it is tested empirically at the start of Tier 3.
 
-One more point on the same fallback: some signers require the domain `chainId` to match the wallet's active chain (MetaMask does; Openfort: To verify). If Openfort does too, the fallback also requires switching the embedded account's active chain to the constant chain before signing. That is a UX step to document in the web app, not a design change.
+If Openfort rejects such a domain, put a constant `chainId` in the domain as a namespace, identical on every chain. Because the docs point at matching the active chain, the constant is chosen among the chains the embedded wallet is configured for, and the wallet is switched to it before signing if needed. No contract ever verifies this signature, so any constant works and the replay analysis in ADR-012 does not change. This fallback is written here so that the open item cannot block the design.
 
 ## Alternatives considered
 
@@ -54,7 +55,7 @@ One more point on the same fallback: some signers require the domain `chainId` t
 | ------ | ---- | ---- | -------------- |
 | Openfort embedded account (chosen) | Email login, recovery, AA roadmap (4337, 7702, session keys, paymasters) | Third party that knows email and address; possibly sees intents (To verify); several To verify items on EIP-712 handling | Chosen |
 | Dynamic (the provider the founder mentioned) | Founder familiarity | Likely equivalent for this use (To verify); no time to evaluate both | Not evaluated in depth; the signing-only usage makes a later switch cheap |
-| Embedded EOA (no smart account) | Same UX, simpler | No lock of any kind is possible | Gives up the AA direction for no gain in this flow |
+| Embedded smart account (ERC-4337 or EIP-7702) for posting | AA features, session keys | Signatures use EIP-1271; owner EOA signature retrieval not documented; ERC-1271 checks need an RPC call per post | EOA is enough for a signing-only identity; smart accounts are kept for the universal interface |
 | Device key or passkey without a provider | Fewer dependencies, no third party sees email | No recovery: losing the device loses the identity | Recovery matters for a consumer social product |
 
 ## Consequences
@@ -69,27 +70,30 @@ Negative:
 
 - Openfort is a privacy-relevant third party (email and address, possibly intents).
 - The platform lock is not delivered; only its design space is documented.
-- Authorship proofs rest on the assumption that the platform cannot sign for the user, which depends on OpenSigner custody (To verify; [ADR-013](ADR-013-author-privacy-sigcommit.md)).
+- Authorship proofs rest on the assumption that the platform cannot sign for the user. That holds only with the recovery modes chosen above (passkey, password, or automatic with OTP); automatic recovery without OTP would break it ([ADR-013](ADR-013-author-privacy-sigcommit.md)).
 - A provider change would require users to bind a new signing key to their username (migration cost).
 
 Follow-ups:
 
-- Verify the To verify items below before the backend implementation block.
+- At the start of Tier 3: test `signTypedData` with a domain without `chainId`, and inspect the iframe's network traffic while signing.
 - Future (out of scope): sponsored UserOps with paymaster policies and session keys for the universal interface. Hiding the sender address there needs a privacy layer: open problem ([ADR-013](ADR-013-author-privacy-sigcommit.md)).
 
 ## Evidence
 
 - Openfort features (ERC-4337, ERC-7702, session keys, paymasters): Verified 2026-11-07: https://www.quicknode.com/es/guia-para-constructores/herramientas/openfort-embedded-wallets-by-openfort (the page is in English despite the `/es/` path).
 - Openfort EntryPoint v0.6, v0.8, v0.9 support: Verified 2026-11-06: https://www.openfort.io/docs/products/infrastructure.
-- Openfort docs checked on 2026-11-06 do not mention co-signer validation (To verify with Openfort).
-- OpenSigner: the key is split into shares named device, hot and cold with Shamir's Secret Sharing; no threshold is stated (Verified 2026-11-07: https://github.com/openfort-xyz/opensigner). The "any 2 of 3 reconstruct the key" threshold appears only in a third-party evaluation that calls the third share "recovery" (https://capxul-docs.pages.dev/appendices/openfort-evaluation, checked 2026-11-07). The research notes stated the threshold as fact; it is downgraded here to To verify against Openfort's own documentation, and the soft-lock conclusion depends on it.
+- Co-signer validation: not mentioned in Openfort's docs (checked 2026-11-06 and 2026-11-07).
+- Typed-data signing: `signTypedData({ domain, types, message, primaryType })`, "Typed-data signing is available for Ethereum wallets. Use the connected wallet's chain ID so the domain matches the active chain." (Verified 2026-11-07: https://www.openfort.io/docs/products/embedded-wallet/react/wallet/actions/sign-message).
+- Account types: "Smart and Delegated accounts use EIP-1271 verification" (same page); "By default, the Openfort SDK creates EOA (Externally Owned Account) wallets" and `accountType: AccountTypeEnum.EOA` (Verified 2026-11-07: https://www.openfort.io/docs/products/embedded-wallet/react/wallet/actions/session-keys, https://www.openfort.io/docs/products/embedded-wallet/account-types).
+- Signing location: "All signing operations happen inside the iFrame. The private key is never exposed to the host application or any external service." (Verified 2026-11-07: https://opensigner.dev/actions/operation).
+- Shares and threshold: Device Share, Hot Share, Cold Share, "You need 2 of 3 shares" (Verified 2026-11-07: https://opensigner.dev and https://github.com/openfort-xyz/opensigner). Openfort's product page names the shares device, auth and recovery with a "2-of-3 threshold" (https://www.openfort.io/docs/products/embedded-wallet/security/on-device), and describes automatic recovery as a 2-of-2 model between cold storage and a developer share: the docs are not fully consistent on naming.
+- Platform reconstruction: the recovery-methods page says that in automatic recovery without OTP the backend can reconstruct a user's private key; with OTP, password or passkey recovery it cannot (Verified 2026-11-07: https://opensigner.dev/security/recovery-methods and https://opensigner.dev/security/deployment-scenarios).
+- Allowed domains per publishable key (Verified 2026-11-07: https://www.openfort.io/docs/configuration/allowed-domains).
+- Session keys (EIP-7715, `useGrantPermissions`) only for smart and delegated accounts (Verified 2026-11-07: https://www.openfort.io/docs/products/embedded-wallet/react/hooks/useGrantPermissions).
+- Superseded: the third-party "2 of 3" claim (https://capxul-docs.pages.dev/appendices/openfort-evaluation) is now confirmed by Openfort's own OpenSigner docs.
 
-To verify (consolidated):
+Still To verify:
 
-- That Openfort can sign EIP-712 typed data with a domain without `chainId`.
-- Whether Openfort requires the domain `chainId` to match the active chain (only relevant for the fallback).
-- How Openfort exposes the signer EOA signature (as opposed to a smart account signature).
-- Where the typed-data payload travels (client-side iframe or Openfort servers).
-- OpenSigner reconstruction threshold, and whether the platform alone can ever sign for the user.
-- Whether Openfort supports an on-chain co-signer validator.
+- Whether `signTypedData` accepts a domain without `chainId` (empirical test, Tier 3).
+- Whether the typed-data payload ever leaves the iframe (network inspection, Tier 3).
 - Whether Dynamic is equivalent for this signing-only use.

@@ -38,7 +38,7 @@ The one sentence that defines what the accountability mechanisms cover, used ver
 | Chain observer | Relayer address (tx sender), `root`, `manifestId`, `count`, block timestamp | User address, signature, content |
 | Arweave reader | Image, post JSON (with username and caption), manifest (`postHash`, `postArweaveId`, `sigCommit` per post); `owner` = platform key; tags without username | User address, public key, signature |
 | Turbo | Upload contents and tags; IP of the backend | User IPs, user addresses |
-| Openfort | Email and account address. Whether it also sees every `PublishIntent` depends on whether the typed-data payload goes through Openfort's servers or stays in the client-side signer iframe (To verify, [ADR-011](decisions/ADR-011-identity-openfort.md)). Worst case: the only third party able to link email, address and posts | Posts, if the payload stays client-side (To verify) |
+| Openfort | Email and account address. Signing happens inside the OpenSigner iframe; whether the `PublishIntent` payload is ever sent to Openfort's servers is not documented (To verify, [ADR-011](decisions/ADR-011-identity-openfort.md)). Worst case: the only third party able to link email, address and posts | Posts, if the payload stays client-side (To verify) |
 | Platform / relayer | Everything: user to signer mapping (stored as HMAC), encrypted signatures, IPs at the API, all content | Plaintext addresses in a database dump without `DB_HMAC_SECRET` and the signature encryption key |
 | The user's own browser | The user's signatures and intent fields in IndexedDB | Other users' data |
 | Other users | Username and content | Addresses and signatures |
@@ -50,7 +50,7 @@ The user's address and signature appear nowhere public.
 | Trust root | What it anchors | Revocation |
 | ---------- | --------------- | ---------- |
 | `config/trusted-keys.json` | Relayer addresses per chain (role `relayer`) and receipt key addresses (role `receipt`, which sign receipts under the EIP-712 "Phi Receipts" domain), each with `validFrom` and `revokedAt` ([ADR-009](decisions/ADR-009-anchor-contract.md), [ADR-015](decisions/ADR-015-signed-receipts.md)) | Off-chain only: set `revokedAt`. The contract has no admin. For relayer entries the window is compared with `block.timestamp`, set by the chain; for receipt entries it is compared with the self-declared `acceptedAt` (consistency check only, see receipt key compromise below) |
-| Openfort key custody | That only the user can sign with the embedded account | Provider-dependent (OpenSigner threshold To verify, [ADR-011](decisions/ADR-011-identity-openfort.md)) |
+| Openfort key custody | That only the user can sign with the embedded account | OpenSigner: 2 of 3 shares (device, hot, cold). Holds only with passkey, password or OTP-protected automatic recovery; automatic recovery without OTP lets the developer backend reconstruct the key, so it is excluded ([ADR-011](decisions/ADR-011-identity-openfort.md)) |
 
 Independent verification means running the verifier CLI from the public repository at a pinned commit, or with a `trusted-keys.json` the user supplies. The Verify page in the web app is served by the platform together with its copy of the file, so it is a convenience, not independent verification.
 
@@ -63,7 +63,7 @@ Independent verification means running the verifier CLI from the public reposito
 | Manifests stay available on Arweave | Leaves are not emitted on-chain, so proof generation and the bounded scan depend on manifests ([ADR-005](decisions/ADR-005-commitment-merkle-tree.md)); `postArweaveId` in the leaf removes the indexer dependency for posts, not for manifests |
 | Sequencer soft confirmations | "Published" on the L2s is the sequencer's word; rarely reverted; "Settled" waits for the safe head ([ADR-017](decisions/ADR-017-confirmation-semantics.md)) |
 | Chain timestamps | Relayer key windows use `block.timestamp`. On Arbitrum it comes from the sequencer's clock, must be monotonic and within 24 hours earlier or 1 hour later than current time (Verified 2026-11-07: https://docs.arbitrum.io/build-decentralized-apps/arbitrum-vs-ethereum/block-numbers-and-time), so a revocation instant is only as precise as the sequencer's clock within that bound |
-| Openfort key custody | The platform cannot sign for the user (To verify, [ADR-011](decisions/ADR-011-identity-openfort.md)); authorship proofs rest on it |
+| Openfort key custody | The platform cannot sign for the user, given the recovery modes chosen in [ADR-011](decisions/ADR-011-identity-openfort.md); authorship proofs rest on it |
 
 ## Threats and mitigations
 

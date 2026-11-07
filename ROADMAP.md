@@ -11,7 +11,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | Phase | Scope | Status |
 | ----- | ----- | ------ |
 | Block B | Documentation-first scaffold: repo, README, ADRs, efficiency and threat model, diagrams | Done (2026-11-07) |
-| Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | Next |
+| Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | In progress: contract, tests and gas benchmark done |
 | Tier 2 | Minimal pipeline: backend, Postgres, Turbo uploads, anchoring on the 3 testnets | Not started |
 | Tier 3 | Minimal web: compose, per-stage status, Verify page | Not started |
 
@@ -29,21 +29,25 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 
 ### Contract (`contracts/`)
 
-- [ ] `PostAnchor` as designed in [ADR-009](docs/decisions/ADR-009-anchor-contract.md); pin the compiler version and `evm_version`
-- [ ] Unit tests for `anchor` and `verifyPost`
-- [ ] Invariant tests with handler: I1 (anchor once), I2 (`anchoredAt` immutable), I4 (sender isolation)
-- [ ] Fuzz tests: I3 (zero root reverts), I5 (`verifyPost` iff leaf in an anchored tree); I6 (no ETH accepted) unit + fuzz
-- [ ] CREATE2 deployment script; choose the deterministic deployment factory (To verify on the 3 chains)
-- [ ] Deploy to Ethereum Sepolia, Base Sepolia and Arbitrum Sepolia; record the address
+- [x] `PostAnchor` as designed in [ADR-009](docs/decisions/ADR-009-anchor-contract.md); solc 0.8.30 and `evm_version = "cancun"` pinned ([contracts/src/PostAnchor.sol](contracts/src/PostAnchor.sol))
+- [x] Unit tests for `anchor` and `verifyPost` ([contracts/test/PostAnchor.t.sol](contracts/test/PostAnchor.t.sol))
+- [x] Invariant tests with handler: I1 (anchor once), I2 (`anchoredAt` immutable), I4 (sender isolation); checked against a mutant ([contracts/test/invariant](contracts/test/invariant/))
+- [x] Fuzz tests: I3 (zero root reverts), I5 (`verifyPost` iff leaf in an anchored tree); I6 (no ETH accepted) unit + fuzz
+- [x] CREATE2 deployment script; deterministic deployment proxy present on the 3 testnets; predicted address `0x36b5D5F0D176b96013678FC69C34038897fAF382` ([contracts/script/DeployPostAnchor.s.sol](contracts/script/DeployPostAnchor.s.sol))
+- [ ] Deploy to Ethereum Sepolia, Base Sepolia and Arbitrum Sepolia; record the address (needs a funded deployer key)
 
 ### Benchmark (`contracts/bench`, `packages/bench`)
 
-- [ ] Baseline contracts: B0, B1, B2, ours-lite ([ADR-001](docs/decisions/ADR-001-efficiency-definition.md))
-- [ ] Gas per batch and per post for N = 1, 10, 100, 500, 1000 with Foundry
+- [x] Baseline contracts: B0, B1, B2, ours-lite ([contracts/bench](contracts/bench/), [ADR-001](docs/decisions/ADR-001-efficiency-definition.md))
+- [x] Gas per batch and per post for N = 1, 10, 100, 500, 1000, real receipts under Ethereum mainnet rules, deterministic and reproducible ([packages/bench/src/gas-bench.mjs](packages/bench/src/gas-bench.mjs))
+- [x] Measured crossovers: ours vs B1 from N = 3, ours vs B2 from N = 20 (estimated 34), ours-lite vs B2 from N = 2
+- [x] Calldata pricing probe on the six public chains: EIP-7623 floor on Ethereum and Base, none on Arbitrum, Ethereum Sepolia on a different schedule ([packages/bench/src/calldata-floor-probe.mjs](packages/bench/src/calldata-floor-probe.mjs))
+- [x] Dated results in [packages/bench/results](packages/bench/results/)
+- [x] Gas tables in the README and docs/efficiency.md; Estimates in ADR-001, ADR-004, ADR-005 and ADR-009 replaced with measured values
 - [ ] Money conversion: mainnet price snapshot and L1 data fee oracles (confirm method names)
-- [ ] Dated results in `packages/bench/results/*.json`
-- [ ] Fill the results tables in the README and docs/efficiency.md; replace the Estimates in ADR-001, ADR-005 and ADR-006 with measured values
-- [ ] Apply the revisit criterion of [ADR-005](docs/decisions/ADR-005-commitment-merkle-tree.md) and record the outcome
+- [ ] Arbitrum execution gas (no calldata floor there) and the L2 L1-data fee
+- [ ] Identify which upgrade set Ethereum Sepolia's current gas schedule
+- [ ] Apply the revisit criterion of [ADR-005](docs/decisions/ADR-005-commitment-merkle-tree.md) once typical batch sizes are known, and record the outcome
 
 ### `packages/core`
 
@@ -61,13 +65,13 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 
 ### Docs and diagrams
 
-- [ ] PNG export script for the Archify diagrams, versioned in the repo
+- [x] PNG export script for the Archify diagrams, versioned in the repo ([docs/diagrams/export-png.mjs](docs/diagrams/export-png.mjs))
 - [ ] Timeline (batching example) and Waterfall (latency breakdown) diagrams from real benchmark data
-- [ ] Key benchmark numbers in the README TL;DR
+- [~] Key benchmark numbers in the README TL;DR (gas done, USD pending)
 
 ### Research (To verify items that can change the design)
 
-- [ ] Openfort: EIP-712 domain without `chainId`, signer EOA signature exposure, where the typed-data payload travels, OpenSigner threshold, co-signer support ([ADR-011](docs/decisions/ADR-011-identity-openfort.md))
+- [~] Openfort ([ADR-011](docs/decisions/ADR-011-identity-openfort.md)): resolved from the official docs: EOA account type (plain ECDSA signatures), 2-of-3 OpenSigner shares, recovery modes that keep the platform from reconstructing keys, allowed domains, no co-signer. Still open, to test at the start of Tier 3: a domain without `chainId`, and whether the payload leaves the iframe
 - [ ] Base stack lineage and its L1 data fee oracle ([ADR-007](docs/decisions/ADR-007-chain-selection.md))
 - [ ] Turbo: default `anchor` field, behaviour on an existing data item ID, upload rate limits ([ADR-002](docs/decisions/ADR-002-storage-arweave-turbo.md))
 
@@ -98,3 +102,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | Date | Change |
 | ---- | ------ |
 | 2026-11-07 | Block B completed: scaffold, ADR-001 to ADR-019, efficiency and threat model, six diagrams. Roadmap created. |
+| 2026-11-07 | Tier 1 contract work: `PostAnchor`, 16 tests (I1 to I6), CREATE2 script, gas benchmark with five variants and the calldata probe. Openfort research folded into ADR-011 (EOA account type, recovery modes). |
