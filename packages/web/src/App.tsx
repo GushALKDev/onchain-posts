@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { DEMO_MODE } from './config.ts';
-import { developmentSigner } from './signer.ts';
+import { OPENFORT_CONFIGURED, openfortClient } from './openfort.ts';
+import { developmentSigner, type PostSigner } from './signer.ts';
+import { Access } from './views/Access.tsx';
 import { Compose } from './views/Compose.tsx';
 import { Efficiency } from './views/Efficiency.tsx';
 import { PostList, PostView } from './views/Posts.tsx';
@@ -17,7 +19,8 @@ function useRoute(): string[] {
 }
 
 export function App() {
-  const [signer] = useState(() => developmentSigner());
+  // Openfort when configured (ADR-011); otherwise a development key in this browser.
+  const [signer, setSigner] = useState<PostSigner | null>(() => (OPENFORT_CONFIGURED ? null : developmentSigner()));
   const [view = 'compose', param] = useRoute();
 
   return (
@@ -31,14 +34,18 @@ export function App() {
           <a href="#efficiency" className={view === 'efficiency' ? 'active' : ''}>Efficiency</a>
         </nav>
         <p className="signer">
-          Signing with: {signer.label}
+          {signer ? `Signing with: ${signer.label}` : 'Not signed in'}
+          {signer?.kind === 'openfort' && (
+            <button className="link" onClick={async () => { await openfortClient().auth.logout(); setSigner(null); }}>Sign out</button>
+          )}
           {DEMO_MODE && <span className="demo-badge">DEMO MODE: short batching window, not the efficiency configuration</span>}
         </p>
       </header>
       <main>
-        {view === 'compose' && <Compose signer={signer} />}
-        {view === 'posts' && <PostList signer={signer} />}
-        {view === 'post' && param && <PostView signer={signer} postHash={param} />}
+        {!signer && (view === 'compose' || view === 'posts' || view === 'post') && <Access onReady={setSigner} />}
+        {signer && view === 'compose' && <Compose signer={signer} />}
+        {signer && view === 'posts' && <PostList signer={signer} />}
+        {signer && view === 'post' && param && <PostView signer={signer} postHash={param} />}
         {view === 'verify' && <Verify initialPostHash={param ?? ''} />}
         {view === 'efficiency' && <Efficiency />}
       </main>

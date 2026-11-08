@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@openfort/openfort-js": "2.6.4",
     "@phi/core": "workspace:*",
     "@phi/verifier": "workspace:*",
     "react": "19.3.1",

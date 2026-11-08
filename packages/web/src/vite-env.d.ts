@@ -9,4 +9,6 @@ interface ImportMetaEnv {
   readonly VITE_RPC_11155111?: string;
   readonly VITE_RPC_84532?: string;
   readonly VITE_RPC_421614?: string;
+  readonly VITE_OPENFORT_PUBLISHABLE_KEY?: string;
+  readonly VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY?: string;
 }
