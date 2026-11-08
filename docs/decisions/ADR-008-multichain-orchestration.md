@@ -69,4 +69,6 @@ Follow-ups:
 
 ## Evidence
 
-- Design-level ADR; tests pending (anchor worker).
+- Implemented in `packages/backend/src/workers/anchor.ts` with one in-flight transaction per chain (ADR-016). Tested against a local chain (`packages/backend/test/pipeline.test.ts`): a stuck transaction is replaced with the same nonce and higher fees and only one `BatchAnchored` event exists for the root; a root already anchored after a crash is adopted without sending again; a batch whose anchor would revert is marked FAILED instead of retried.
+- Re-batching a stuck batch with newer posts is not implemented in the PoC (ADR-016); stuck transactions are only fee-bumped.
+- A replacement reuses the original gas limit: re-estimating against the pending state reverts with `AlreadyAnchored` because the original transaction already anchored the root there.

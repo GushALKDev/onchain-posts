@@ -55,7 +55,23 @@ All of them live outside the database. Production: KMS (secp256k1 signing suppor
 
 ### Trusted keys
 
-The relayer addresses in use and the receipt key address are listed in `config/trusted-keys.json` with `role`, `validFrom` and `revokedAt` ([ADR-009](ADR-009-anchor-contract.md)). Rotation = add a new entry. Revocation = set `revokedAt` (off-chain; the contract has no admin).
+The relayer addresses in use and the receipt key address are listed in `config/trusted-keys.json` with `role`, `validFrom` and `revokedAt` ([ADR-009](ADR-009-anchor-contract.md)). Rotation = add a new entry. Revocation = set `revokedAt` (off-chain; the contract has no admin). `node dist/print-keys.js` prints the public addresses of the keystore in that format; the startup log does not, because the logger redacts every address.
+
+### Implementation in the PoC (2026-11-08)
+
+Implemented in [`packages/backend`](../../packages/backend/README.md): Hono API, postgres.js, the workers above in one process, the KMS simulator, Docker image and `docker compose` service. Simplifications, each deliberate and reversible:
+
+| Simplification | Why acceptable in the PoC | Production path |
+| -------------- | ------------------------- | --------------- |
+| One in-flight anchor transaction per chain; the nonce is read from the chain | Batches leave every Tmax (30 s on the L2s), so one transaction at a time is not a bottleneck, and no local nonce state can drift | Local nonce manager with several pending transactions |
+| A stuck transaction is only fee-bumped, never re-batched with newer posts | Re-batching needs the same-nonce rule of ADR-008 plus orphan-manifest handling; bumping covers the failure | Implement re-batching as specified in ADR-008 |
+| Usernames are claimed by the first signer that posts with them | Shows the ownership check; there are no accounts yet | Usernames bound to platform accounts at sign-up |
+| Rate limits are in-memory counters | Single process | Shared store, or rate limiting at the edge |
+| No cross-instance lock for the anchor worker | Single process; the contract still rejects duplicate roots | Postgres advisory lock per chain |
+| `STORAGE_MODE=memory` for local runs and tests | Turbo uploads are permanent and public | `STORAGE_MODE=turbo` |
+| KMS simulator (keys in a local file outside the database) | Same `KeyStore` interface as a KMS | KMS-backed `KeyStore` |
+
+Finding from the tests: a replacement transaction must reuse the original gas limit. Re-estimating gas for the replacement runs against the pending state, where the original transaction has already anchored the root, so the estimate reverts with `AlreadyAnchored`.
 
 ## Alternatives considered
 
@@ -88,5 +104,7 @@ Follow-ups:
 ## Evidence
 
 - `FOR UPDATE SKIP LOCKED`: "With SKIP LOCKED, any selected rows that cannot be immediately locked are skipped"; the same paragraph says this inconsistent view suits queue-like tables, not general-purpose work (Verified 2026-11-07: https://www.postgresql.org/docs/current/sql-select.html).
+- Tests (`packages/backend`, 37 at this commit, against a real Postgres in Docker and two local chains): every acceptance check, the privacy boundary (no address or signature in clear in the database), disclosure, demo flush, the full pipeline to SETTLED with `@phi/verifier` accepting the result, and the anchor worker failure cases of ADR-008.
+- Smoke run on 2026-11-08: the Docker image against a local chain and Postgres accepted two posts, anchored them in one batch after a demo flush, and served a proof bundle that verifies against the anchored root.
 - To verify: AWS KMS support for secp256k1 signing keys suitable for Ethereum transactions and EIP-712 signatures.
 - To verify: Turbo upload rate limits ([ADR-010](ADR-010-gasless-relayer.md)).

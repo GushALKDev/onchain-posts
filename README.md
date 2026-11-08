@@ -211,15 +211,14 @@ pnpm verify <postHash>
 pnpm verify <postHash> --hints <bundle.json> --scan
 ```
 
-Not implemented yet (placeholders):
-
 ```bash
-# Backend + Postgres (+ web) locally
-cp .env.example .env   # fill in values
-docker compose up
+# Backend (API + workers) and Postgres; see packages/backend/README.md
+cp .env.example .env        # set POSTGRES_*, DB_HMAC_SECRET, the RPC URLs and STORAGE_MODE
+docker compose up --build
+docker compose exec backend node dist/print-keys.js   # public relayer and receipt addresses for config/trusted-keys.json
 ```
 
-Demo URL: pending.
+Web app: Tier 3, not implemented yet. Demo URL: pending.
 
 **DEMO_MODE.** The live demo uses a short Tmax or a "flush now" button so "Published" appears quickly. Both are clearly labelled as demo behaviour; the flush-now endpoint spends a transaction per chain per call, so it is protected by `DEMO_FLUSH_TOKEN` and rate-limited ([ADR-006](docs/decisions/ADR-006-batching-policy.md), [ADR-018](docs/decisions/ADR-018-abuse-cost-control.md)). Demo mode is not the efficiency configuration.
 

@@ -48,7 +48,7 @@ Everything inside the hash must reach its final form in the client, before signi
 
 | Check | Why |
 | ----- | --- |
-| The username belongs to the signer | Otherwise anyone could post as "ana" |
+| The username belongs to the signer | Otherwise anyone could post as "ana". PoC rule (ADR-016): the first signer that posts with a username claims it; anyone can still claim a free name with a fresh key, so squatting is possible until usernames are bound to platform accounts |
 | Normalisation is verified, not applied | A non-normalised string is rejected; unicode confusables are handled by the restricted username charset |
 | `createdAt` within a few minutes of server time (design parameter: exact skew set in the backend block) | `createdAt` is client-declared and untrusted; the anchor gives the strong "existed before T" proof |
 | `nonce` is random (32 bytes) and stored once used | A sequential nonce would reveal how many posts a user made if an intent were ever disclosed; storage blocks reuse |

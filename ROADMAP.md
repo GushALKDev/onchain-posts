@@ -12,7 +12,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | ----- | ----- | ------ |
 | Block B | Documentation-first scaffold: repo, README, ADRs, efficiency and threat model, diagrams | Done (2026-11-07) |
 | Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | Done except the testnet deployment, the Timeline and Waterfall diagrams and the open research items |
-| Tier 2 | Minimal pipeline: backend, Postgres, Turbo uploads, anchoring on the 3 testnets | Not started |
+| Tier 2 | Minimal pipeline: backend, Postgres, Turbo uploads, anchoring on the 3 testnets | Implemented and tested locally; real Turbo uploads and testnet anchoring pending (deployment) |
 | Tier 3 | Minimal web: compose, per-stage status, Verify page | Not started |
 
 ## Block B: documentation-first scaffold
@@ -80,16 +80,19 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 
 ## Tier 2: minimal pipeline (`packages/backend`)
 
-- [ ] Postgres migrations and job queue (`SELECT ... FOR UPDATE SKIP LOCKED`)
-- [ ] `Signer` / `KeyStore` interface with the KMS simulator
-- [ ] API: intent validation, username ownership, nonce, deadline, `createdAt` skew, media checks, rate limits, signed receipts
-- [ ] Storage worker: image then post JSON to Turbo with the platform key
-- [ ] Batcher per chain (Tmax / Nmax), manifest upload
-- [ ] Anchor worker per chain: nonce manager, gas bump, receipt check before retry, same-nonce replacement for re-batches ([ADR-008](docs/decisions/ADR-008-multichain-orchestration.md))
-- [ ] Tracker (soft to safe) and indexer keyed by `(chainId, sender, root)`
-- [ ] `GET /proof/:postHash`, on-demand signature disclosure with audit log
-- [ ] `DEMO_MODE` with the protected flush-now endpoint ([ADR-018](docs/decisions/ADR-018-abuse-cost-control.md))
-- [ ] Backend service in `docker-compose.yml`
+- [x] Postgres migrations and job queue (`SELECT ... FOR UPDATE SKIP LOCKED`)
+- [x] `KeyStore` interface with the KMS simulator; `print-keys` for the public addresses
+- [x] API: intent validation, username ownership, nonce, deadline, `createdAt` skew, media checks, rate limits, signed receipts
+- [x] Storage worker: image then post JSON through Turbo with the platform key (memory mode for tests and local runs)
+- [x] Batcher per chain (Tmax / Nmax, demo flush), manifest upload
+- [x] Anchor worker per chain: one in-flight transaction, receipt check before retry, crash adoption, same-nonce fee bump ([ADR-008](docs/decisions/ADR-008-multichain-orchestration.md)); re-batching of stuck batches not implemented (ADR-016)
+- [x] Tracker (soft to safe); the batches table is the index of our own anchors, keyed by chain, sender and root
+- [x] `GET /proof/:postHash`, `GET /status/:postHash`, on-demand signature disclosure with audit log
+- [x] `DEMO_MODE` with the protected flush-now endpoint ([ADR-018](docs/decisions/ADR-018-abuse-cost-control.md))
+- [x] Backend service in `docker-compose.yml`; Docker smoke run against a local chain
+- [x] 37 tests with Postgres and two local chains, including the full pipeline verified by `@phi/verifier`
+- [ ] First real Turbo upload (permanent and public, needs the owner's go-ahead)
+- [ ] Anchoring on the three testnets (needs the deployment and a funded relayer)
 
 ## Tier 3: minimal web (`packages/web`)
 
@@ -109,3 +112,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | 2026-11-07 | Benchmark completed in money: Arbitrum gas proxy, L1 data fee oracles, USD per post. Finding: image storage is 96% or more of the end-to-end cost from N = 100 on. |
 | 2026-11-07 | `packages/core` implemented: EIP-712, Merkle, schemas, normalisation, WebP parser, trusted keys; 40 vitest tests and a cross-implementation fixture checked by Foundry. |
 | 2026-11-08 | `packages/verifier` implemented: library, bounded scan, verdicts, authorship check and CLI; 17 integration tests against local nodes. |
+| 2026-11-08 | `packages/backend` implemented: API, workers, KMS simulator, Docker; 37 tests and a Docker smoke run. Finding: a replacement transaction must reuse the original gas limit. |
