@@ -1,5 +1,29 @@
 {
   "name": "@phi/web",
   "private": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "description": "Minimal web app (ADR-019): compose, per-chain status, proof bundle download and a Verify page on the verifier library.",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @phi/verifier build && vite",
+    "build": "pnpm --filter @phi/verifier build && tsc -p tsconfig.json && vite build",
+    "typecheck": "pnpm --filter @phi/verifier build && tsc -p tsconfig.json",
+    "test": "pnpm --filter @phi/verifier build && vitest run",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@phi/core": "workspace:*",
+    "@phi/verifier": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "viem": "2.57.8"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "typescript": "6.0.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
 }
