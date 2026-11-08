@@ -81,7 +81,7 @@ export function PostView({ signer, postHash }: { signer: PostSigner; postHash: s
       {local && <p>@{local.username}: {local.caption || '(no caption)'}</p>}
       {status && (
         <>
-          <p className="hint">Accepted {new Date(status.acceptedAt * 1000).toLocaleString()}; storage: {status.state === 'STORED' ? `on Arweave (${status.postArweaveId})` : status.state}</p>
+          <p className="hint">Accepted {new Date(status.acceptedAt * 1000).toLocaleString()}; storage: {status.state === 'STORED' ? `stored, ID ${status.postArweaveId}` : status.state}</p>
           <table>
             <thead>
               <tr><th>Chain</th><th title={STAGE_HELP}>Stage</th><th>Deadline (receipt)</th><th>Transaction</th></tr>

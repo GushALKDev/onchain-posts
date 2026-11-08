@@ -8,6 +8,6 @@
     "verify": "pnpm -s --filter @phi/verifier build && node packages/verifier/dist/cli.js",
     "build": "pnpm --filter @phi/verifier build",
     "bench": "pnpm --filter @phi/bench gas",
-    "test": "pnpm --filter @phi/core test && pnpm --filter @phi/verifier test && pnpm --filter @phi/backend test && cd contracts && forge test"
+    "test": "pnpm --filter @phi/core test && pnpm --filter @phi/verifier test && pnpm --filter @phi/backend test && pnpm --filter @phi/web test && cd contracts && forge test"
   }
 }
