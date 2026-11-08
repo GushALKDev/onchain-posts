@@ -13,7 +13,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | Block B | Documentation-first scaffold: repo, README, ADRs, efficiency and threat model, diagrams | Done (2026-11-07) |
 | Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | Done except the testnet deployment, the Timeline and Waterfall diagrams and the open research items |
 | Tier 2 | Minimal pipeline: backend, Postgres, Turbo uploads, anchoring on the 3 testnets | Implemented and tested locally; real Turbo uploads and testnet anchoring pending (deployment) |
-| Tier 3 | Minimal web: compose, per-stage status, Verify page | Not started |
+| Tier 3 | Minimal web: compose, per-stage status, Verify page | Implemented and run in a browser against a local stack; Openfort sign-in and public demo pending |
 
 ## Block B: documentation-first scaffold
 
@@ -96,11 +96,13 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 
 ## Tier 3: minimal web (`packages/web`)
 
-- [ ] Compose: client-side compression, metadata stripping, normalisation, Openfort EIP-712 signing
-- [ ] Chain selector (1 to 3) and per-chain status: Accepted / Published / Settled
-- [ ] IndexedDB persistence of signatures and intent fields; proof bundle download
-- [ ] Verify page on the verifier library, with the "convenience, not independent verification" note
-- [ ] Demo-only flush-now button; efficiency panel linking benchmark results
+- [x] Compose: client-side resize and WebP re-encoding (quality 0.9 down to 0.5), metadata stripping, normalisation, EIP-712 signing through `PostSigner`
+- [x] Chain selector (1 to 3) and per-chain status: Accepted / Published / Settled, with explorer links
+- [x] IndexedDB persistence of signatures and intent fields; proof bundle download
+- [x] Verify page on the verifier library, with the "convenience, not independent verification" note and an optional user-supplied trust root
+- [x] Demo-only flush-now button (token typed by the operator); efficiency panel from the benchmark results
+- [x] Browser run in headless Chrome against a local stack: compose, publish on two chains, flush, VERIFIED (ADR-019)
+- [ ] Openfort sign-in adapter and the two open ADR-011 checks (needs an Openfort project)
 - [ ] Public demo URL in the README
 
 ## Log
@@ -113,3 +115,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | 2026-11-07 | `packages/core` implemented: EIP-712, Merkle, schemas, normalisation, WebP parser, trusted keys; 40 vitest tests and a cross-implementation fixture checked by Foundry. |
 | 2026-11-08 | `packages/verifier` implemented: library, bounded scan, verdicts, authorship check and CLI; 17 integration tests against local nodes. |
 | 2026-11-08 | `packages/backend` implemented: API, workers, KMS simulator, Docker; 37 tests and a Docker smoke run. Finding: a replacement transaction must reuse the original gas limit. |
+| 2026-11-08 | `packages/web` implemented: compose, status, proof bundle, Verify, efficiency; run end to end in a headless browser against a local stack. Openfort waits for a project. |

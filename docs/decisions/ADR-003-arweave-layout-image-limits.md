@@ -22,7 +22,7 @@ ADR-002 puts every byte on Arweave, paid by the platform and permanent. Two forc
 **Image limits.**
 
 - Max side 1080 px, WebP (design parameters).
-- Client-side recompression loop: lower the WebP quality step by step down to a minimum quality (design parameter, value set when the web app is built) until the file is at most **95 KiB** (design parameter). The margin keeps the item under Turbo's free-tier threshold of 105 KiB (Verified 2026-11-07: https://docs.ar.io/build/upload/turbo-credits/). Whether ANS-104 headers and tags count toward that threshold: To verify.
+- Client-side recompression loop: lower the WebP quality step by step down to a minimum quality of 0.5 (design parameter, `packages/web/src/image.ts`) until the file is at most **95 KiB** (design parameter). The margin keeps the item under Turbo's free-tier threshold of 105 KiB (Verified 2026-11-07: https://docs.ar.io/build/upload/turbo-credits/). Whether ANS-104 headers and tags count toward that threshold: To verify.
 - If it still does not fit: **reject**, in the PoC and in production.
 
 **Why reject instead of paying.** Cost-exhaustion attack: an attacker uploading large images in a loop makes the platform pay for permanent storage that cannot be undone, and the attacker chooses the volume. Per-user rate limits (ADR-018) are the primary defence; the hard cap is mainly about **cost predictability**: it bounds the storage cost of one post at about USD 0.0067 at list price (Estimate: 95 KiB x USD 0.0000701 per KiB, ADR-002). The free tier no longer matters at scale because it is a 10 MiB lifetime allowance per wallet and per subnet (ADR-002), so the cap is what keeps the per-post cost known in advance.
@@ -73,7 +73,7 @@ Negative:
 
 Follow-ups:
 
-- Choose the minimum quality of the recompression loop with real photos.
+- Revisit the minimum quality of 0.5 with real photos (the first browser run needed only quality 0.9 for a 1080 px diagram).
 - Confirm whether headers and tags count toward the free-tier size.
 
 ## Evidence

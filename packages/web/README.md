@@ -1,14 +1,40 @@
 # @phi/web
 
-Vite + React + Openfort. Minimal scope, proposed in [ADR-019](../../docs/decisions/ADR-019-web-app-scope.md).
+Minimal web app ([ADR-019](../../docs/decisions/ADR-019-web-app-scope.md)): Vite + React, importing `@phi/core` and the `@phi/verifier` library. The live demo is not the efficiency proof (small batches, demo mode); the benchmark is.
 
-Not implemented yet.
+## Pages
 
-## Responsibilities
+| Page | What it does |
+| ---- | ------------ |
+| Compose | Username, caption and optional image. The image is resized to 1080 px and re-encoded to WebP in the browser, lowering quality from 0.9 to 0.5 until it fits 95 KiB (rejected otherwise); the shared RIFF parser strips and checks the chunks. Username and caption are normalised (NFC) before signing, because the signature freezes the bytes (ADR-003, ADR-012). The user picks 1 to 3 chains and signs the EIP-712 `PublishIntent`. |
+| My posts | Posts signed in this browser. Each shows Accepted / Published / Settled per chain (ADR-017), the receipt deadline and explorer links, refreshed every 3 s. "Download proof bundle" combines the public hints from `GET /proof/:postHash` with the signature and intent fields kept in IndexedDB (ADR-014). |
+| Verify | Runs the verifier library from public sources, with optional bundle and optional trust root file. Shows the convenience notice: the platform serves this page and its copy of `trusted-keys.json`, so independent verification means the CLI from the public repository, or a trust root you supply. |
+| Efficiency | Gas per post and end-to-end USD from the committed benchmark results. |
 
-- Compose: caption and image, client-side WebP compression, EXIF/XMP stripping with the `@phi/core` RIFF parser, NFC normalisation, all before signing.
-- Chain selector (1 to 3 chains) and EIP-712 signing of the `PublishIntent` with the Openfort embedded account (signing identity only, never a transaction sender, ADR-011).
-- Live status per stage and per chain: Accepted / Published / Settled, with explorer links (ADR-017).
-- Local persistence of each signature in IndexedDB, keyed by `postHash` and bound to the logged-in user, and a "download proof bundle" action (public bundle from `GET /proof/:postHash` plus the local signature, ADR-014).
-- Verify page that imports the `@phi/verifier` library (same code as the CLI). It is a convenience, not independent verification: the platform serves both the page and its copy of `config/trusted-keys.json`.
-- "Flush now" button, visible only in `DEMO_MODE`, labelled as demo behaviour and backed by the protected endpoint (ADR-018).
+In demo mode a "Flush now" button asks for the operator token (it is never embedded in the app) and calls the protected endpoint (ADR-018).
+
+## Signing
+
+The app signs through a `PostSigner` interface (`src/signer.ts`). The production signer is the Openfort embedded EOA (ADR-011), used only as a signing identity. Until an Openfort project is configured (publishable key), the app uses a **development key** generated in the browser and says so on every page. Clearing site data loses that key and the locally stored signatures.
+
+## Running locally
+
+```bash
+cp packages/web/.env.example packages/web/.env   # point VITE_API_URL at the backend and set the RPCs
+pnpm --filter @phi/web dev                        # http://localhost:5173
+```
+
+The backend must list the web origin in `WEB_ORIGINS`. With `STORAGE_MODE=memory`, set `VITE_ARWEAVE_GATEWAY` to the backend's `/dev-gateway` so the Verify page can read content.
+
+## Tests and checks
+
+- `pnpm test`: 6 unit tests (submission building and signature recovery, base64 of large images, development signer, private bundle).
+- `pnpm build`: typecheck and production build.
+- Browser run on 2026-11-08 in headless Chrome against a local stack (backend, Postgres, two local chains with `PostAnchor`): compose with a real 962 KB PNG, publish on two chains, demo flush, Published with explorer links, Verify reported VERIFIED. Details in ADR-019.
+
+## Limits
+
+- Openfort sign-in is not wired yet (needs a project); the two open ADR-011 checks depend on it.
+- Browsers that cannot encode WebP from a canvas get an explicit error.
+- The production bundle is over 500 kB (viem, the Merkle library and zod); code splitting is possible if it matters.
+- Signatures in IndexedDB are only as safe as the browser that holds them (ADR-014).

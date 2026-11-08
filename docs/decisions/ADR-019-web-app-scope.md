@@ -1,6 +1,6 @@
 # ADR-019: Web app scope
 
-Status: Proposed
+Status: Accepted (implemented 2026-11-08; Openfort sign-in pending a project, see Implementation)
 Confidence: Medium
 Reversibility: Reversible
 Date: 2026-11-07
@@ -45,6 +45,14 @@ Vite + React + Openfort, importing `packages/core` (hashing, normalisation, RIFF
 
 The live demo is not the efficiency proof (small batches, demo mode); the benchmark is ([ADR-001](ADR-001-efficiency-definition.md)).
 
+### Implementation (2026-11-08)
+
+Implemented in [`packages/web`](../../packages/web/README.md) with the scope above. Differences from the plan:
+
+- **Signer.** The app signs through a `PostSigner` interface. Until an Openfort project exists (publishable key), it uses a development key generated in the browser and labels it as such on every page. The Openfort adapter, and the two open ADR-011 checks that need it (EIP-712 domain without `chainId`, whether the payload leaves the iframe), wait for those credentials.
+- **Trust root upload.** The Verify page also accepts a `trusted-keys.json` the user supplies, instead of the copy served with the page. That is the browser counterpart of running the CLI with your own trust root.
+- **Image loop.** Re-encoding goes from WebP quality 0.9 down to 0.5 (design parameter, ADR-003); below that the image is rejected. Browsers that cannot encode WebP from a canvas get an explicit error.
+
 ## Alternatives considered
 
 | Option | Pros | Cons | Why not chosen |
@@ -75,4 +83,6 @@ Follow-ups:
 ## Evidence
 
 - No measurements: this ADR sets scope. The efficiency evidence lives in the benchmark ([ADR-001](ADR-001-efficiency-definition.md)).
+- Browser run on 2026-11-08 (headless Chrome against a local stack: backend, Postgres, two local chains with `PostAnchor`): a 4032x3378 PNG of 962 KB was resized and re-encoded in the browser to a 1080x905 WebP of 64.3 KiB at quality 0.9; the username "Ana_Browser" was signed as "ana_browser" and a decomposed accent normalised to NFC; after a demo flush both chains showed Published with explorer links, and the Verify page reported VERIFIED with a trust root supplied by file. No page exceptions.
+- Unit tests in `packages/web/test` (6) cover submission building and signature recovery, base64 of large images, the development signer and the private bundle.
 - To verify: the Openfort items still open in [ADR-011](ADR-011-identity-openfort.md) (EIP-712 domain without `chainId`, whether the payload leaves the iframe), tested at the start of Tier 3; the compose flow depends on them.
