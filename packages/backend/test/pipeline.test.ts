@@ -110,7 +110,8 @@ describe('pipeline end to end', () => {
       expect(chain).toMatchObject({ stage: 'settled', batch: { postCount: 3, replacements: 0 } });
       expect(chain.batch.batchedAt).toBeGreaterThanOrEqual(detail.storedAt);
       expect(chain.batch.settledAt).toBeGreaterThanOrEqual(chain.batch.batchedAt);
-      expect(chain.proof.siblings).toHaveLength(2); // 3 leaves: depth 2
+      // 3 leaves in a StandardMerkleTree: one leaf sits at depth 1, two at depth 2; which one depends on the hashes.
+      expect([1, 2]).toContain(chain.proof.siblings.length);
       const leaf = decodeAbiParameters([{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'bytes32' }], chain.proof.leafData);
       expect(verifyInclusion(chain.batch.root, leaf as unknown as LeafValue, chain.proof.siblings)).toBe(true);
     }
