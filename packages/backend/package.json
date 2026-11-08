@@ -8,7 +8,8 @@
     "build": "pnpm --filter @phi/verifier build && tsc -p tsconfig.json",
     "typecheck": "pnpm --filter @phi/verifier build && tsc -p tsconfig.check.json",
     "test": "pnpm --filter @phi/verifier build && vitest run",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "keys": "node dist/print-keys.js"
   },
   "dependencies": {
     "@ardrive/turbo-sdk": "2.1.2",

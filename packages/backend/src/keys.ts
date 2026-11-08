@@ -60,7 +60,8 @@ export function generateKeys(refs: { relayer: string; receipt: string; arweave: 
  * KMS simulator: keys in a local JSON file outside the database, generated on first start. Not for production:
  * a real KMS never exposes private keys to the process.
  */
-export function simulatorKeyStore(path: string, refs: Parameters<typeof generateKeys>[0]): { keyStore: KeyStore; created: boolean } {
+export function simulatorKeyStore(path: string, refs: Parameters<typeof generateKeys>[0], options = { create: true }): { keyStore: KeyStore; created: boolean } {
+  if (!existsSync(path) && !options.create) throw new Error(`no keystore at ${path}`);
   if (existsSync(path)) {
     const file = JSON.parse(readFileSync(path, 'utf8')) as KeystoreFile;
     return { keyStore: keyStoreFromKeys(file.keys), created: false };

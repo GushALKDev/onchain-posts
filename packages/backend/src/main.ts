@@ -20,9 +20,8 @@ async function main() {
 
   const { keyStore, created } = simulatorKeyStore(config.keystorePath, config.keyRefs);
   const relayer = keyStore.evmAccount(config.keyRefs.relayer);
-  const receiptSigner = keyStore.evmAccount(config.keyRefs.receipt);
-  // Public addresses only: they must be listed in config/trusted-keys.json for verifiers to accept this deployment.
-  log.info(created ? 'KMS simulator keystore created' : 'KMS simulator keystore loaded', { relayer: relayer.address, receipt: receiptSigner.address });
+  // The logger redacts every address; the public relayer and receipt addresses for config/trusted-keys.json come from print-keys.
+  log.info(created ? 'KMS simulator keystore created' : 'KMS simulator keystore loaded', { hint: 'run node dist/print-keys.js to print the public relayer and receipt addresses' });
 
   const now = () => Math.floor(Date.now() / 1000);
   const deps: Deps = { sql, config, keyStore, now, limiter: new RateLimiter(now), flushRequests: new Set() };
