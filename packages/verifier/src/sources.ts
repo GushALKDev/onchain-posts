@@ -22,7 +22,12 @@ export type Sources = { arweave: ArweaveSource; chains: Record<number, ChainSour
 
 const batchAnchored = getAbiItem({ abi: postAnchorAbi, name: 'BatchAnchored' });
 
-/** ChainSource over a viem public client; log queries are split into ranges that public RPCs accept. */
+const RANGE_REJECTED = /range|limit|too many|exceed/i;
+
+/**
+ * ChainSource over a viem public client. Log queries are split into block ranges; when a provider rejects a range as
+ * too large (public RPCs set different limits, e.g. 200 blocks), the range is halved and the query retried.
+ */
 export function chainSourceFromClient(client: PublicClient, maxBlockRange = 10_000n): ChainSource {
   return {
     anchoredAt: (contract, sender, root) => client.readContract({ address: contract, abi: postAnchorAbi, functionName: 'anchoredAt', args: [sender, root] }),
@@ -31,12 +36,24 @@ export function chainSourceFromClient(client: PublicClient, maxBlockRange = 10_0
     async anchorEvents(contract, senders, fromBlock, toBlock) {
       if (senders.length === 0 || fromBlock > toBlock) return [];
       const events: AnchorEvent[] = [];
-      for (let start = fromBlock; start <= toBlock; start += maxBlockRange) {
-        const end = start + maxBlockRange - 1n < toBlock ? start + maxBlockRange - 1n : toBlock;
-        const logs = await client.getLogs({ address: contract, event: batchAnchored, args: { sender: senders }, fromBlock: start, toBlock: end, strict: true });
+      let range = maxBlockRange;
+      let start = fromBlock;
+      while (start <= toBlock) {
+        const end = start + range - 1n < toBlock ? start + range - 1n : toBlock;
+        let logs;
+        try {
+          logs = await client.getLogs({ address: contract, event: batchAnchored, args: { sender: senders }, fromBlock: start, toBlock: end, strict: true });
+        } catch (error) {
+          if (range > 1n && RANGE_REJECTED.test((error as Error).message)) {
+            range /= 2n;
+            continue;
+          }
+          throw error;
+        }
         for (const log of logs) {
           events.push({ sender: log.args.sender, root: log.args.root, manifestId: log.args.manifestId, count: log.args.count, blockNumber: log.blockNumber });
         }
+        start = end + 1n;
       }
       return events;
     },

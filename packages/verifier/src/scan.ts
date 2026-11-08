@@ -15,12 +15,28 @@ export type ScanOutcome = {
   problems: string[];
 };
 
-/** First block with timestamp >= t (binary search; returns head + 1 if t is in the future). */
+/**
+ * First block with timestamp >= t (head + 1 if t is in the future). Gallops back from the head (1, 2, 4... blocks) and
+ * then bisects, so only recent blocks are read: public RPCs often prune old history.
+ */
 export async function blockAtOrAfter(chain: ChainSource, t: bigint): Promise<bigint> {
   const head = await chain.block();
   if (head.timestamp < t) return head.number + 1n;
-  let lo = 0n;
-  let hi = head.number;
+  let hi = head.number; // known: timestamp >= t
+  let lo = 0n; // first candidate
+  for (let step = 1n; ; step *= 2n) {
+    if (step >= head.number) {
+      if ((await chain.block(0n)).timestamp >= t) return 0n;
+      lo = 1n;
+      break;
+    }
+    const candidate = head.number - step;
+    if ((await chain.block(candidate)).timestamp < t) {
+      lo = candidate + 1n;
+      break;
+    }
+    hi = candidate;
+  }
   while (lo < hi) {
     const mid = (lo + hi) / 2n;
     if ((await chain.block(mid)).timestamp >= t) hi = mid;
