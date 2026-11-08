@@ -56,7 +56,7 @@ CREATE TABLE batches (
   tx_history          jsonb NOT NULL DEFAULT '[]',   -- every hash sent with this nonce (replacements)
   max_fee_per_gas     numeric,
   max_priority_fee    numeric,
-  submitted_at        timestamptz,
+  submitted_at        bigint,                -- app clock, unix seconds (replacement timing)
   block_number        bigint,
   anchored_at         bigint,                -- block.timestamp of the anchor
   attempts            integer NOT NULL DEFAULT 0,
@@ -73,7 +73,7 @@ CREATE TABLE post_chains (
   anchor_by  bigint NOT NULL,
   state      text NOT NULL CHECK (state IN ('WAITING', 'QUEUED', 'BATCHED')),
   batch_id   bigint REFERENCES batches (id),
-  queued_at  timestamptz,
+  queued_at  bigint,                         -- app clock, unix seconds (Tmax)
   PRIMARY KEY (post_hash, chain_id)
 );
 CREATE INDEX post_chains_queue_idx ON post_chains (chain_id, queued_at) WHERE state = 'QUEUED';

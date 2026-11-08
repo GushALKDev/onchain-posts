@@ -24,6 +24,8 @@ export type TestChain = {
   accounts: { relayer: PrivateKeyAccount; outsider: PrivateKeyAccount; revoked: PrivateKeyAccount };
   wallet: (account: PrivateKeyAccount) => ReturnType<typeof createWalletClient>;
   increaseTime: (seconds: number) => Promise<void>;
+  setAutomine: (enabled: boolean) => Promise<void>;
+  mine: () => Promise<void>;
   head: () => Promise<number>;
   stop: () => void;
 };
@@ -33,7 +35,12 @@ export async function startChain(chainId: number): Promise<TestChain> {
   const dir = mkdtempSync(path.join(tmpdir(), 'phi-verifier-'));
   const port = 20000 + Math.floor(Math.random() * 20000);
   const url = `http://127.0.0.1:${port}`;
-  const anvil: ChildProcess = spawn('anvil', ['--chain-id', String(chainId), '--port', String(port), '--silent', '--config-out', path.join(dir, 'anvil.json')], { stdio: 'ignore' });
+  const anvil: ChildProcess = spawn(
+    'anvil',
+    // One slot per epoch keeps the safe and finalized heads a couple of blocks behind the head, so settlement is testable.
+    ['--chain-id', String(chainId), '--port', String(port), '--silent', '--slots-in-an-epoch', '1', '--config-out', path.join(dir, 'anvil.json')],
+    { stdio: 'ignore' },
+  );
 
   const chain = defineChain({ id: chainId, name: `test-${chainId}`, nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: [url] } } });
   const publicClient = createPublicClient({ chain, transport: http(url) }) as PublicClient;
@@ -67,6 +74,8 @@ export async function startChain(chainId: number): Promise<TestChain> {
       await testClient.increaseTime({ seconds });
       await testClient.mine({ blocks: 1 });
     },
+    setAutomine: (enabled) => testClient.setAutomine(enabled),
+    mine: () => testClient.mine({ blocks: 1 }),
     head: async () => Number((await publicClient.getBlock()).timestamp),
     stop: () => {
       anvil.kill();
