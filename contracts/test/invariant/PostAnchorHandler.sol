@@ -69,7 +69,8 @@ contract PostAnchorHandler is CommonBase, StdUtils {
             ghostAnchoredAt[sender][root] = block.timestamp;
             ++ghostSuccessCount[sender][root];
         } catch (bytes memory reason) {
-            if (!alreadyAnchored || keccak256(reason) != keccak256(abi.encodeWithSelector(PostAnchor.AlreadyAnchored.selector))) {
+            bytes memory expected = abi.encodeWithSelector(PostAnchor.AlreadyAnchored.selector, root, ghostAnchoredAt[sender][root]);
+            if (!alreadyAnchored || keccak256(reason) != keccak256(expected)) {
                 modelViolation = true;
             }
         }

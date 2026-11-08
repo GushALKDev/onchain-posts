@@ -13,7 +13,7 @@ import { privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 import { chainSourceFromClient, type ArweaveSource, type ChainSource } from '../src/index.ts';
 
 const CREATE2_DEPLOYER = '0x4e59b44847b379578588920cA78FbF26c0B4956C';
-const SALT = keccak256(toBytes('phi-onchain-posts/PostAnchor/v1'));
+const SALT = keccak256(toBytes('onchain-posts/PostAnchor/v2'));
 const ARTIFACT = new URL('../../../contracts/out/PostAnchor.sol/PostAnchor.json', import.meta.url);
 
 export type TestChain = {

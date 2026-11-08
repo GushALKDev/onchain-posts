@@ -21,7 +21,7 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
 
 contract PostAnchor {
     error ZeroRoot();
-    error AlreadyAnchored();
+    error AlreadyAnchored(bytes32 root, uint256 anchoredAt);
 
     // sender => root => anchoring timestamp (0 = not anchored)
     mapping(address => mapping(bytes32 => uint256)) public anchoredAt;
@@ -30,7 +30,7 @@ contract PostAnchor {
 
     function anchor(bytes32 root, bytes32 manifestId, uint32 count) external {
         if (root == bytes32(0)) revert ZeroRoot();
-        if (anchoredAt[msg.sender][root] != 0) revert AlreadyAnchored();
+        if (anchoredAt[msg.sender][root] != 0) revert AlreadyAnchored(root, anchoredAt[msg.sender][root]);
         anchoredAt[msg.sender][root] = block.timestamp;
         emit BatchAnchored(msg.sender, root, manifestId, count);
     }
@@ -68,6 +68,8 @@ contract PostAnchor {
 
 **One storage slot per batch (`anchoredAt`).** It serves on-chain idempotency (ADR-008) and contract readability (`verifyPost`, any other contract can check an anchor). `manifestId` and `count` go only in the event, for off-chain consumers: storing `manifestId` would add another new slot, about 22k gas, almost +50% per batch (Estimate: 20,000 + 2,100 cold, on top of 47,058). The price of this one slot versus an event-only contract is 22,432 gas per batch (measured: ours minus ours-lite, ADR-001). `uint256` is used because the slot holds a single value: a smaller type would save nothing.
 
+**`AlreadyAnchored` carries the root and the existing anchor time**, so a rejected duplicate explains itself in logs and traces (the repository convention is custom errors with parameters). The slot is re-read only on the revert path, so the success path costs exactly as without parameters: 47,058 gas (re-measured on 2026-11-08 with `node packages/bench/src/gas-bench.mjs`; keeping the first read in a local variable instead cost 5 gas more on every anchor).
+
 **`block.timestamp` instead of `block.number`.** On Arbitrum, `block.number` returns "a value close to (but not necessarily exactly) the block number of the first non-Arbitrum ancestor chain" (Verified 2026-11-07: https://docs.arbitrum.io/build-decentralized-apps/arbitrum-vs-ethereum/block-numbers-and-time; the third-party page https://rpcfree.com/arbitrum-rpc says the same). A timestamp means the same thing on all three chains and is what the trusted-keys windows compare against.
 
 **No sequence counter and no `prevRoot` hash chain.**
@@ -84,15 +86,15 @@ contract PostAnchor {
 
 - Factory: the deterministic deployment proxy `0x4e59b44847b379578588920cA78FbF26c0B4956C` that Foundry uses for `new X{salt: s}()`; its code is present and identical on the three testnets (Verified 2026-11-07: `cast code 0x4e59b44847b379578588920cA78FbF26c0B4956C --rpc-url <rpc>` on the public RPCs listed in ADR-007).
 - Compiler settings pinned in `contracts/foundry.toml`: solc 0.8.30, `evm_version = "cancun"` (Prague adds no opcode this contract needs), optimizer 200 runs, `bytecode_hash = "none"` and `cbor_metadata = false` so comment-only changes do not move the address.
-- Predicted address with salt `keccak256("phi-onchain-posts/PostAnchor/v1")`: `0x36b5D5F0D176b96013678FC69C34038897fAF382` on all three chains Deployed on 2026-11-08 at that address on the three testnets; the runtime bytecode read from each chain has the same keccak as the local build (`0x6cf2bcf7451a1e0fb2a4ef6c3c2a90df518b7ee9e00380426a0a430c780f0aa3`), so the `cancun` bytecode runs unchanged on all three.
+- Address with salt `keccak256("onchain-posts/PostAnchor/v2")`: `0xD0fB2A7F1D12C5AF80E49B31Bcb1B4983AD7C5dB` on all three chains. Deployed on 2026-11-08 at that address on the three testnets; the runtime bytecode read from each chain has the same keccak as the local build (`0x6b515179b0a4266d92c42367a3ebae40c68171e6c09391d9fe7a96b5bf5ad6d5`, `cast code <address> --rpc-url <rpc> | cast keccak`), so the `cancun` bytecode runs unchanged on all three.
 
 | Chain | Deployment transaction | Block | Gas used |
 | ----- | ---------------------- | ----- | -------- |
-| Ethereum Sepolia | [0x56d697c2...](https://sepolia.etherscan.io/tx/0x56d697c23e0f076980be5dedf894f72e5e7d81604f452c62431dc20cef6811fc) | 12,092,665 | 1,829,478 |
-| Base Sepolia | [0xf67c6e02...](https://sepolia.basescan.org/tx/0xf67c6e024f98e4e6b139f5e8af1ae49d250295986e4204d4bacf76ebf9fcba15) | 56,226,917 | 280,500 |
-| Arbitrum Sepolia | [0x90dc5518...](https://sepolia.arbiscan.io/tx/0x90dc5518c6fb25f27be160433f3816795fffa7720198843c60782f0ab1d0568d) | 327,338,887 | 280,500 |
+| Ethereum Sepolia | [0x342de0c1...](https://sepolia.etherscan.io/tx/0x342de0c19f1987bd30c506f3b324a62e9df4d8dac80300f29ae8862d214f4801) | 12,093,208 | 1,899,086 |
+| Base Sepolia | [0x26cdad46...](https://sepolia.basescan.org/tx/0x26cdad4683ecc4b2349ce051374a7b8d626e27e3c13ee37925beddaa4ce3ea9f) | 56,262,308 | 290,246 |
+| Arbitrum Sepolia | [0xeb00ff21...](https://sepolia.arbiscan.io/tx/0xeb00ff21cdf67aa740cc07a7af198ee90d27ae74322c8390841aff2983922082) | 327,362,493 | 290,246 |
 
-The first attempt on Ethereum Sepolia reverted (transaction `0xf803113e...`, gas limit 387,440): forge estimated gas with a local simulation under mainnet rules, while the Sepolia node estimates 1,860,853 for the same deployment (Base Sepolia: 283,893), because Sepolia currently runs a different gas schedule (ADR-001). Redeploying with `--skip-simulation`, which takes the node's estimate, succeeded.
+On Ethereum Sepolia the script runs with `--skip-simulation`: forge estimates gas with a local simulation under mainnet rules, which underestimates this deployment on Sepolia because Sepolia currently runs a different gas schedule (ADR-001); without the flag a first attempt reverted out of gas. With the flag, forge takes the node's estimate.
 
 **Gas.** `anchor` costs 47,058 gas per batch regardless of N (measured with real transactions under mainnet rules, ADR-001; Estimate was about 47k).
 

@@ -33,8 +33,8 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] Unit tests for `anchor` and `verifyPost` ([contracts/test/PostAnchor.t.sol](contracts/test/PostAnchor.t.sol))
 - [x] Invariant tests with handler: I1 (anchor once), I2 (`anchoredAt` immutable), I4 (sender isolation); checked against a mutant ([contracts/test/invariant](contracts/test/invariant/))
 - [x] Fuzz tests: I3 (zero root reverts), I5 (`verifyPost` iff leaf in an anchored tree); I6 (no ETH accepted) unit + fuzz
-- [x] CREATE2 deployment script; deterministic deployment proxy present on the 3 testnets; predicted address `0x36b5D5F0D176b96013678FC69C34038897fAF382` ([contracts/script/DeployPostAnchor.s.sol](contracts/script/DeployPostAnchor.s.sol))
-- [x] Deployed to Ethereum Sepolia, Base Sepolia and Arbitrum Sepolia at `0x36b5D5F0D176b96013678FC69C34038897fAF382`, same bytecode on all three (README section 11)
+- [x] CREATE2 deployment script; deterministic deployment proxy present on the 3 testnets; predicted address `0xD0fB2A7F1D12C5AF80E49B31Bcb1B4983AD7C5dB` ([contracts/script/DeployPostAnchor.s.sol](contracts/script/DeployPostAnchor.s.sol))
+- [x] Deployed to Ethereum Sepolia, Base Sepolia and Arbitrum Sepolia at `0xD0fB2A7F1D12C5AF80E49B31Bcb1B4983AD7C5dB`, same bytecode on all three (README section 11)
 
 ### Benchmark (`contracts/bench`, `packages/bench`)
 
@@ -119,3 +119,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | 2026-11-08 | `packages/web` implemented: compose, status, proof bundle, Verify, efficiency; run end to end in a headless browser against a local stack. Openfort waits for a project. |
 | 2026-11-08 | Deployed `PostAnchor` on the three testnets, trusted the real relayer and receipt keys, published the first real post through Turbo and verified it from public sources; Openfort sign-in wired and checked. |
 | 2026-11-08 | Verifier reads several gateways in order and reports verified / pending / failed (a gateway 404 is pending, not invalid). Backend: `GET /posts` and `GET /posts/:postHash` with timeline columns. Web redesign: feed, post page with live checks, How it works, light and dark themes. |
+| 2026-11-08 | `PostAnchor` v2 deployed (`AlreadyAnchored` with parameters, same gas per batch) with new relayer, receipt and Arweave keys; neutral names: `Onchain-Posts` tag, `onchain-posts.*/1` schemas, "Onchain Posts" and "Onchain Receipts" EIP-712 domains; database emptied. |

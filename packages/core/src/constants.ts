@@ -10,7 +10,7 @@ export const CHAIN_IDS = {
 export const SUPPORTED_CHAIN_IDS: readonly number[] = Object.values(CHAIN_IDS);
 
 /** Predicted CREATE2 address of PostAnchor, identical on the three chains (ADR-009). Also the EIP-712 verifyingContract. */
-export const POST_ANCHOR_ADDRESS: Address = '0x36b5D5F0D176b96013678FC69C34038897fAF382';
+export const POST_ANCHOR_ADDRESS: Address = '0xD0fB2A7F1D12C5AF80E49B31Bcb1B4983AD7C5dB';
 
 export const CONTENT_TYPE_POST = 'post';
 

@@ -49,7 +49,7 @@ describe('log queries', () => {
       },
     };
     const source = chainSourceFromClient(client as never);
-    await source.anchorEvents('0x36b5D5F0D176b96013678FC69C34038897fAF382', ['0x1111111111111111111111111111111111111111'], 1_000n, 3_499n);
+    await source.anchorEvents('0xD0fB2A7F1D12C5AF80E49B31Bcb1B4983AD7C5dB', ['0x1111111111111111111111111111111111111111'], 1_000n, 3_499n);
     expect(ranges.every(([a, b]) => b - a + 1n <= 200n)).toBe(true);
     expect(ranges[0]![0]).toBe(1_000n);
     expect(ranges.at(-1)![1]).toBe(3_499n);
@@ -58,7 +58,7 @@ describe('log queries', () => {
 
   it('does not retry errors that are not about the range', async () => {
     const client = { getLogs: async () => Promise.reject(new Error('connection refused')) };
-    await expect(chainSourceFromClient(client as never).anchorEvents('0x36b5D5F0D176b96013678FC69C34038897fAF382', ['0x1111111111111111111111111111111111111111'], 0n, 10n)).rejects.toThrow('connection refused');
+    await expect(chainSourceFromClient(client as never).anchorEvents('0xD0fB2A7F1D12C5AF80E49B31Bcb1B4983AD7C5dB', ['0x1111111111111111111111111111111111111111'], 0n, 10n)).rejects.toThrow('connection refused');
   });
 });
 

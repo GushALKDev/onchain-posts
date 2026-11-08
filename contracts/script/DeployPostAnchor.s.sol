@@ -24,7 +24,7 @@ contract DeployPostAnchor is Script {
                                CONSTANTS
     //////////////////////////////////////////////////////////////*/
 
-    bytes32 internal constant SALT = keccak256("phi-onchain-posts/PostAnchor/v1");
+    bytes32 internal constant SALT = keccak256("onchain-posts/PostAnchor/v2");
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS

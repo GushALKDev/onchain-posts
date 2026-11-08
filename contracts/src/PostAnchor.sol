@@ -21,8 +21,10 @@ contract PostAnchor {
 
     /**
      * @notice The sender already anchored this root.
+     * @param root Root that was already anchored by the sender.
+     * @param anchoredAt Timestamp of the existing anchor.
      */
-    error AlreadyAnchored();
+    error AlreadyAnchored(bytes32 root, uint256 anchoredAt);
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -59,7 +61,8 @@ contract PostAnchor {
      */
     function anchor(bytes32 root, bytes32 manifestId, uint32 count) external {
         if (root == bytes32(0)) revert ZeroRoot();
-        if (anchoredAt[msg.sender][root] != 0) revert AlreadyAnchored();
+        // The slot is re-read only on the revert path, so the success path costs the same as without error parameters.
+        if (anchoredAt[msg.sender][root] != 0) revert AlreadyAnchored(root, anchoredAt[msg.sender][root]);
 
         anchoredAt[msg.sender][root] = block.timestamp;
 

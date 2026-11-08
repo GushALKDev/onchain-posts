@@ -52,9 +52,10 @@ contract PostAnchorTest is Test {
     function test_anchor_revertsOnDuplicate() public {
         vm.startPrank(relayer);
         postAnchor.anchor(ROOT, MANIFEST_ID, 3);
+        uint256 firstAnchor = block.timestamp;
 
         vm.warp(block.timestamp + 1 hours);
-        vm.expectRevert(PostAnchor.AlreadyAnchored.selector);
+        vm.expectRevert(abi.encodeWithSelector(PostAnchor.AlreadyAnchored.selector, ROOT, firstAnchor));
         postAnchor.anchor(ROOT, MANIFEST_ID, 3);
         vm.stopPrank();
     }

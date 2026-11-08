@@ -5,32 +5,32 @@
     {
       "role": "relayer",
       "chainId": 11155111,
-      "address": "0xe8424fd67dcCfcc0102088FCEe849c19935Dc9cA",
-      "validFrom": "2026-11-08T19:51:00Z",
+      "address": "0xAD78029FE45ccEA39cF42870cEE4B012c8CBF1b3",
+      "validFrom": "2026-11-08T21:40:00Z",
       "revokedAt": null,
       "note": "PoC relayer key, Ethereum Sepolia"
     },
     {
       "role": "relayer",
       "chainId": 84532,
-      "address": "0xe8424fd67dcCfcc0102088FCEe849c19935Dc9cA",
-      "validFrom": "2026-11-08T19:51:00Z",
+      "address": "0xAD78029FE45ccEA39cF42870cEE4B012c8CBF1b3",
+      "validFrom": "2026-11-08T21:40:00Z",
       "revokedAt": null,
       "note": "PoC relayer key, Base Sepolia"
     },
     {
       "role": "relayer",
       "chainId": 421614,
-      "address": "0xe8424fd67dcCfcc0102088FCEe849c19935Dc9cA",
-      "validFrom": "2026-11-08T19:51:00Z",
+      "address": "0xAD78029FE45ccEA39cF42870cEE4B012c8CBF1b3",
+      "validFrom": "2026-11-08T21:40:00Z",
       "revokedAt": null,
       "note": "PoC relayer key, Arbitrum Sepolia"
     },
     {
       "role": "receipt",
       "chainId": null,
-      "address": "0x4f7bEA09FD0974d96eFBadc49E73323300478803",
-      "validFrom": "2026-11-08T19:51:00Z",
+      "address": "0x812fDb7947C38fb9f2Ccda8C5dDa46137D8B57DE",
+      "validFrom": "2026-11-08T21:40:00Z",
       "revokedAt": null,
       "note": "PoC receipt-signing key, chain-agnostic because the \"Onchain Receipts\" domain has no chainId"
     }

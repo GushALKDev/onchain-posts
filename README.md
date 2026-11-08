@@ -222,13 +222,13 @@ docker compose exec backend node dist/print-keys.js   # public relayer and recei
 
 Web app (see [packages/web/README.md](packages/web/README.md)): the VITE_* variables of the root `.env`, then `pnpm --filter @onchain-posts/web dev` on http://localhost:5173. It signs with the Openfort embedded wallet when the Openfort keys are set, and with a development key otherwise. Demo URL: pending.
 
-**Deployment.** `PostAnchor` is live at `0x36b5D5F0D176b96013678FC69C34038897fAF382` on the three testnets, with identical runtime bytecode (keccak `0x6cf2bcf7...0aa3`, equal to the local build):
+**Deployment.** `PostAnchor` is live at `0xD0fB2A7F1D12C5AF80E49B31Bcb1B4983AD7C5dB` on the three testnets, with identical runtime bytecode (keccak `0x6b515179...d6d5`, equal to the local build):
 
 | Chain | Deployment transaction | Block | Gas used |
 | ----- | ---------------------- | ----- | -------- |
-| Ethereum Sepolia | [0x56d697c2...](https://sepolia.etherscan.io/tx/0x56d697c23e0f076980be5dedf894f72e5e7d81604f452c62431dc20cef6811fc) | 12,092,665 | 1,829,478 |
-| Base Sepolia | [0xf67c6e02...](https://sepolia.basescan.org/tx/0xf67c6e024f98e4e6b139f5e8af1ae49d250295986e4204d4bacf76ebf9fcba15) | 56,226,917 | 280,500 |
-| Arbitrum Sepolia | [0x90dc5518...](https://sepolia.arbiscan.io/tx/0x90dc5518c6fb25f27be160433f3816795fffa7720198843c60782f0ab1d0568d) | 327,338,887 | 280,500 |
+| Ethereum Sepolia | [0x342de0c1...](https://sepolia.etherscan.io/tx/0x342de0c19f1987bd30c506f3b324a62e9df4d8dac80300f29ae8862d214f4801) | 12,093,208 | 1,899,086 |
+| Base Sepolia | [0x26cdad46...](https://sepolia.basescan.org/tx/0x26cdad4683ecc4b2349ce051374a7b8d626e27e3c13ee37925beddaa4ce3ea9f) | 56,262,308 | 290,246 |
+| Arbitrum Sepolia | [0xeb00ff21...](https://sepolia.arbiscan.io/tx/0xeb00ff21cdf67aa740cc07a7af198ee90d27ae74322c8390841aff2983922082) | 327,362,493 | 290,246 |
 
 Ethereum Sepolia used 6.5 times the gas of the L2s for the same deployment: it currently runs a different gas schedule from mainnet (ADR-001), and forge's local simulation, which uses mainnet rules, underestimated it, so the deployment there needed `--skip-simulation` to take the node's estimate.
 
