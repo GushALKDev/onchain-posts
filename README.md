@@ -157,6 +157,8 @@ Anyone can verify a post without trusting us, with the `@phi/verifier` package. 
 - The verifier re-derives and re-checks everything against public sources and `config/trusted-keys.json`: it fetches the post JSON and image by Arweave ID, recomputes `imageHash` and `postHash`, rebuilds the root from the manifest and checks the proof, checks `anchoredAt` / `verifyPost` for a sender listed as relayer with the anchor time inside the key's window, and verifies the receipt with the "Phi Receipts" EIP-712 domain against a listed receipt key.
 - Per chain it reports: anchored (flagged late if anchored after `anchorBy`), pending inside deadline, deadline passed but not scanned (or scan incomplete), or omitted. **A verdict of "omitted" is never derived from hints alone**: it requires the bounded scan of the trusted relayers' `BatchAnchored` events between `acceptedAt` and `anchorBy` plus a margin, with every manifest in that window searched ([ADR-015](docs/decisions/ADR-015-signed-receipts.md)).
 
+Implemented in [`packages/verifier`](packages/verifier/README.md): a library and the `pnpm verify <postHash> [--hints <bundle.json>] [--scan]` CLI, tested end to end against local nodes running `PostAnchor` at its real address (17 tests, including omission only after a complete bounded scan, untrusted or revoked relayers, tampered hints and tampered content).
+
 Honest note: **the Verify page inside the web app is a convenience, not independent verification**, because the platform serves both the code and its copy of `trusted-keys.json`. Independent verification means running the CLI from the public repository at a pinned commit, or with a `trusted-keys.json` the user supplies.
 
 ## 10. Decision log
@@ -202,16 +204,19 @@ node packages/bench/src/calldata-floor-probe.mjs
 cd contracts && forge script script/DeployPostAnchor.s.sol --rpc-url <rpc> --broadcast --private-key <key>
 ```
 
+```bash
+# Verify a post from public sources only (optionally with untrusted hints); real posts need the deployment
+# and the real keys in config/trusted-keys.json first
+pnpm verify <postHash>
+pnpm verify <postHash> --hints <bundle.json> --scan
+```
+
 Not implemented yet (placeholders):
 
 ```bash
 # Backend + Postgres (+ web) locally
 cp .env.example .env   # fill in values
 docker compose up
-
-# Verify a post from public sources only (optionally with untrusted hints)
-pnpm verify <postHash>
-pnpm verify <postHash> --hints <bundle.json>
 ```
 
 Demo URL: pending.

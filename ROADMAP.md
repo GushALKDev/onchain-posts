@@ -11,7 +11,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | Phase | Scope | Status |
 | ----- | ----- | ------ |
 | Block B | Documentation-first scaffold: repo, README, ADRs, efficiency and threat model, diagrams | Done (2026-11-07) |
-| Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | In progress: contract, tests, gas and USD benchmark, `packages/core` done; verifier next |
+| Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | Done except the testnet deployment, the Timeline and Waterfall diagrams and the open research items |
 | Tier 2 | Minimal pipeline: backend, Postgres, Turbo uploads, anchoring on the 3 testnets | Not started |
 | Tier 3 | Minimal web: compose, per-stage status, Verify page | Not started |
 
@@ -60,9 +60,11 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 
 ### `packages/verifier`
 
-- [ ] Library: hints parsing, Arweave fetch by ID, hash recomputation, root rebuild, on-chain checks, trusted-keys windows, receipt verification
-- [ ] Bounded scan and the four per-chain verdicts ([ADR-015](docs/decisions/ADR-015-signed-receipts.md))
-- [ ] CLI: `pnpm verify <postHash> [--hints <bundle.json>]`
+- [x] Library: hints parsing, Arweave fetch by ID, hash recomputation, root rebuild, on-chain checks, trusted-keys windows, receipt verification, authorship from the private bundle ([packages/verifier/src/verify.ts](packages/verifier/src/verify.ts))
+- [x] Bounded scan and the per-chain verdicts, with the late flag and incomplete scans never yielding "omitted" ([ADR-015](docs/decisions/ADR-015-signed-receipts.md))
+- [x] CLI: `pnpm verify <postHash> [--hints <bundle.json>] [--scan]`, tested as a child process
+- [x] Integration tests against local nodes with `PostAnchor` at its real CREATE2 address (17 tests)
+- [ ] Run against the real testnets once `PostAnchor` is deployed and `config/trusted-keys.json` holds the real keys
 
 ### Docs and diagrams
 
@@ -106,3 +108,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | 2026-11-07 | Tier 1 contract work: `PostAnchor`, 16 tests (I1 to I6), CREATE2 script, gas benchmark with five variants and the calldata probe. Openfort research folded into ADR-011 (EOA account type, recovery modes). |
 | 2026-11-07 | Benchmark completed in money: Arbitrum gas proxy, L1 data fee oracles, USD per post. Finding: image storage is 96% or more of the end-to-end cost from N = 100 on. |
 | 2026-11-07 | `packages/core` implemented: EIP-712, Merkle, schemas, normalisation, WebP parser, trusted keys; 40 vitest tests and a cross-implementation fixture checked by Foundry. |
+| 2026-11-08 | `packages/verifier` implemented: library, bounded scan, verdicts, authorship check and CLI; 17 integration tests against local nodes. |

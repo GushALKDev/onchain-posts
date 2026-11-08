@@ -106,5 +106,6 @@ Follow-ups:
 ## Evidence
 
 - EIP-712 allows a domain with only some fields ("Protocol designers only need to include the fields that make sense for their signing domain") (Verified 2026-11-07: https://eips.ethereum.org/EIPS/eip-712).
-- Tests to add in a later block: receipt round-trip in `packages/core` (sign with the KMS simulator, verify against a test `config/trusted-keys.json`); verifier tests for each of the four verdicts, including an incomplete scan.
+- Implemented in `packages/verifier` with a default scan margin of 120 s after `anchorBy` (design parameter). Its integration tests (`packages/verifier/test/verify.test.ts`, local nodes with `PostAnchor` at its real address) cover each verdict: anchored (and late), pending, deadline passed but not scanned (scan not run, and an incomplete scan with a missing manifest), and omitted only after a complete bounded scan; plus a receipt from an untrusted key, whose deadlines are ignored.
+- Receipt round-trip (sign and recover) is tested in `packages/core/test/eip712.test.ts`; signing with the KMS simulator comes with the backend.
 - Tmax defaults: [ADR-006](ADR-006-batching-policy.md) (design parameters, tunable from the benchmark).
