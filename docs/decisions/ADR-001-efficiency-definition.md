@@ -123,7 +123,7 @@ Negative:
 
 Follow-ups:
 
-- Identify the gas schedule currently active on Ethereum Sepolia.
+- Identify the gas schedule currently active on Ethereum Sepolia. Its effect is already measured: the `PostAnchor` deployment used 1,829,478 gas there against 280,500 on Base and Arbitrum Sepolia, and the first real anchor 129,078 against 47,058 (ADR-009).
 - Rerun the cost snapshot before delivery: USD figures age with gas prices.
 
 ## Evidence
@@ -133,6 +133,7 @@ Follow-ups:
 - EIP-7623 floor formula: confirmed by the exact match above (B2 at N = 10, 100 and 1000); specification at https://eips.ethereum.org/EIPS/eip-7623.
 - Arbitrum execution-gas proxy: [`packages/bench/results/2026-11-07-gas-local-cancun.json`](../../packages/bench/results/2026-11-07-gas-local-cancun.json), produced by `node packages/bench/src/gas-bench.mjs --hardfork cancun`.
 - USD cost: [`packages/bench/results/2026-11-07-cost-snapshot.json`](../../packages/bench/results/2026-11-07-cost-snapshot.json), produced by `node packages/bench/src/cost-snapshot.mjs`.
+- Real-chain check (2026-11-08): the first real anchor used exactly 47,058 gas on Base Sepolia and Arbitrum Sepolia, the value measured locally under mainnet rules (ADR-009).
 - Turbo list price: USD 73.51 per GiB, `winc` 14986793268274 from https://turbo.ardrive.io/v1/rates; the unit is inferred to be 1 GiB because https://turbo.ardrive.io/v1/price/bytes/1073741824 returned the same `winc` (Verified 2026-11-06). About USD 0.00007 per KiB (Estimate: 73.51 / 1,048,576).
 - Turbo free tier: items up to 105 KiB, 10 MiB lifetime allowance tracked per wallet and per subnet (Verified 2026-11-07: https://docs.ar.io/build/upload/turbo-credits/). The research notes of 2026-11-06 recorded "under 100 KiB" from a page that now returns 404; see ADR-002.
 - To verify: Base stack lineage (ADR-007); which upgrade set Ethereum Sepolia's current gas schedule.

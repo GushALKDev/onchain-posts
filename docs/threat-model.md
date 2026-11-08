@@ -38,7 +38,7 @@ The one sentence that defines what the accountability mechanisms cover, used ver
 | Chain observer | Relayer address (tx sender), `root`, `manifestId`, `count`, block timestamp | User address, signature, content |
 | Arweave reader | Image, post JSON (with username and caption), manifest (`postHash`, `postArweaveId`, `sigCommit` per post); `owner` = platform key; tags without username | User address, public key, signature |
 | Turbo | Upload contents and tags; IP of the backend | User IPs, user addresses |
-| Openfort | Email and account address. Signing happens inside the OpenSigner iframe; whether the `PublishIntent` payload is ever sent to Openfort's servers is not documented (To verify, [ADR-011](decisions/ADR-011-identity-openfort.md)). Worst case: the only third party able to link email, address and posts | Posts, if the payload stays client-side (To verify) |
+| Openfort | Email and account address. Signing happens inside the OpenSigner iframe; Openfort does not document whether the `PublishIntent` payload reaches its servers, and in a recorded run on 2026-11-08 no request or WebSocket frame to Openfort carried it ([ADR-011](decisions/ADR-011-identity-openfort.md)). Worst case: the only third party able to link email, address and posts | Posts, if the payload stays client-side (To verify) |
 | Platform / relayer | Everything: user to signer mapping (stored as HMAC), encrypted signatures, IPs at the API, all content | Plaintext addresses in a database dump without `DB_HMAC_SECRET` and the signature encryption key |
 | The user's own browser | The user's signatures and intent fields in IndexedDB | Other users' data |
 | Other users | Username and content | Addresses and signatures |

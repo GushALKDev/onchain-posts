@@ -21,7 +21,7 @@ Store everything on **Arweave**, uploaded through **Turbo** (the ar.io / ArDrive
 
 **Platform signer key type (nice-to-have, To verify).** The ID of an ANS-104 data item is the SHA-256 of its signature (Verified 2026-11-07, ANS-104 spec: "The id of the DataItem, is the SHA256 digest of this signature"). An Arweave RSA-PSS key uses a random salt, so uploading the same bytes twice yields two IDs. A secp256k1 signer with deterministic ECDSA (RFC 6979) would yield the same ID for the same bytes and tags, which makes upload retries idempotent by construction and makes the ID known before upload. Three checks before choosing it:
 
-1. Whether the Turbo SDK adds a random `anchor` by default. The anchor is optional and up to 32 bytes (Verified 2026-11-07, ANS-104 spec); a random one would break determinism.
+1. Whether the Turbo SDK adds a random `anchor` by default. Partly checked on 2026-11-08: `@ardrive/turbo-sdk` 2.1.2 only passes an `anchor` when `dataItemOpts` provides one (`lib/esm/node/signer.js`); whether the underlying data-item library adds one is still open. The anchor is optional and up to 32 bytes (Verified 2026-11-07, ANS-104 spec); a random one would break determinism.
 2. What Turbo does with an ID that already exists (rejects, or charges again).
 3. That the signing library is actually RFC 6979 deterministic.
 
@@ -67,4 +67,5 @@ Follow-ups:
 - Walrus vs Arweave over time: Arweave costs about USD 68.5 per GB once (Estimate: 73.51 / 1.0737 GB per GiB); Walrus at USD 0.023 per GB per month reaches that after about 2,977 months, about 248 years (Estimate: 68.5 / 0.023). If the Walrus price applies to the encoded size (about 5x), that drops to about 50 years. Which size the price applies to: To verify.
 - Ethereum blob retention: about 18 days (Estimate: 4096 epochs x 32 slots x 12 s = 1,572,864 s = 18.2 days; the 4096-epoch retention parameter To verify against the consensus specs).
 - Turbo price on 2026-11-07: USD 71.41 per GiB plus a flat fee per data item of 6,275,347 winc (USD 0.0000308), from https://turbo.ardrive.io/v1/rates (`perDataItemFeeWinc`); the price of a 95 KiB item, USD 0.00650, matches `/v1/price/bytes/97280` fee included (Verified 2026-11-07 by `node packages/bench/src/cost-snapshot.mjs`).
+- First real upload (2026-11-08, platform RSA key): Turbo reported the post JSON `CONFIRMED` at once with a cost of 0 winc (free tier), but `arweave.net` served it only about 6 minutes after the upload (first served between 20:00:29 and 20:00:49 UTC for an upload at 19:54:57 UTC, polled every 20 s). The signed data item was 1,711 bytes for a 510-byte payload: about 1.2 KB of ANS-104 headers (RSA owner and signature, tags), which bounds the effect on the 105 KiB threshold for the 95 KiB image cap.
 - To verify: whether ANS-104 headers and tags count toward the 105 KiB free-tier threshold; the three signer key checks above; Turbo upload rate limits (ADR-010).

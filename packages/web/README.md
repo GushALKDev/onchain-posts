@@ -15,7 +15,9 @@ In demo mode a "Flush now" button asks for the operator token (it is never embed
 
 ## Signing
 
-The app signs through a `PostSigner` interface (`src/signer.ts`). The production signer is the Openfort embedded EOA (ADR-011), used only as a signing identity. Until an Openfort project is configured (publishable key), the app uses a **development key** generated in the browser and says so on every page. Clearing site data loses that key and the locally stored signatures.
+The app signs through a `PostSigner` interface (`src/signer.ts`). With `VITE_OPENFORT_PUBLISHABLE_KEY` and `VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY` set, it signs with the **Openfort embedded EOA** (ADR-011): email code or guest sign-in, EOA account type, password recovery. Every Openfort signature is checked locally before use: it must recover to the account for the exact payload. Without those keys, the app falls back to a **development key** generated in the browser and says so on every page.
+
+Observed on 2026-11-08 with `@openfort/openfort-js` 2.6.4: Openfort signs the chain-agnostic "Phi Posts" domain as given, and no request to Openfort carried the payload while signing (details in ADR-011).
 
 ## Running locally
 
@@ -34,7 +36,7 @@ The backend must list the web origin in `WEB_ORIGINS`. With `STORAGE_MODE=memory
 
 ## Limits
 
-- Openfort sign-in is not wired yet (needs a project); the two open ADR-011 checks depend on it.
+- Openfort guest accounts are real accounts in the Openfort project; each guest is a new key, so a username claimed by one guest cannot be reused by another.
 - Browsers that cannot encode WebP from a canvas get an explicit error.
 - The production bundle is over 500 kB (viem, the Merkle library and zod); code splitting is possible if it matters.
 - Signatures in IndexedDB are only as safe as the browser that holds them (ADR-014).

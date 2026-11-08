@@ -11,9 +11,9 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | Phase | Scope | Status |
 | ----- | ----- | ------ |
 | Block B | Documentation-first scaffold: repo, README, ADRs, efficiency and threat model, diagrams | Done (2026-11-07) |
-| Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | Done except the testnet deployment, the Timeline and Waterfall diagrams and the open research items |
-| Tier 2 | Minimal pipeline: backend, Postgres, Turbo uploads, anchoring on the 3 testnets | Implemented and tested locally; real Turbo uploads and testnet anchoring pending (deployment) |
-| Tier 3 | Minimal web: compose, per-stage status, Verify page | Implemented and run in a browser against a local stack; Openfort sign-in and public demo pending |
+| Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | Done, deployed on the three testnets; Timeline and Waterfall diagrams and some research items open |
+| Tier 2 | Minimal pipeline: backend, Postgres, Turbo uploads, anchoring on the 3 testnets | Done: first real post stored through Turbo and anchored on the three testnets (2026-11-08) |
+| Tier 3 | Minimal web: compose, per-stage status, Verify page | Done, with Openfort sign-in; public demo URL pending |
 
 ## Block B: documentation-first scaffold
 
@@ -34,7 +34,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] Invariant tests with handler: I1 (anchor once), I2 (`anchoredAt` immutable), I4 (sender isolation); checked against a mutant ([contracts/test/invariant](contracts/test/invariant/))
 - [x] Fuzz tests: I3 (zero root reverts), I5 (`verifyPost` iff leaf in an anchored tree); I6 (no ETH accepted) unit + fuzz
 - [x] CREATE2 deployment script; deterministic deployment proxy present on the 3 testnets; predicted address `0x36b5D5F0D176b96013678FC69C34038897fAF382` ([contracts/script/DeployPostAnchor.s.sol](contracts/script/DeployPostAnchor.s.sol))
-- [ ] Deploy to Ethereum Sepolia, Base Sepolia and Arbitrum Sepolia; record the address (needs a funded deployer key)
+- [x] Deployed to Ethereum Sepolia, Base Sepolia and Arbitrum Sepolia at `0x36b5D5F0D176b96013678FC69C34038897fAF382`, same bytecode on all three (README section 11)
 
 ### Benchmark (`contracts/bench`, `packages/bench`)
 
@@ -64,7 +64,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] Bounded scan and the per-chain verdicts, with the late flag and incomplete scans never yielding "omitted" ([ADR-015](docs/decisions/ADR-015-signed-receipts.md))
 - [x] CLI: `pnpm verify <postHash> [--hints <bundle.json>] [--scan]`, tested as a child process
 - [x] Integration tests against local nodes with `PostAnchor` at its real CREATE2 address (17 tests)
-- [ ] Run against the real testnets once `PostAnchor` is deployed and `config/trusted-keys.json` holds the real keys
+- [x] Verified the first real post from public sources only, with hints and by scanning without hints; scanning adapted to pruned history and log-range limits of public RPCs
 
 ### Docs and diagrams
 
@@ -74,9 +74,9 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 
 ### Research (To verify items that can change the design)
 
-- [~] Openfort ([ADR-011](docs/decisions/ADR-011-identity-openfort.md)): resolved from the official docs: EOA account type (plain ECDSA signatures), 2-of-3 OpenSigner shares, recovery modes that keep the platform from reconstructing keys, allowed domains, no co-signer. Still open, to test at the start of Tier 3: a domain without `chainId`, and whether the payload leaves the iframe
+- [x] Openfort ([ADR-011](docs/decisions/ADR-011-identity-openfort.md)): EOA account type, 2-of-3 shares, recovery modes, allowed domains, no co-signer (docs); domain without `chainId` and payload staying in the iframe (observed 2026-11-08). Dynamic equivalence still open
 - [~] Base stack lineage ([ADR-007](docs/decisions/ADR-007-chain-selection.md)): Base still exposes the OP Stack `GasPriceOracle` (v1.6.0, Isthmus), used for its L1 data fee; full lineage still open
-- [ ] Turbo: default `anchor` field, behaviour on an existing data item ID, upload rate limits ([ADR-002](docs/decisions/ADR-002-storage-arweave-turbo.md))
+- [~] Turbo: the SDK passes an `anchor` only when given; behaviour on an existing data item ID and upload rate limits still open ([ADR-002](docs/decisions/ADR-002-storage-arweave-turbo.md))
 
 ## Tier 2: minimal pipeline (`packages/backend`)
 
@@ -91,8 +91,8 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] `DEMO_MODE` with the protected flush-now endpoint ([ADR-018](docs/decisions/ADR-018-abuse-cost-control.md))
 - [x] Backend service in `docker-compose.yml`; Docker smoke run against a local chain
 - [x] 37 tests with Postgres and two local chains, including the full pipeline verified by `@phi/verifier`
-- [ ] First real Turbo upload (permanent and public, needs the owner's go-ahead)
-- [ ] Anchoring on the three testnets (needs the deployment and a funded relayer)
+- [x] First real Turbo upload (free tier, 0 winc); `arweave.net` served it about 6 minutes later (ADR-002, ADR-008)
+- [x] Anchoring on the three testnets: 47,058 gas on Base and Arbitrum Sepolia as measured locally, 129,078 on Ethereum Sepolia (different schedule)
 
 ## Tier 3: minimal web (`packages/web`)
 
@@ -102,7 +102,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] Verify page on the verifier library, with the "convenience, not independent verification" note and an optional user-supplied trust root
 - [x] Demo-only flush-now button (token typed by the operator); efficiency panel from the benchmark results
 - [x] Browser run in headless Chrome against a local stack: compose, publish on two chains, flush, VERIFIED (ADR-019)
-- [ ] Openfort sign-in adapter and the two open ADR-011 checks (needs an Openfort project)
+- [x] Openfort sign-in (email code or guest, EOA, password recovery); domain without `chainId` accepted and payload not leaving the iframe, both observed (ADR-011)
 - [ ] Public demo URL in the README
 
 ## Log
@@ -116,3 +116,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | 2026-11-08 | `packages/verifier` implemented: library, bounded scan, verdicts, authorship check and CLI; 17 integration tests against local nodes. |
 | 2026-11-08 | `packages/backend` implemented: API, workers, KMS simulator, Docker; 37 tests and a Docker smoke run. Finding: a replacement transaction must reuse the original gas limit. |
 | 2026-11-08 | `packages/web` implemented: compose, status, proof bundle, Verify, efficiency; run end to end in a headless browser against a local stack. Openfort waits for a project. |
+| 2026-11-08 | Deployed `PostAnchor` on the three testnets, trusted the real relayer and receipt keys, published the first real post through Turbo and verified it from public sources; Openfort sign-in wired and checked. |

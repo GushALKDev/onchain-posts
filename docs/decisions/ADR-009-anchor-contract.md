@@ -84,7 +84,15 @@ contract PostAnchor {
 
 - Factory: the deterministic deployment proxy `0x4e59b44847b379578588920cA78FbF26c0B4956C` that Foundry uses for `new X{salt: s}()`; its code is present and identical on the three testnets (Verified 2026-11-07: `cast code 0x4e59b44847b379578588920cA78FbF26c0B4956C --rpc-url <rpc>` on the public RPCs listed in ADR-007).
 - Compiler settings pinned in `contracts/foundry.toml`: solc 0.8.30, `evm_version = "cancun"` (Prague adds no opcode this contract needs), optimizer 200 runs, `bytecode_hash = "none"` and `cbor_metadata = false` so comment-only changes do not move the address.
-- Predicted address with salt `keccak256("phi-onchain-posts/PostAnchor/v1")`: `0x36b5D5F0D176b96013678FC69C34038897fAF382` on all three chains (simulation, not yet broadcast: `forge script script/DeployPostAnchor.s.sol --rpc-url <rpc>` against each testnet). Whether `cancun` bytecode runs unchanged on the three chains is confirmed only once deployed.
+- Predicted address with salt `keccak256("phi-onchain-posts/PostAnchor/v1")`: `0x36b5D5F0D176b96013678FC69C34038897fAF382` on all three chains Deployed on 2026-11-08 at that address on the three testnets; the runtime bytecode read from each chain has the same keccak as the local build (`0x6cf2bcf7451a1e0fb2a4ef6c3c2a90df518b7ee9e00380426a0a430c780f0aa3`), so the `cancun` bytecode runs unchanged on all three.
+
+| Chain | Deployment transaction | Block | Gas used |
+| ----- | ---------------------- | ----- | -------- |
+| Ethereum Sepolia | [0x56d697c2...](https://sepolia.etherscan.io/tx/0x56d697c23e0f076980be5dedf894f72e5e7d81604f452c62431dc20cef6811fc) | 12,092,665 | 1,829,478 |
+| Base Sepolia | [0xf67c6e02...](https://sepolia.basescan.org/tx/0xf67c6e024f98e4e6b139f5e8af1ae49d250295986e4204d4bacf76ebf9fcba15) | 56,226,917 | 280,500 |
+| Arbitrum Sepolia | [0x90dc5518...](https://sepolia.arbiscan.io/tx/0x90dc5518c6fb25f27be160433f3816795fffa7720198843c60782f0ab1d0568d) | 327,338,887 | 280,500 |
+
+The first attempt on Ethereum Sepolia reverted (transaction `0xf803113e...`, gas limit 387,440): forge estimated gas with a local simulation under mainnet rules, while the Sepolia node estimates 1,860,853 for the same deployment (Base Sepolia: 283,893), because Sepolia currently runs a different gas schedule (ADR-001). Redeploying with `--skip-simulation`, which takes the node's estimate, succeeded.
 
 **Gas.** `anchor` costs 47,058 gas per batch regardless of N (measured with real transactions under mainnet rules, ADR-001; Estimate was about 47k).
 
@@ -128,10 +136,11 @@ Negative:
 
 Follow-ups:
 
-- Broadcast the deployment on the three testnets (needs a funded deployer key) and record the address in the README.
+- Verify the source on the block explorers (needs explorer API keys).
 
 ## Evidence
 
 - Gas: measured in ADR-001 (`packages/bench/results/2026-11-07-gas-local-prague.json`).
 - Arbitrum `block.number` and `block.timestamp` semantics: Verified 2026-11-07 (link above).
-- To verify: timestamp bounds on Base; the deployed bytecode on each chain once broadcast.
+- Real anchors (first post, 2026-11-08): 47,058 gas on Base Sepolia and Arbitrum Sepolia, identical to the local measurement, and 129,078 on Ethereum Sepolia (its different schedule). Arbitrum Sepolia charged no L1 component (`gasUsedForL1` 0) and Base Sepolia an L1 fee of 108 wei: testnet L1 fees are not representative, hence the mainnet snapshot for USD (ADR-001).
+- To verify: timestamp bounds on Base.

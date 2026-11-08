@@ -43,4 +43,4 @@ The invariant suite was checked against a mutant with the `AlreadyAnchored` chec
 
 ## Deployment status
 
-Not broadcast yet: it needs a funded deployer key. Simulation against each testnet predicts `0x36b5D5F0D176b96013678FC69C34038897fAF382` on all three chains.
+Deployed on 2026-11-08 at `0x36b5D5F0D176b96013678FC69C34038897fAF382` on Ethereum Sepolia, Base Sepolia and Arbitrum Sepolia, with the same runtime bytecode as the local build. Transactions and gas in the README (section 11). On Ethereum Sepolia, run the script with `--skip-simulation`: forge's local simulation uses mainnet gas rules and underestimates Sepolia's current schedule.

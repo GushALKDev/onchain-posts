@@ -15,7 +15,7 @@ A user can choose up to three chains for one post (brief). Each chain has its ow
 
 **Pipeline invariant: no post enters a batch unless its data is stored on Arweave.** Anchors never point to missing data.
 
-**Trust assumption.** Turbo makes data readable before final Arweave settlement; anchoring before settlement trusts Turbo to settle (ADR-002).
+**Trust assumption.** Turbo makes data readable before final Arweave settlement; anchoring before settlement trusts Turbo to settle (ADR-002). Measured on 2026-11-08: Turbo confirmed the upload at once, the anchors landed 7 to 15 seconds after the flush, and `arweave.net` served the post JSON about 6 minutes after the upload. So for a few minutes an anchored post is not retrievable from the public gateway; the verifier reports that as "not available yet", not as invalid content. Waiting for gateway availability before anchoring would remove that window at the cost of minutes of latency and of the receipt deadlines; the PoC keeps anchoring after Turbo's confirmation.
 
 **Semantics.**
 

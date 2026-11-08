@@ -124,7 +124,7 @@ Interactive version (download and open in a browser): [docs/diagrams/html/03-pri
 | Chain observer | Relayer address, root, manifestId, count, timing | User address, signature, content |
 | Arweave reader | Image, post JSON (with username and caption), manifest (postHash, postArweaveId, sigCommit); owner field = platform key | User address, public key, signature |
 | Turbo | The uploads (same as Arweave), the backend's IP, timing | User address, signature |
-| Openfort | Email and embedded-account address; signing happens in its iframe, and whether the `PublishIntent` payload ever reaches its servers is To verify ([ADR-011](docs/decisions/ADR-011-identity-openfort.md)) | Platform database |
+| Openfort | Email and embedded-account address; signing happens in its iframe, and in a recorded run no request to Openfort carried the `PublishIntent` payload ([ADR-011](docs/decisions/ADR-011-identity-openfort.md)) | Platform database |
 | Platform | Everything: user to signer mapping (stored as an HMAC), signatures (encrypted with a key outside the database), request IPs | Nothing is hidden from the platform |
 | Other users | Username and content | Address, public key, signature |
 | The user's own browser | Their signatures in IndexedDB | Other users' data |
@@ -158,6 +158,8 @@ Anyone can verify a post without trusting us, with the `@phi/verifier` package. 
 - Per chain it reports: anchored (flagged late if anchored after `anchorBy`), pending inside deadline, deadline passed but not scanned (or scan incomplete), or omitted. **A verdict of "omitted" is never derived from hints alone**: it requires the bounded scan of the trusted relayers' `BatchAnchored` events between `acceptedAt` and `anchorBy` plus a margin, with every manifest in that window searched ([ADR-015](docs/decisions/ADR-015-signed-receipts.md)).
 
 Implemented in [`packages/verifier`](packages/verifier/README.md): a library and the `pnpm verify <postHash> [--hints <bundle.json>] [--scan]` CLI, tested end to end against local nodes running `PostAnchor` at its real address (17 tests, including omission only after a complete bounded scan, untrusted or revoked relayers, tampered hints and tampered content).
+
+**Real post on the testnets**: to be recorded (postHash, Arweave IDs, one anchor per chain and the `pnpm verify` command to check it without our backend).
 
 Honest note: **the Verify page inside the web app is a convenience, not independent verification**, because the platform serves both the code and its copy of `trusted-keys.json`. Independent verification means running the CLI from the public repository at a pinned commit, or with a `trusted-keys.json` the user supplies.
 
@@ -218,7 +220,17 @@ docker compose up --build
 docker compose exec backend node dist/print-keys.js   # public relayer and receipt addresses for config/trusted-keys.json
 ```
 
-Web app (see [packages/web/README.md](packages/web/README.md)): the VITE_* variables of the root `.env`, then `pnpm --filter @phi/web dev` on http://localhost:5173. It signs with a development key until an Openfort project is configured. Demo URL: pending.
+Web app (see [packages/web/README.md](packages/web/README.md)): the VITE_* variables of the root `.env`, then `pnpm --filter @phi/web dev` on http://localhost:5173. It signs with the Openfort embedded wallet when the Openfort keys are set, and with a development key otherwise. Demo URL: pending.
+
+**Deployment.** `PostAnchor` is live at `0x36b5D5F0D176b96013678FC69C34038897fAF382` on the three testnets, with identical runtime bytecode (keccak `0x6cf2bcf7...0aa3`, equal to the local build):
+
+| Chain | Deployment transaction | Block | Gas used |
+| ----- | ---------------------- | ----- | -------- |
+| Ethereum Sepolia | [0x56d697c2...](https://sepolia.etherscan.io/tx/0x56d697c23e0f076980be5dedf894f72e5e7d81604f452c62431dc20cef6811fc) | 12,092,665 | 1,829,478 |
+| Base Sepolia | [0xf67c6e02...](https://sepolia.basescan.org/tx/0xf67c6e024f98e4e6b139f5e8af1ae49d250295986e4204d4bacf76ebf9fcba15) | 56,226,917 | 280,500 |
+| Arbitrum Sepolia | [0x90dc5518...](https://sepolia.arbiscan.io/tx/0x90dc5518c6fb25f27be160433f3816795fffa7720198843c60782f0ab1d0568d) | 327,338,887 | 280,500 |
+
+Ethereum Sepolia used 6.5 times the gas of the L2s for the same deployment: it currently runs a different gas schedule from mainnet (ADR-001), and forge's local simulation, which uses mainnet rules, underestimated it, so the deployment there needed `--skip-simulation` to take the node's estimate.
 
 **DEMO_MODE.** The live demo uses a short Tmax or a "flush now" button so "Published" appears quickly. Both are clearly labelled as demo behaviour; the flush-now endpoint spends a transaction per chain per call, so it is protected by `DEMO_FLUSH_TOKEN` and rate-limited ([ADR-006](docs/decisions/ADR-006-batching-policy.md), [ADR-018](docs/decisions/ADR-018-abuse-cost-control.md)). Demo mode is not the efficiency configuration.
 

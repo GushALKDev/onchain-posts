@@ -30,7 +30,7 @@ Why Openfort and an embedded account:
 Openfort is an actor in the threat model ([threat model](../threat-model.md)), not a footnote:
 
 - It knows the user's email and the account address.
-- Signing happens inside the OpenSigner iframe: "All signing operations happen inside the iFrame. The private key is never exposed to the host application or any external service" (Verified 2026-11-07, see Evidence). The iframe fetches key shares from Openfort's hot storage and Shield; whether the typed-data payload itself is ever sent to Openfort's servers is not documented (To verify, by inspecting the iframe's network traffic in Tier 3).
+- Signing happens inside the OpenSigner iframe: "All signing operations happen inside the iFrame. The private key is never exposed to the host application or any external service" (Verified 2026-11-07, see Evidence). The iframe fetches key shares from Openfort's hot storage and Shield; whether the typed-data payload itself is sent to Openfort's servers is not documented. Observed on 2026-11-08 (see Evidence): while signing, no HTTP request or WebSocket frame to Openfort carried the payload.
 - In the worst case Openfort is the only third party able to link email, address and posts.
 
 ### Platform lock: documented, not implemented
@@ -45,7 +45,7 @@ Openfort is an actor in the threat model ([threat model](../threat-model.md)), n
 
 ### Fallback for an EIP-712 domain without chainId
 
-The intent domain has no `chainId` ([ADR-012](ADR-012-signature-scheme-eip712.md)). Openfort documents `signTypedData({ domain, types, message, primaryType })` for Ethereum embedded wallets, and its sample code says "Use the connected wallet's chain ID so the domain matches the active chain" (Verified 2026-11-07). Whether a domain without `chainId` is accepted is not documented: it is tested empirically at the start of Tier 3.
+The intent domain has no `chainId` ([ADR-012](ADR-012-signature-scheme-eip712.md)). Openfort documents `signTypedData({ domain, types, message, primaryType })` for Ethereum embedded wallets, and its sample code says "Use the connected wallet's chain ID so the domain matches the active chain" (Verified 2026-11-07). Whether a domain without `chainId` is accepted is not documented. Tested on 2026-11-08: `embeddedWallet.signTypedData` signs the chain-agnostic domain as given (see Evidence), so the fallback below is not needed with this SDK version.
 
 If Openfort rejects such a domain, put a constant `chainId` in the domain as a namespace, identical on every chain. Because the docs point at matching the active chain, the constant is chosen among the chains the embedded wallet is configured for, and the wallet is switched to it before signing if needed. No contract ever verifies this signature, so any constant works and the replay analysis in ADR-012 does not change. This fallback is written here so that the open item cannot block the design.
 
@@ -75,7 +75,7 @@ Negative:
 
 Follow-ups:
 
-- At the start of Tier 3: test `signTypedData` with a domain without `chainId`, and inspect the iframe's network traffic while signing.
+- Re-run both empirical checks below when the Openfort SDK is upgraded: they are observations of `@openfort/openfort-js` 2.6.4, not behaviour the provider documents or commits to.
 - Future (out of scope): sponsored UserOps with paymaster policies and session keys for the universal interface. Hiding the sender address there needs a privacy layer: open problem ([ADR-013](ADR-013-author-privacy-sigcommit.md)).
 
 ## Evidence
@@ -92,8 +92,12 @@ Follow-ups:
 - Session keys (EIP-7715, `useGrantPermissions`) only for smart and delegated accounts (Verified 2026-11-07: https://www.openfort.io/docs/products/embedded-wallet/react/hooks/useGrantPermissions).
 - Superseded: the third-party "2 of 3" claim (https://capxul-docs.pages.dev/appendices/openfort-evaluation) is now confirmed by Openfort's own OpenSigner docs.
 
+Empirical checks (2026-11-08, `@openfort/openfort-js` 2.6.4, guest sign-in on the owner's Openfort project, headless Chrome against the local backend):
+
+- **Domain without `chainId`: accepted.** `embeddedWallet.signTypedData(domain, types, message)` with the "Phi Posts" domain (name, version, verifyingContract) returned a signature that recovers locally to the embedded EOA for exactly that payload, and the backend accepted the post after recovering the same signer.
+- **The payload did not leave the iframe.** All network traffic of the page and its iframes was recorded while signing and submitting: Openfort received a `GET /iam/v2/auth/get-session` from the page and a `GET` plus `OPTIONS` of `/v1/devices/<id>` from the iframe, all without body; no URL or body contained the caption or the postHash; no WebSocket frame was sent (the only WebSocket was the local dev server). Only the backend's `POST /posts` carried the payload. This is one observation of the current SDK, not a provider commitment.
+- The username ownership check held with real accounts: a second guest account posting with a username claimed by the first was rejected.
+
 Still To verify:
 
-- Whether `signTypedData` accepts a domain without `chainId` (empirical test, Tier 3).
-- Whether the typed-data payload ever leaves the iframe (network inspection, Tier 3).
 - Whether Dynamic is equivalent for this signing-only use.
