@@ -1,5 +1,28 @@
 {
   "name": "@phi/backend",
   "private": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "description": "API, workers and KMS-simulator key store for the posting pipeline (ADR-016). Single process in the PoC.",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter @phi/verifier build && tsc -p tsconfig.json",
+    "typecheck": "pnpm --filter @phi/verifier build && tsc -p tsconfig.check.json",
+    "test": "pnpm --filter @phi/verifier build && vitest run",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@ardrive/turbo-sdk": "2.1.2",
+    "@hono/node-server": "2.1.5",
+    "@phi/core": "workspace:*",
+    "hono": "4.13.14",
+    "postgres": "3.4.9",
+    "viem": "2.57.8",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@phi/verifier": "workspace:*",
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
 }
