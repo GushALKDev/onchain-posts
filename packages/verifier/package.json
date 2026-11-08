@@ -1,5 +1,33 @@
 {
   "name": "@phi/verifier",
   "private": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "description": "Verifies a post from public sources only (Arweave gateway, public RPCs, config/trusted-keys.json); hints are untrusted.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "phi-verify": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pnpm --filter @phi/core build && tsc -p tsconfig.json",
+    "typecheck": "pnpm --filter @phi/core build && tsc -p tsconfig.check.json",
+    "test": "pnpm --filter @phi/core build && vitest run"
+  },
+  "dependencies": {
+    "@phi/core": "workspace:*",
+    "viem": "2.57.8"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
 }
