@@ -87,4 +87,14 @@ CREATE TABLE disclosure_log (
 );
 `,
   },
+  {
+    version: '002_timeline',
+    sql: `
+-- App-clock timestamps (unix seconds) for the per-chain timeline shown by the web app.
+ALTER TABLE posts ADD COLUMN stored_at bigint;
+ALTER TABLE batches ADD COLUMN batched_at bigint;
+ALTER TABLE batches ADD COLUMN settled_at bigint;
+CREATE INDEX posts_accepted_desc_idx ON posts (accepted_at DESC);
+`,
+  },
 ];

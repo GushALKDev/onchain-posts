@@ -59,7 +59,7 @@ export async function storeReceivedPosts(deps: Deps, storage: Storage, maxPosts 
           { name: 'Type', value: 'post' },
           { name: 'Post-Hash', value: postHash },
         ]);
-        await tx`UPDATE posts SET state = 'STORED', post_arweave_id = ${postArweaveId}, image_bytes = NULL, updated_at = now() WHERE post_hash = ${row.post_hash}`;
+        await tx`UPDATE posts SET state = 'STORED', post_arweave_id = ${postArweaveId}, image_bytes = NULL, stored_at = ${deps.now()}, updated_at = now() WHERE post_hash = ${row.post_hash}`;
         await tx`UPDATE post_chains SET state = 'QUEUED', queued_at = ${deps.now()} WHERE post_hash = ${row.post_hash} AND state = 'WAITING'`;
         stored++;
       } catch (error) {

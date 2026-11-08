@@ -6,6 +6,7 @@ import type { Hex } from 'viem';
 import { acceptPost } from './api/posts.ts';
 import { disclose } from './api/disclosure.ts';
 import { postStatus, proofBundle } from './api/read.ts';
+import { postDetail, recentPosts } from './api/posts-read.ts';
 import type { Deps } from './deps.ts';
 import { ApiError } from './errors.ts';
 import { log } from './log.ts';
@@ -48,6 +49,14 @@ export function createApp(deps: Deps, clientIp: (c: Context) => string, options:
   });
 
   app.get('/status/:postHash', async (c) => c.json(await postStatus(deps.sql, postHashParam(c))));
+
+  app.get('/posts', async (c) => {
+    const limit = Math.min(Math.max(Number(c.req.query('limit') ?? 20) || 20, 1), 50);
+    const before = c.req.query('before');
+    return c.json(await recentPosts(deps.sql, limit, before && /^\d+$/.test(before) ? Number(before) : undefined));
+  });
+
+  app.get('/posts/:postHash', async (c) => c.json(await postDetail(deps.sql, postHashParam(c))));
 
   app.post('/disclosure', async (c) => c.json(await disclose(deps, await c.req.json().catch(() => null))));
 

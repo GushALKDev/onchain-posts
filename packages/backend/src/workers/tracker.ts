@@ -8,7 +8,7 @@ export async function settleChain(deps: Deps, ctx: ChainContext): Promise<number
   if (!pending[0]?.count) return 0;
   const safe = await ctx.publicClient.getBlock({ blockTag: 'safe' });
   const settled = await deps.sql`
-    UPDATE batches SET state = 'SETTLED', updated_at = now()
+    UPDATE batches SET state = 'SETTLED', settled_at = ${deps.now()}, updated_at = now()
     WHERE chain_id = ${ctx.config.chainId} AND state = 'ANCHORED' AND block_number <= ${safe.number.toString()} RETURNING id`;
   if (settled.length > 0) log.info('batches settled', { chainId: ctx.config.chainId, count: settled.length, safeBlock: Number(safe.number) });
   return settled.length;

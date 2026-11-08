@@ -29,8 +29,8 @@ export async function batchChain(deps: Deps, chain: ChainConfig): Promise<number
     const entries: BatchEntry[] = rows.map((r) => ({ postHash: bytesToHex(r.post_hash), postArweaveId: r.post_arweave_id, sigCommit: bytesToHex(r.sig_commit) }));
     const { manifest } = buildBatch(chain.chainId, entries);
     const [batch] = await tx<{ id: string }[]>`
-      INSERT INTO batches (chain_id, root, manifest, post_count, state)
-      VALUES (${chain.chainId}, ${Buffer.from(hexToBytes(manifest.root))}, ${tx.json(manifest)}, ${rows.length}, 'CREATED') RETURNING id`;
+      INSERT INTO batches (chain_id, root, manifest, post_count, state, batched_at)
+      VALUES (${chain.chainId}, ${Buffer.from(hexToBytes(manifest.root))}, ${tx.json(manifest)}, ${rows.length}, 'CREATED', ${deps.now()}) RETURNING id`;
     const id = Number(batch!.id);
     await tx`UPDATE post_chains SET state = 'BATCHED', batch_id = ${id} WHERE chain_id = ${chain.chainId} AND post_hash IN ${tx(rows.map((r) => r.post_hash))}`;
     log.info('batch created', { chainId: chain.chainId, batchId: id, posts: rows.length, flushRequested });

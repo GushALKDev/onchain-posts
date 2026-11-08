@@ -1,7 +1,7 @@
-import { postAnchorAbi, type TrustedKey } from '@phi/core';
+import { postAnchorAbi, verifyInclusion, type LeafValue, type TrustedKey } from '@phi/core';
 import { verifyPublishedPost } from '@phi/verifier';
 import type { Hono } from 'hono';
-import { getAbiItem, type Hex } from 'viem';
+import { decodeAbiParameters, getAbiItem, type Hex } from 'viem';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startChain, type TestChain } from '../../verifier/test/harness.ts';
 import { createApp } from '../src/app.ts';
@@ -101,6 +101,28 @@ describe('pipeline end to end', () => {
 
     // No indexable user dimension on Arweave: no username tag on any item (ADR-014).
     expect([...storage.items.values()].flatMap((i) => i.tags.map((t) => t.name))).not.toContain('Username');
+
+    // Public detail for the post page: full timeline, the shared batch and a Merkle proof that checks out.
+    const detail = await (await request(`/posts/${postHash}`)).json();
+    expect(detail).toMatchObject({ postHash, username: 'ana', state: 'STORED' });
+    expect(detail.storedAt).toBeGreaterThanOrEqual(detail.acceptedAt);
+    for (const chain of detail.chains) {
+      expect(chain).toMatchObject({ stage: 'settled', batch: { postCount: 3, replacements: 0 } });
+      expect(chain.batch.batchedAt).toBeGreaterThanOrEqual(detail.storedAt);
+      expect(chain.batch.settledAt).toBeGreaterThanOrEqual(chain.batch.batchedAt);
+      expect(chain.proof.siblings).toHaveLength(2); // 3 leaves: depth 2
+      const leaf = decodeAbiParameters([{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'bytes32' }], chain.proof.leafData);
+      expect(verifyInclusion(chain.batch.root, leaf as unknown as LeafValue, chain.proof.siblings)).toBe(true);
+    }
+    const serialized = JSON.stringify(detail).toLowerCase();
+    expect(serialized).not.toContain(user.address.slice(2).toLowerCase());
+    expect(serialized).not.toContain(disclosed.signature.slice(2).toLowerCase());
+
+    // Recent posts, newest first, with per-chain stages.
+    const recent = await (await request('/posts?limit=2')).json();
+    expect(recent).toHaveLength(2);
+    expect(recent[0].acceptedAt).toBeGreaterThanOrEqual(recent[1].acceptedAt);
+    expect(recent[0].chains.map((c: { stage: string }) => c.stage)).toEqual(['settled', 'settled']);
   });
 
   it('flushes before Tmax on a demo flush request', async () => {
