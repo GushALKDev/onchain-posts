@@ -34,10 +34,18 @@ export type AnchorEvidence = {
 
 export type ChainResult = { chainId: number; verdict: Verdict; anchorBy?: number; late?: boolean; anchor?: AnchorEvidence; notes: string[] };
 
+export type VerificationStatus = 'verified' | 'pending' | 'failed';
+
 export type VerificationReport = {
   postHash: Hex;
   checkedAt: number;
-  /** Content valid, anchored on at least one chain, nothing omitted, receipt valid if given, authorship proven if checked. */
+  /**
+   * verified: content valid, anchored on at least one chain, nothing omitted, receipt valid if given, authorship proven if checked.
+   * pending: nothing failed, but the content is not served by any gateway yet, or no chain is anchored yet inside its deadline.
+   * failed: any check failed.
+   */
+  status: VerificationStatus;
+  /** status === 'verified'. */
   ok: boolean;
   /** `available` is false when the gateway did not serve the post JSON or the image: that is not evidence of invalid content. */
   content: { valid: boolean; available: boolean; postArweaveId?: string; imageArweaveId?: string | null; username?: string; createdAt?: number; errors: string[]; warnings: string[] };
@@ -89,6 +97,7 @@ export async function verifyPublishedPost(postHash: Hex, options: VerifyOptions,
   const report: VerificationReport = {
     postHash,
     checkedAt: now,
+    status: 'failed',
     ok: false,
     content: { valid: false, available: true, errors: [], warnings: [] },
     receipt: { present: false, valid: false, errors: [] },
@@ -161,12 +170,16 @@ export async function verifyPublishedPost(postHash: Hex, options: VerifyOptions,
   report.chains = verdicts(anchors, scans, chainNotes, receipt, now);
   if (hints?.signature && hints.intent) report.authorship = await checkAuthorship(hints, post, evidence, report.chains);
 
-  report.ok =
-    report.content.valid &&
-    evidence.length > 0 &&
-    report.chains.every((c) => c.verdict !== 'omitted') &&
-    (!report.receipt.present || report.receipt.valid) &&
-    (report.authorship === undefined || report.authorship.proven);
+  const contentWaiting = !report.content.available;
+  const failed =
+    (report.content.available && !report.content.valid) ||
+    (report.receipt.present && !report.receipt.valid) ||
+    report.chains.some((c) => c.verdict === 'omitted') ||
+    (report.authorship !== undefined && !report.authorship.proven && !contentWaiting);
+  const anchored = evidence.length > 0;
+  const waiting = contentWaiting || (!anchored && report.chains.some((c) => c.verdict === 'pending'));
+  report.status = failed ? 'failed' : anchored && report.content.valid ? 'verified' : waiting ? 'pending' : 'failed';
+  report.ok = report.status === 'verified';
   return report;
 }
 
@@ -331,7 +344,7 @@ function verdicts(
 
 async function checkAuthorship(hints: ProofBundle, post: Post | null, evidence: AnchorEvidence[], chains: ChainResult[]): Promise<NonNullable<VerificationReport['authorship']>> {
   const result: NonNullable<VerificationReport['authorship']> = { proven: false, errors: [] };
-  if (!post) result.errors.push('content is not valid, so the signed post cannot be rebuilt');
+  if (!post) result.errors.push('the content is not available or not valid, so the signed post cannot be rebuilt');
   if (evidence.length === 0) result.errors.push('no verified anchor carries a sigCommit to compare with');
   if (!post || evidence.length === 0 || !hints.signature || !hints.intent) return result;
 

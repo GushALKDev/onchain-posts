@@ -64,18 +64,32 @@ export function chainSourceFromClient(client: PublicClient, maxBlockRange = 10_0
   };
 }
 
-export function gatewaySource(gatewayUrl: string): ArweaveSource {
-  const base = gatewayUrl.replace(/\/+$/, '');
+/**
+ * Public Arweave gateways tried in order. Turbo uploads are served first by ar.io gateways that read Turbo's cache;
+ * arweave.net can lag by minutes (ADR-008). Content is checked by hash, so no gateway needs to be trusted.
+ */
+export const DEFAULT_GATEWAYS = ['https://turbo-gateway.com', 'https://ardrive.net', 'https://arweave.net'];
+
+export function gatewaySource(gateways: string | string[]): ArweaveSource {
+  const bases = (Array.isArray(gateways) ? gateways : [gateways]).map((g) => g.replace(/\/+$/, ''));
   return {
     async get(id) {
-      const res = await fetch(`${base}/${id}`);
-      if (!res.ok) throw new Error(`gateway returned ${res.status} for ${id}`);
-      return new Uint8Array(await res.arrayBuffer());
+      const failures: string[] = [];
+      for (const base of bases) {
+        try {
+          const res = await fetch(`${base}/${id}`);
+          if (res.ok) return new Uint8Array(await res.arrayBuffer());
+          failures.push(`${new URL(base).host} ${res.status}`);
+        } catch (error) {
+          failures.push(`${base}: ${(error as Error).message}`);
+        }
+      }
+      throw new Error(`no gateway served ${id} (${failures.join(', ')})`);
     },
   };
 }
 
-export function createPublicSources({ rpcUrls, gateway }: { rpcUrls: Record<number, string>; gateway: string }): Sources {
+export function createPublicSources({ rpcUrls, gateway = DEFAULT_GATEWAYS }: { rpcUrls: Record<number, string>; gateway?: string | string[] }): Sources {
   const chains: Record<number, ChainSource> = {};
   for (const [chainId, url] of Object.entries(rpcUrls)) {
     chains[Number(chainId)] = chainSourceFromClient(createPublicClient({ transport: http(url) }));

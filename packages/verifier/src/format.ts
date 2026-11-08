@@ -12,7 +12,8 @@ const iso = (t?: number) => (t === undefined ? '-' : new Date(t * 1000).toISOStr
 
 /** Human-readable report for the CLI. */
 export function formatReport(r: VerificationReport): string {
-  const lines = [`Post ${r.postHash}`, `Result: ${r.ok ? 'VERIFIED' : 'NOT VERIFIED'} (checked ${iso(r.checkedAt)})`, ''];
+  const result = r.status === 'verified' ? 'VERIFIED' : r.status === 'pending' ? 'PENDING (nothing failed; content or anchors not available yet, retry later)' : 'NOT VERIFIED';
+  const lines = [`Post ${r.postHash}`, `Result: ${result} (checked ${iso(r.checkedAt)})`, ''];
   lines.push(`Content: ${r.content.valid ? 'valid' : r.content.available ? 'INVALID' : 'NOT AVAILABLE from the gateway yet (retry later)'}${r.content.username ? ` (@${r.content.username}, created ${iso(r.content.createdAt)})` : ''}`);
   if (r.content.postArweaveId) lines.push(`  post JSON ${r.content.postArweaveId}${r.content.imageArweaveId ? `, image ${r.content.imageArweaveId}` : ''}`);
   for (const e of r.content.errors) lines.push(`  error: ${e}`);

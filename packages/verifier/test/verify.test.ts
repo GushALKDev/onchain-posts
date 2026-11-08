@@ -37,7 +37,7 @@ describe('verification from hints', () => {
     const p = await publish({ arweave, allChains: [base, arbitrum], signedChainIds: [BASE, ARBITRUM, ETHEREUM], receiptChainIds: [BASE, ARBITRUM, ETHEREUM], anchors: [{ chain: base }, { chain: arbitrum }] });
     const report = await verifyPublishedPost(p.postHash, { hints: p.publicBundle }, { ...config, now: () => p.acceptedAt + 10 });
 
-    expect(report.ok).toBe(true);
+    expect(report).toMatchObject({ ok: true, status: 'verified' });
     expect(report.content).toMatchObject({ valid: true, postArweaveId: p.postArweaveId, imageArweaveId: p.imageArweaveId, username: 'ana' });
     expect(report.receipt).toMatchObject({ present: true, valid: true, signer: receiptKey.address });
     expect(verdictOf(report, BASE)).toMatchObject({ verdict: 'anchored', late: false, anchor: { source: 'hints', sender: base.accounts.relayer.address } });
@@ -64,6 +64,15 @@ describe('verification from hints', () => {
     const foreignLeaf = { ...p.publicBundle, anchors: [other.publicBundle.anchors[0]!] };
     const r2 = await verifyPublishedPost(p.postHash, { hints: foreignLeaf }, { ...config, now: () => p.acceptedAt });
     expect(verdictOf(r2, BASE)?.notes).toContain('hint rejected: leaf belongs to another post');
+  });
+});
+
+describe('pending posts', () => {
+  it('reports an accepted post that is not anchored yet, inside its deadline, as pending', async () => {
+    const p = await publish({ arweave, allChains: [base, arbitrum], signedChainIds: [BASE], receiptChainIds: [BASE], anchors: [] });
+    const report = await verifyPublishedPost(p.postHash, { hints: p.publicBundle }, { ...config, now: () => p.acceptedAt + 5 });
+    expect(report).toMatchObject({ ok: false, status: 'pending' });
+    expect(verdictOf(report, BASE)).toMatchObject({ verdict: 'pending' });
   });
 });
 
@@ -112,7 +121,7 @@ describe('content', () => {
     expect(report.content).toMatchObject({ valid: false, available: false });
     expect(report.content.errors[0]).toMatch(/not available from the gateway/);
     expect(verdictOf(report, BASE)).toMatchObject({ verdict: 'anchored' }); // the anchor is still verified
-    expect(report.ok).toBe(false);
+    expect(report).toMatchObject({ ok: false, status: 'pending' });
   });
 
   it('detects image bytes that do not match the signed image hash', async () => {
@@ -153,7 +162,7 @@ describe('deadlines, scans and omission', () => {
     const withScan = await verifyPublishedPost(p.postHash, { hints: p.publicBundle, scan: true }, later);
     expect(verdictOf(withScan, ARBITRUM)).toMatchObject({ verdict: 'omitted', anchorBy: p.anchorBy });
     expect(verdictOf(withScan, BASE)).toMatchObject({ verdict: 'anchored' });
-    expect(withScan.ok).toBe(false);
+    expect(withScan).toMatchObject({ ok: false, status: 'failed' });
   });
 
   it('never reports "omitted" when a manifest in the window cannot be fetched', async () => {

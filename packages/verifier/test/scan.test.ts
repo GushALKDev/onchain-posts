@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { blockAtOrAfter, blockAtOrBefore } from '../src/scan.ts';
-import { chainSourceFromClient, type ChainSource } from '../src/sources.ts';
+import { chainSourceFromClient, gatewaySource, type ChainSource } from '../src/sources.ts';
+import { MemoryArweave, serveArweave } from './harness.ts';
 
 /** A chain of `length` blocks, one every 2 s from t = 1000, whose RPC has pruned everything below `prunedBelow`. */
 function prunedChain(length: number, prunedBelow: number): ChainSource & { reads: number[] } {
@@ -58,5 +59,21 @@ describe('log queries', () => {
   it('does not retry errors that are not about the range', async () => {
     const client = { getLogs: async () => Promise.reject(new Error('connection refused')) };
     await expect(chainSourceFromClient(client as never).anchorEvents('0x36b5D5F0D176b96013678FC69C34038897fAF382', ['0x1111111111111111111111111111111111111111'], 0n, 10n)).rejects.toThrow('connection refused');
+  });
+});
+
+describe('gateways', () => {
+  it('tries the gateways in order and returns the first copy served', async () => {
+    const empty = await serveArweave(new MemoryArweave());
+    const store = new MemoryArweave();
+    const id = store.put(new TextEncoder().encode('content'));
+    const full = await serveArweave(store);
+    try {
+      expect(new TextDecoder().decode(await gatewaySource([empty.url, full.url]).get(id))).toBe('content');
+      await expect(gatewaySource([empty.url]).get(id)).rejects.toThrow(/no gateway served/);
+    } finally {
+      empty.close();
+      full.close();
+    }
   });
 });

@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { CHAIN_IDS, TrustedKeysFileSchema } from '@phi/core';
-import { createPublicSources } from './sources.ts';
+import { DEFAULT_GATEWAYS, createPublicSources } from './sources.ts';
 import { formatReport } from './format.ts';
 import { verifyPublishedPost } from './verify.ts';
 
@@ -13,7 +13,6 @@ const DEFAULT_RPCS: Record<number, string> = {
   [CHAIN_IDS.baseSepolia]: 'https://sepolia.base.org',
   [CHAIN_IDS.arbitrumSepolia]: 'https://sepolia-rollup.arbitrum.io/rpc',
 };
-const DEFAULT_GATEWAY = 'https://arweave.net';
 const DEFAULT_TRUSTED_KEYS = new URL('../../../config/trusted-keys.json', import.meta.url);
 
 const USAGE = `Usage: phi-verify <postHash> [options]
@@ -22,10 +21,12 @@ const USAGE = `Usage: phi-verify <postHash> [options]
   --hints-url <url>       fetch hints from GET /proof/:postHash; untrusted, re-checked
   --trusted-keys <file>   trust root (default: config/trusted-keys.json of this repository)
   --rpc <chainId>=<url>   RPC per chain, repeatable (default: public testnet RPCs)
-  --gateway <url>         Arweave gateway (default: ${DEFAULT_GATEWAY})
+  --gateway <url>         Arweave gateway, repeatable, tried in order (default: ${DEFAULT_GATEWAYS.join(', ')})
   --scan                  scan BatchAnchored events: discovery and the bounded scan behind "omitted"
   --since <time>          start of the discovery window without a receipt (unix seconds or ISO 8601)
-  --json                  print the report as JSON`;
+  --json                  print the report as JSON
+
+Exit codes: 0 verified, 1 not verified, 2 usage error, 3 pending (content or anchors not available yet).`;
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -35,7 +36,7 @@ async function main() {
       'hints-url': { type: 'string' },
       'trusted-keys': { type: 'string' },
       rpc: { type: 'string', multiple: true },
-      gateway: { type: 'string' },
+      gateway: { type: 'string', multiple: true },
       scan: { type: 'boolean' },
       since: { type: 'string' },
       json: { type: 'boolean' },
@@ -64,10 +65,11 @@ async function main() {
   const report = await verifyPublishedPost(
     postHash as `0x${string}`,
     { hints, scan: values.scan ?? false, since },
-    { sources: createPublicSources({ rpcUrls, gateway: values.gateway ?? DEFAULT_GATEWAY }), trustedKeys },
+    { sources: createPublicSources({ rpcUrls, gateway: values.gateway?.length ? values.gateway : DEFAULT_GATEWAYS }), trustedKeys },
   );
   console.log(values.json ? JSON.stringify(report, null, 2) : formatReport(report));
-  process.exitCode = report.ok ? 0 : 1;
+  // 0 verified, 1 not verified, 3 pending (retry later).
+  process.exitCode = report.status === 'verified' ? 0 : report.status === 'pending' ? 3 : 1;
 }
 
 main().catch((error) => {

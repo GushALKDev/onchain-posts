@@ -10,7 +10,7 @@ Principle: **untrusted hints, independent verification** (README section 9, ADR-
 2. **Receipt**: the signer is recovered from the "Phi Receipts" EIP-712 domain and must be a `receipt` key in the trust root at `acceptedAt` (a consistency check only, ADR-015). An invalid receipt means no deadline is trusted, so no "pending" or "omitted" claim is made from it.
 3. **Anchors**: each one is accepted only if `PostAnchor.anchoredAt(sender, root)` is non-zero, the sender is a `relayer` key for that chain at the anchor timestamp, the leaf belongs to this post and `PostAnchor.verifyPost` accepts the proof.
 4. **Scan** (`scan: true`): reads `BatchAnchored` events of the trusted relayers, fetches each manifest, checks that it rebuilds to the anchored root and looks for the post. Without a receipt it needs a start time (`since`). With a receipt it is the bounded scan from `acceptedAt` to `anchorBy` + margin (120 s by default, design parameter).
-5. **Content**: the post JSON is fetched by the Arweave ID pinned in the leaf (or from the hints when there is no verified anchor), validated against `phi.post/1`, and its fields must hash to the `postHash`; the image bytes must hash to `image.hash`. Chunks outside the WebP allowlist are reported as warnings.
+5. **Content**: the post JSON is fetched by the Arweave ID pinned in the leaf (or from the hints when there is no verified anchor), trying public gateways in order (`turbo-gateway.com`, `ardrive.net`, `arweave.net` by default: arweave.net can take minutes to serve a new Turbo upload), validated against `phi.post/1`, and its fields must hash to the `postHash`; the image bytes must hash to `image.hash`. Chunks outside the WebP allowlist are reported as warnings.
 6. **Authorship** (private bundle with `signature` and `intent`): the signer is recovered from the `PublishIntent`, `keccak256(signature)` must equal the `sigCommit` in the anchored leaf, and every anchored chain must be one the author signed.
 
 ## Verdicts per chain
@@ -23,7 +23,7 @@ Principle: **untrusted hints, independent verification** (README section 9, ADR-
 | `omitted` | The bounded scan covered every trusted batch in the closed window and none contains the post |
 | `not-found` | No receipt deadline for that chain and the scan did not find the post |
 
-`ok` is true when the content is valid, at least one chain is anchored, nothing is omitted, the receipt (if any) is valid and authorship (if checked) is proven.
+The overall `status` is `verified` when the content is valid, at least one chain is anchored, nothing is omitted, the receipt (if any) is valid and authorship (if checked) is proven; `pending` when nothing failed but the content is not served by any gateway yet, or no chain is anchored yet inside its deadline; `failed` otherwise. `ok` is `status === 'verified'`.
 
 ## Usage
 
@@ -40,7 +40,7 @@ CLI (from the repository root):
 pnpm verify <postHash> [--hints <bundle.json> | --hints-url <url>] [--trusted-keys <file>] [--rpc <chainId>=<url>]... [--gateway <url>] [--scan] [--since <time>] [--json]
 ```
 
-Exit code 0 when `ok`, 1 when not verified, 2 on usage errors. Independent verification means running the CLI from the public repository at a pinned commit, or with a trusted-keys file you supply. The Verify page in the web app runs the same library, but the platform serves both the page and its copy of the trust root, so it is a convenience.
+Exit code 0 when verified, 1 when not verified, 2 on usage errors, 3 when pending. `--gateway` is repeatable. Independent verification means running the CLI from the public repository at a pinned commit, or with a trusted-keys file you supply. The Verify page in the web app runs the same library, but the platform serves both the page and its copy of the trust root, so it is a convenience.
 
 ## Tests
 
