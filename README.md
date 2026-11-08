@@ -218,7 +218,7 @@ docker compose up --build
 docker compose exec backend node dist/print-keys.js   # public relayer and receipt addresses for config/trusted-keys.json
 ```
 
-Web app (see [packages/web/README.md](packages/web/README.md)): `cp packages/web/.env.example packages/web/.env`, then `pnpm --filter @phi/web dev` on http://localhost:5173. It signs with a development key until an Openfort project is configured. Demo URL: pending.
+Web app (see [packages/web/README.md](packages/web/README.md)): the VITE_* variables of the root `.env`, then `pnpm --filter @phi/web dev` on http://localhost:5173. It signs with a development key until an Openfort project is configured. Demo URL: pending.
 
 **DEMO_MODE.** The live demo uses a short Tmax or a "flush now" button so "Published" appears quickly. Both are clearly labelled as demo behaviour; the flush-now endpoint spends a transaction per chain per call, so it is protected by `DEMO_FLUSH_TOKEN` and rate-limited ([ADR-006](docs/decisions/ADR-006-batching-policy.md), [ADR-018](docs/decisions/ADR-018-abuse-cost-control.md)). Demo mode is not the efficiency configuration.
 

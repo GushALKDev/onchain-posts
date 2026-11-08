@@ -20,7 +20,7 @@ The app signs through a `PostSigner` interface (`src/signer.ts`). The production
 ## Running locally
 
 ```bash
-cp packages/web/.env.example packages/web/.env   # point VITE_API_URL at the backend and set the RPCs
+# The web app reads the repository-root .env (see .env.example): set VITE_API_URL and the RPCs
 pnpm --filter @phi/web dev                        # http://localhost:5173
 ```
 
