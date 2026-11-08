@@ -39,7 +39,8 @@ export type VerificationReport = {
   checkedAt: number;
   /** Content valid, anchored on at least one chain, nothing omitted, receipt valid if given, authorship proven if checked. */
   ok: boolean;
-  content: { valid: boolean; postArweaveId?: string; imageArweaveId?: string | null; username?: string; createdAt?: number; errors: string[]; warnings: string[] };
+  /** `available` is false when the gateway did not serve the post JSON or the image: that is not evidence of invalid content. */
+  content: { valid: boolean; available: boolean; postArweaveId?: string; imageArweaveId?: string | null; username?: string; createdAt?: number; errors: string[]; warnings: string[] };
   receipt: { present: boolean; valid: boolean; signer?: Address; acceptedAt?: number; errors: string[] };
   chains: ChainResult[];
   authorship?: { proven: boolean; signer?: Address; errors: string[] };
@@ -89,7 +90,7 @@ export async function verifyPublishedPost(postHash: Hex, options: VerifyOptions,
     postHash,
     checkedAt: now,
     ok: false,
-    content: { valid: false, errors: [], warnings: [] },
+    content: { valid: false, available: true, errors: [], warnings: [] },
     receipt: { present: false, valid: false, errors: [] },
     chains: [],
     notes: [],
@@ -242,11 +243,20 @@ async function checkContent(sources: Sources, postHash: Hex, postArweaveId: stri
   }
   content.postArweaveId = postArweaveId;
 
+  let bytes: Uint8Array;
+  try {
+    bytes = await sources.arweave.get(postArweaveId);
+  } catch (error) {
+    // Turbo accepts an upload before gateways serve it; a missing item is "not available yet", not invalid content.
+    content.available = false;
+    content.errors.push(`post JSON is not available from the gateway (retry later): ${(error as Error).message}`);
+    return null;
+  }
   let json;
   try {
-    json = JSON.parse(new TextDecoder().decode(await sources.arweave.get(postArweaveId)));
-  } catch (error) {
-    content.errors.push(`post JSON could not be fetched or parsed: ${(error as Error).message}`);
+    json = JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    content.errors.push('post JSON is not valid JSON');
     return null;
   }
   const parsed = PostJsonSchema.safeParse(json);
@@ -264,14 +274,22 @@ async function checkContent(sources: Sources, postHash: Hex, postArweaveId: stri
   if (parsed.data.image) {
     const image = parsed.data.image;
     if (hints && hints.imageArweaveId !== image.arweaveId) report.notes.push('the hinted imageArweaveId differs from the post JSON; the post JSON wins');
+    let imageBytes: Uint8Array | null = null;
     try {
-      const bytes = await sources.arweave.get(image.arweaveId);
-      if (!same(keccak256(bytes), image.hash)) content.errors.push('image bytes do not match image.hash');
-      if (bytes.length !== image.bytes) content.warnings.push(`image size is ${bytes.length} bytes, the post JSON says ${image.bytes}`);
-      const info = inspectWebp(bytes);
-      if (info.disallowed.length > 0) content.warnings.push(`image carries chunks outside the allowlist: ${info.disallowed.join(', ')}`);
+      imageBytes = await sources.arweave.get(image.arweaveId);
     } catch (error) {
-      content.errors.push(`image could not be fetched or parsed: ${(error as Error).message}`);
+      content.available = false;
+      content.errors.push(`image is not available from the gateway (retry later): ${(error as Error).message}`);
+    }
+    if (imageBytes) {
+      if (!same(keccak256(imageBytes), image.hash)) content.errors.push('image bytes do not match image.hash');
+      if (imageBytes.length !== image.bytes) content.warnings.push(`image size is ${imageBytes.length} bytes, the post JSON says ${image.bytes}`);
+      try {
+        const info = inspectWebp(imageBytes);
+        if (info.disallowed.length > 0) content.warnings.push(`image carries chunks outside the allowlist: ${info.disallowed.join(', ')}`);
+      } catch (error) {
+        content.warnings.push(`image is not a well-formed WebP: ${(error as Error).message}`);
+      }
     }
   } else if (hints?.imageArweaveId) {
     report.notes.push('the hints name an image but the post JSON has none');

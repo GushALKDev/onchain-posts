@@ -105,6 +105,16 @@ describe('content', () => {
     expect(report.ok).toBe(false);
   });
 
+  it('reports content the gateway does not serve as not available, not as invalid', async () => {
+    const p = await publish({ arweave, allChains: [base, arbitrum], signedChainIds: [BASE], receiptChainIds: [BASE], anchors: [{ chain: base }] });
+    arweave.delete(p.postArweaveId);
+    const report = await verifyPublishedPost(p.postHash, { hints: p.publicBundle }, { ...config, now: () => p.acceptedAt });
+    expect(report.content).toMatchObject({ valid: false, available: false });
+    expect(report.content.errors[0]).toMatch(/not available from the gateway/);
+    expect(verdictOf(report, BASE)).toMatchObject({ verdict: 'anchored' }); // the anchor is still verified
+    expect(report.ok).toBe(false);
+  });
+
   it('detects image bytes that do not match the signed image hash', async () => {
     const p = await publish({ arweave, allChains: [base, arbitrum], signedChainIds: [BASE], receiptChainIds: [BASE], anchors: [{ chain: base }] });
     arweave.replace(p.imageArweaveId, toBytes('different image'));
