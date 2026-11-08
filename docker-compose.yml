@@ -22,11 +22,32 @@ services:
       context: .
       dockerfile: packages/backend/Dockerfile
     restart: unless-stopped
-    env_file: .env
+    # Only the backend's own variables: never the deployer key or the VITE_* web settings (least privilege).
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       # The KMS simulator keystore lives in a volume, outside the database (ADR-016). Never commit it.
       KMS_SIMULATOR_KEYSTORE_PATH: /data/keystore.json
+      PORT: ${PORT:-8080}
+      WEB_ORIGINS: ${WEB_ORIGINS:-}
+      STORAGE_MODE: ${STORAGE_MODE:-turbo}
+      DB_HMAC_SECRET: ${DB_HMAC_SECRET:?set DB_HMAC_SECRET in .env}
+      SIGNER_MODE: ${SIGNER_MODE:-simulator}
+      RELAYER_SIGNER_KEY_REF: ${RELAYER_SIGNER_KEY_REF:-relayer}
+      RECEIPT_SIGNER_KEY_REF: ${RECEIPT_SIGNER_KEY_REF:-receipt}
+      ARWEAVE_SIGNER_KEY_REF: ${ARWEAVE_SIGNER_KEY_REF:-arweave}
+      SIGNATURE_ENCRYPTION_KEY_REF: ${SIGNATURE_ENCRYPTION_KEY_REF:-signature-encryption}
+      ETHEREUM_SEPOLIA_RPC_URL: ${ETHEREUM_SEPOLIA_RPC_URL:-}
+      BASE_SEPOLIA_RPC_URL: ${BASE_SEPOLIA_RPC_URL:-}
+      ARBITRUM_SEPOLIA_RPC_URL: ${ARBITRUM_SEPOLIA_RPC_URL:-}
+      TMAX_SECONDS_ETHEREUM_SEPOLIA: ${TMAX_SECONDS_ETHEREUM_SEPOLIA:-}
+      TMAX_SECONDS_BASE_SEPOLIA: ${TMAX_SECONDS_BASE_SEPOLIA:-}
+      TMAX_SECONDS_ARBITRUM_SEPOLIA: ${TMAX_SECONDS_ARBITRUM_SEPOLIA:-}
+      NMAX_ETHEREUM_SEPOLIA: ${NMAX_ETHEREUM_SEPOLIA:-}
+      NMAX_BASE_SEPOLIA: ${NMAX_BASE_SEPOLIA:-}
+      NMAX_ARBITRUM_SEPOLIA: ${NMAX_ARBITRUM_SEPOLIA:-}
+      DEMO_MODE: ${DEMO_MODE:-false}
+      DEMO_TMAX_SECONDS: ${DEMO_TMAX_SECONDS:-}
+      DEMO_FLUSH_TOKEN: ${DEMO_FLUSH_TOKEN:-}
     ports:
       - "8080:8080"
     volumes:

@@ -33,7 +33,9 @@ const DEFAULT_NMAX = 500;
 const intFrom = (fallback: number) => z.coerce.number().int().positive().default(fallback);
 
 /** Reads the environment (.env.example lists every variable). A chain is enabled when its RPC URL is set. */
-export function loadConfig(env: NodeJS.ProcessEnv): Config {
+export function loadConfig(rawEnv: NodeJS.ProcessEnv): Config {
+  // An empty variable (KEY= in a .env file, or ${KEY:-} in docker compose) means "not set".
+  const env: NodeJS.ProcessEnv = Object.fromEntries(Object.entries(rawEnv).filter(([, value]) => value !== ''));
   const base = z
     .object({
       PORT: intFrom(8080),

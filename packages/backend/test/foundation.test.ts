@@ -73,6 +73,11 @@ describe('config', () => {
     expect(demo.chains.every((c) => c.tmaxSeconds === 5)).toBe(true);
   });
 
+  it('treats empty variables as unset', () => {
+    const config = loadConfig({ ...env, TMAX_SECONDS_BASE_SEPOLIA: '', ARBITRUM_SEPOLIA_RPC_URL: '', DEMO_FLUSH_TOKEN: '' });
+    expect(config.chains.map((c) => [c.chainId, c.tmaxSeconds])).toEqual([[11155111, 300], [84532, 30]]);
+  });
+
   it('rejects a short HMAC secret and the unimplemented KMS mode', () => {
     expect(() => loadConfig({ ...env, DB_HMAC_SECRET: 'short' })).toThrow(/32 characters/);
     expect(() => loadConfig({ ...env, SIGNER_MODE: 'kms' })).toThrow(/not implemented/);
