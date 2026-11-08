@@ -1,5 +1,7 @@
+export * from './abi.ts';
 export * from './arweave.ts';
 export * from './constants.ts';
+export * from './convert.ts';
 export * from './eip712.ts';
 export * from './merkle.ts';
 export * from './normalize.ts';
