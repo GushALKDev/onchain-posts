@@ -1,6 +1,6 @@
 # ADR-019: Web app scope
 
-Status: Accepted (implemented 2026-11-08; Openfort sign-in pending a project, see Implementation)
+Status: Accepted (implemented 2026-11-08; scope extended the same day with a feed and a public post page, see Scope update)
 Confidence: Medium
 Reversibility: Reversible
 Date: 2026-11-07
@@ -37,7 +37,7 @@ The Verify page shows a visible note: this page is served by the platform togeth
 
 ### Out of scope
 
-Feed, profiles, follows, likes, edits, multiple images per post.
+Profiles, follows, likes, edits, multiple images per post. (A feed was out of scope here; it was added later, see Scope update.)
 
 ### Stack
 
@@ -49,9 +49,24 @@ The live demo is not the efficiency proof (small batches, demo mode); the benchm
 
 Implemented in [`packages/web`](../../packages/web/README.md) with the scope above. Differences from the plan:
 
-- **Signer.** The app signs through a `PostSigner` interface. Until an Openfort project exists (publishable key), it uses a development key generated in the browser and labels it as such on every page. The Openfort adapter, and the two open ADR-011 checks that need it (EIP-712 domain without `chainId`, whether the payload leaves the iframe), wait for those credentials.
+- **Signer.** The app signs through a `PostSigner` interface: the Openfort embedded EOA when its publishable keys are set (wired and checked on 2026-11-08, ADR-011), otherwise a development key generated in the browser and labelled as such.
 - **Trust root upload.** The Verify page also accepts a `trusted-keys.json` the user supplies, instead of the copy served with the page. That is the browser counterpart of running the CLI with your own trust root.
 - **Image loop.** Re-encoding goes from WebP quality 0.9 down to 0.5 (design parameter, ADR-003); below that the image is rejected. Browsers that cannot encode WebP from a canvas get an explicit error.
+
+### Scope update (2026-11-08): feed and public post page
+
+At the owner's request, after the first real posts, the app was extended so that a reader can see each post and everything behind it, not only its status:
+
+- **Feed** (default page) and **My posts**: cards with the image from Arweave, caption, username and one stage pill per chain. Backed by `GET /posts` (latest, paginated) and `GET /posts/:postHash`, which return only public data: no address, HMAC, signature or intent fields. My posts takes its list from IndexedDB and its details from the API.
+- **Post page**, one section per piece of evidence, each with the check that makes it trustworthy:
+  - Journey: signed, accepted, stored, then batched / published / settled per chain, with times relative to acceptance (from the `002_timeline` columns and the block timestamp).
+  - Signed content: the EIP-712 domain and `Post` struct, `postHash` and `sigCommit`.
+  - Stored on Arweave: post JSON, image and one manifest per chain, each fetched live from the gateways in order, with Turbo status (bundle, cost, signed size against payload size), owner and tags from the ar.io GraphQL index, and a check: post fields rehash to `postHash`, image bytes hash to `imageHash`, manifest rebuilds to its root.
+  - Anchored on-chain: per chain, receipt deadline met or missed, batch size, transaction, block, relayer checked against `trusted-keys.json`, fee read from the transaction receipt, and the Merkle path recomputed level by level from the decoded leaf to the anchored root.
+  - Receipt signer recovered and checked; inline verification with the verifier library (runs once automatically when a chain is anchored); privacy panel; public and private bundle downloads; demo flush.
+- **How it works**: the seven steps, the guarantees and non-guarantees (with the ADR-015 sentence on fabrication), the deployment links and three of the diagrams.
+
+Reason for not keeping the feed out: the enumeration concern above is about per-user enumeration, and the feed adds none. Every field it shows is already public in the post JSON on Arweave, and no profile or address is exposed. The cost is UI code that the evaluation does not weigh, accepted because it makes the design legible to a reader.
 
 ## Alternatives considered
 

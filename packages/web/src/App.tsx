@@ -5,50 +5,89 @@ import { developmentSigner, type PostSigner } from './signer.ts';
 import { Access } from './views/Access.tsx';
 import { Compose } from './views/Compose.tsx';
 import { Efficiency } from './views/Efficiency.tsx';
-import { PostList, PostView } from './views/Posts.tsx';
+import { Feed, MyPosts } from './views/Feed.tsx';
+import { HowItWorks } from './views/HowItWorks.tsx';
+import { PostPage } from './views/PostPage.tsx';
 import { Verify } from './views/Verify.tsx';
 
 function useRoute(): string[] {
   const [hash, setHash] = useState(location.hash);
   useEffect(() => {
-    const onChange = () => setHash(location.hash);
+    const onChange = () => {
+      setHash(location.hash);
+      scrollTo(0, 0);
+    };
     addEventListener('hashchange', onChange);
     return () => removeEventListener('hashchange', onChange);
   }, []);
   return hash.replace(/^#\/?/, '').split('/');
 }
 
+const NAV = [
+  { view: 'feed', label: 'Feed' },
+  { view: 'compose', label: 'New post' },
+  { view: 'mine', label: 'My posts' },
+  { view: 'verify', label: 'Verify' },
+  { view: 'how', label: 'How it works' },
+  { view: 'efficiency', label: 'Efficiency' },
+];
+
 export function App() {
   // Openfort when configured (ADR-011); otherwise a development key in this browser.
   const [signer, setSigner] = useState<PostSigner | null>(() => (OPENFORT_CONFIGURED ? null : developmentSigner()));
-  const [view = 'compose', param] = useRoute();
+  const [route = '', param] = useRoute();
+  const view = route || 'feed';
+  const active = view === 'post' ? 'feed' : view;
+  const needsSigner = view === 'compose' || view === 'mine';
 
   return (
     <div className="app">
-      <header>
-        <h1>Phi posts <small>PoC</small></h1>
+      <header className="topbar">
+        <a className="brand" href="#">
+          <span className="brand-mark">Φ</span> Phi posts <small>PoC</small>
+        </a>
         <nav>
-          <a href="#compose" className={view === 'compose' ? 'active' : ''}>Compose</a>
-          <a href="#posts" className={view === 'posts' || view === 'post' ? 'active' : ''}>My posts</a>
-          <a href="#verify" className={view === 'verify' ? 'active' : ''}>Verify</a>
-          <a href="#efficiency" className={view === 'efficiency' ? 'active' : ''}>Efficiency</a>
+          {NAV.map((n) => (
+            <a key={n.view} href={`#${n.view}`} className={active === n.view ? 'active' : ''}>
+              {n.label}
+            </a>
+          ))}
         </nav>
-        <p className="signer">
-          {signer ? `Signing with: ${signer.label}` : 'Not signed in'}
+        <div className="account">
+          {signer ? <span title={signer.label}>{signer.kind === 'openfort' ? 'Signed in' : 'Dev key'}</span> : <span className="muted">Not signed in</span>}
           {signer?.kind === 'openfort' && (
-            <button className="link" onClick={async () => { await openfortClient().auth.logout(); setSigner(null); }}>Sign out</button>
+            <button
+              className="link"
+              onClick={async () => {
+                await openfortClient().auth.logout();
+                setSigner(null);
+              }}
+            >
+              Sign out
+            </button>
           )}
-          {DEMO_MODE && <span className="demo-badge">DEMO MODE: short batching window, not the efficiency configuration</span>}
-        </p>
+        </div>
       </header>
+      {DEMO_MODE && <div className="demo-strip">Demo mode: short batching window so posts anchor in seconds. This is not the efficiency configuration.</div>}
       <main>
-        {!signer && (view === 'compose' || view === 'posts' || view === 'post') && <Access onReady={setSigner} />}
-        {signer && view === 'compose' && <Compose signer={signer} />}
-        {signer && view === 'posts' && <PostList signer={signer} />}
-        {signer && view === 'post' && param && <PostView signer={signer} postHash={param} />}
+        {needsSigner && !signer && (
+          <div className="page narrow">
+            <Access onReady={setSigner} />
+          </div>
+        )}
+        {view === 'feed' && <Feed />}
+        {view === 'compose' && signer && <Compose signer={signer} />}
+        {view === 'mine' && signer && <MyPosts signer={signer} />}
+        {view === 'post' && param && <PostPage postHash={param} signer={signer} />}
         {view === 'verify' && <Verify initialPostHash={param ?? ''} />}
-        {view === 'efficiency' && <Efficiency />}
+        {view === 'how' && <HowItWorks />}
+        {view === 'efficiency' && (
+          <div className="page">
+            <Efficiency />
+          </div>
+        )}
       </main>
+      <footer className="muted small">Testnets only: Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia. Content on Arweave is permanent and public.</footer>
     </div>
   );
 }

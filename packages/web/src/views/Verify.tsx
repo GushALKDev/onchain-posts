@@ -1,11 +1,11 @@
 import { ProofBundleSchema, TrustedKeysFileSchema, type TrustedKey } from '@phi/core';
-import { createPublicSources, formatReport, verifyPublishedPost, type VerificationReport } from '@phi/verifier';
+import { createPublicSources, verifyPublishedPost, type VerificationReport } from '@phi/verifier';
 import { useState } from 'react';
-import trustedKeysFile from '../../../../config/trusted-keys.json';
 import { getProof } from '../api.ts';
-import { CHAINS, GATEWAY_URL } from '../config.ts';
-
-const bundledKeys = TrustedKeysFileSchema.parse(trustedKeysFile).keys;
+import { Spinner } from '../components.tsx';
+import { CHAINS, GATEWAYS } from '../config.ts';
+import { bundledKeys } from '../trust.ts';
+import { ReportView } from './ReportView.tsx';
 
 export function Verify({ initialPostHash }: { initialPostHash: string }) {
   const [postHash, setPostHash] = useState(initialPostHash);
@@ -45,8 +45,8 @@ export function Verify({ initialPostHash }: { initialPostHash: string }) {
     setError(null);
     setReport(null);
     try {
-      const hints = bundle ?? (useApi ? ((await getProof(postHash)) ?? undefined) : undefined);
-      const sources = createPublicSources({ rpcUrls: Object.fromEntries(CHAINS.map((c) => [c.chainId, c.rpcUrl])), gateway: GATEWAY_URL });
+      const hints = bundle ?? (useApi ? ((await getProof(postHash).catch(() => null)) ?? undefined) : undefined);
+      const sources = createPublicSources({ rpcUrls: Object.fromEntries(CHAINS.map((c) => [c.chainId, c.rpcUrl])), gateway: GATEWAYS });
       setReport(await verifyPublishedPost(postHash as `0x${string}`, { hints, scan }, { sources, trustedKeys: customKeys ?? bundledKeys }));
     } catch (e) {
       setError((e as Error).message);
@@ -55,42 +55,51 @@ export function Verify({ initialPostHash }: { initialPostHash: string }) {
     }
   }
 
+  const valid = /^0x[0-9a-fA-F]{64}$/.test(postHash);
   return (
-    <section className="card">
-      <h2>Verify a post</h2>
-      <p className="notice">
-        This page runs the same verifier library as the CLI, but the platform serves both this code and its copy of
-        trusted-keys.json, so it is a convenience, not independent verification. For that, run <code>pnpm verify &lt;postHash&gt;</code> from
-        the public repository at a pinned commit, or with a trusted-keys file you supply.
-      </p>
-      <label>
-        postHash
-        <input value={postHash} onChange={(e) => setPostHash(e.target.value.trim())} placeholder="0x..." />
-      </label>
-      <label>
-        Proof bundle (optional, untrusted hints)
-        <input type="file" accept="application/json" onChange={(e) => onFile(e.target.files?.[0])} />
-      </label>
-      <label>
-        Trust root (optional): your own trusted-keys.json instead of the copy served with this page
-        <input type="file" accept="application/json" onChange={(e) => onKeysFile(e.target.files?.[0])} />
-      </label>
-      <label className="inline">
-        <input type="checkbox" checked={useApi} onChange={(e) => setUseApi(e.target.checked)} disabled={bundle !== undefined} />
-        Without a bundle, fetch hints from the platform API (untrusted, re-checked)
-      </label>
-      <label className="inline">
-        <input type="checkbox" checked={scan} onChange={(e) => setScan(e.target.checked)} />
-        Scan anchor events (needed for an "omitted" verdict; slower)
-      </label>
-      <button onClick={run} disabled={busy || !/^0x[0-9a-fA-F]{64}$/.test(postHash)}>{busy ? 'Verifying...' : 'Verify'}</button>
-      {error && <p className="error">{error}</p>}
+    <div className="page">
+      <div className="page-head">
+        <h1>Verify a post</h1>
+        {valid && <a className="button secondary" href={`#post/${postHash}`}>Open post page</a>}
+      </div>
+      <div className="card">
+        <p className="notice">
+          This page runs the same verifier library as the CLI, but the platform serves both this code and its copy of trusted-keys.json, so it is a
+          convenience, not independent verification. For that, run <code>pnpm verify &lt;postHash&gt;</code> from the public repository at a pinned
+          commit, or with a trusted-keys file you supply.
+        </p>
+        <label>
+          postHash
+          <input value={postHash} onChange={(e) => setPostHash(e.target.value.trim())} placeholder="0x..." />
+        </label>
+        <div className="grid-2">
+          <label>
+            Proof bundle (optional, untrusted hints)
+            <input type="file" accept="application/json" onChange={(e) => onFile(e.target.files?.[0])} />
+          </label>
+          <label>
+            Trust root (optional): your own trusted-keys.json
+            <input type="file" accept="application/json" onChange={(e) => onKeysFile(e.target.files?.[0])} />
+          </label>
+        </div>
+        <label className="inline">
+          <input type="checkbox" checked={useApi} onChange={(e) => setUseApi(e.target.checked)} disabled={bundle !== undefined} />
+          Without a bundle, fetch hints from the platform API (untrusted, re-checked)
+        </label>
+        <label className="inline">
+          <input type="checkbox" checked={scan} onChange={(e) => setScan(e.target.checked)} />
+          Scan anchor events (needed for an "omitted" verdict and to find a post without hints; slower)
+        </label>
+        <p className="muted small">Arweave gateways tried in order: {GATEWAYS.map((g) => new URL(g).host).join(', ')}.</p>
+        <button onClick={run} disabled={busy || !valid}>{busy ? 'Verifying...' : 'Verify'}</button>
+        {error && <p className="error">{error}</p>}
+      </div>
+      {busy && <Spinner label="Fetching from Arweave gateways and public RPCs" />}
       {report && (
-        <>
-          <p className={report.ok ? 'verdict ok' : 'verdict bad'}>{report.ok ? 'VERIFIED' : 'NOT VERIFIED'}</p>
-          <pre>{formatReport(report)}</pre>
-        </>
+        <div className="card">
+          <ReportView report={report} />
+        </div>
       )}
-    </section>
+    </div>
   );
 }

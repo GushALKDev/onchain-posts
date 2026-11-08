@@ -6,12 +6,15 @@ Minimal web app ([ADR-019](../../docs/decisions/ADR-019-web-app-scope.md)): Vite
 
 | Page | What it does |
 | ---- | ------------ |
-| Compose | Username, caption and optional image. The image is resized to 1080 px and re-encoded to WebP in the browser, lowering quality from 0.9 to 0.5 until it fits 95 KiB (rejected otherwise); the shared RIFF parser strips and checks the chunks. Username and caption are normalised (NFC) before signing, because the signature freezes the bytes (ADR-003, ADR-012). The user picks 1 to 3 chains and signs the EIP-712 `PublishIntent`. |
-| My posts | Posts signed in this browser. Each shows Accepted / Published / Settled per chain (ADR-017), the receipt deadline and explorer links, refreshed every 3 s. "Download proof bundle" combines the public hints from `GET /proof/:postHash` with the signature and intent fields kept in IndexedDB (ADR-014). |
+| Feed (default) | Latest posts from `GET /posts`, refreshed every 10 s: image from Arweave (gateways tried in order), caption, username and one stage pill per chain. |
+| Post | Everything public about one post, each piece with its check: journey timeline, the signed EIP-712 struct, every Arweave item (Turbo status, owner and tags from GraphQL, live fetch with hash checks, JSON viewer), per-chain anchors (deadline, transaction, relayer trust, fee from the receipt, Merkle path recomputed level by level), receipt signer, inline verification, privacy panel, bundle downloads. Backed by `GET /posts/:postHash`. |
+| How it works | The seven steps, what is and is not guaranteed, deployment links and three Archify diagrams. |
+| Compose | Username, caption and optional image. The image is resized to 1080 px and re-encoded to WebP in the browser, lowering quality from 0.9 to 0.5 until it fits 95 KiB (rejected otherwise); the shared RIFF parser strips and checks the chunks. Username and caption are normalised (NFC) before signing, because the signature freezes the bytes (ADR-003, ADR-012). The user picks 1 to 3 chains and signs the EIP-712 `PublishIntent`. A live preview shows the exact bytes that will be signed, and the submit shows its three steps (sign, receipt, local save). |
+| My posts | Posts signed in this browser (list from IndexedDB, details from the API), opening the same post page. There, "Download private bundle" combines the public hints from `GET /proof/:postHash` with the signature and intent fields kept in IndexedDB (ADR-014). |
 | Verify | Runs the verifier library from public sources, with optional bundle and optional trust root file. Shows the convenience notice: the platform serves this page and its copy of `trusted-keys.json`, so independent verification means the CLI from the public repository, or a trust root you supply. |
 | Efficiency | Gas per post and end-to-end USD from the committed benchmark results. |
 
-In demo mode a "Flush now" button asks for the operator token (it is never embedded in the app) and calls the protected endpoint (ADR-018).
+In demo mode a "Flush now" button on the post page asks for the operator token (it is never embedded in the app) and calls the protected endpoint (ADR-018).
 
 ## Signing
 
@@ -26,7 +29,7 @@ Observed on 2026-11-08 with `@openfort/openfort-js` 2.6.4: Openfort signs the ch
 pnpm --filter @phi/web dev                        # http://localhost:5173
 ```
 
-The backend must list the web origin in `WEB_ORIGINS`. With `STORAGE_MODE=memory`, set `VITE_ARWEAVE_GATEWAY` to the backend's `/dev-gateway` so the Verify page can read content.
+The backend must list the web origin in `WEB_ORIGINS`. Arweave gateways come from `VITE_ARWEAVE_GATEWAYS` (comma-separated, tried in order; default `turbo-gateway.com`, `ardrive.net`, `arweave.net`). ar.io gateways serve a Turbo upload at once, while `arweave.net` lagged about 6 minutes on 2026-11-08 (ADR-002). With `STORAGE_MODE=memory`, set it to the backend's `/dev-gateway`. The post page also reads the ar.io GraphQL index (`VITE_ARWEAVE_GRAPHQL`) and Turbo's public status endpoint.
 
 ## Tests and checks
 

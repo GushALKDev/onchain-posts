@@ -103,6 +103,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] Demo-only flush-now button (token typed by the operator); efficiency panel from the benchmark results
 - [x] Browser run in headless Chrome against a local stack: compose, publish on two chains, flush, VERIFIED (ADR-019)
 - [x] Openfort sign-in (email code or guest, EOA, password recovery); domain without `chainId` accepted and payload not leaving the iframe, both observed (ADR-011)
+- [x] Feed, public post page with every piece of evidence and its check, How it works page, composer preview (ADR-019 scope update)
 - [ ] Public demo URL in the README
 
 ## Log
@@ -117,3 +118,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | 2026-11-08 | `packages/backend` implemented: API, workers, KMS simulator, Docker; 37 tests and a Docker smoke run. Finding: a replacement transaction must reuse the original gas limit. |
 | 2026-11-08 | `packages/web` implemented: compose, status, proof bundle, Verify, efficiency; run end to end in a headless browser against a local stack. Openfort waits for a project. |
 | 2026-11-08 | Deployed `PostAnchor` on the three testnets, trusted the real relayer and receipt keys, published the first real post through Turbo and verified it from public sources; Openfort sign-in wired and checked. |
+| 2026-11-08 | Verifier reads several gateways in order and reports verified / pending / failed (a gateway 404 is pending, not invalid). Backend: `GET /posts` and `GET /posts/:postHash` with timeline columns. Web redesign: feed, post page with live checks, How it works, light and dark themes. |

@@ -1,6 +1,6 @@
 import { API_URL } from './config.ts';
 import type { SubmitBody } from './compose.ts';
-import type { Hex, PostStatus, ProofBundle, SignedReceipt } from './types.ts';
+import type { Hex, PostDetail, PostSummary, ProofBundle, SignedReceipt } from './types.ts';
 
 async function call<T>(path: string, init?: RequestInit): Promise<{ status: number; body: T }> {
   const res = await fetch(`${API_URL}${path}`, { ...init, headers: { 'content-type': 'application/json', ...init?.headers } });
@@ -11,7 +11,9 @@ async function call<T>(path: string, init?: RequestInit): Promise<{ status: numb
 
 export const submitPost = async (body: SubmitBody) => (await call<{ postHash: Hex; receipt: SignedReceipt }>('/posts', { method: 'POST', body: JSON.stringify(body) })).body;
 
-export const getStatus = async (postHash: string) => (await call<PostStatus>(`/status/${postHash}`)).body;
+export const getPosts = async (limit = 24) => (await call<PostSummary[]>(`/posts?limit=${limit}`)).body;
+
+export const getPost = async (postHash: string) => (await call<PostDetail>(`/posts/${postHash}`)).body;
 
 /** Untrusted hints; null while the post is not stored yet. */
 export async function getProof(postHash: string): Promise<ProofBundle | null> {
