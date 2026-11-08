@@ -44,7 +44,7 @@ export function App() {
     <div className="app">
       <header className="topbar">
         <a className="brand" href="#">
-          <span className="brand-mark">Φ</span> Phi posts <small>PoC</small>
+          <span className="brand-mark">◆</span> Onchain Posts <small>PoC</small>
         </a>
         <nav>
           {NAV.map((n) => (

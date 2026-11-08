@@ -1,6 +1,6 @@
 // Prints the platform's public addresses (relayer and receipt) and a config/trusted-keys.json entry template for each.
 // Never prints private keys. Usage: node dist/print-keys.js (in Docker: docker compose exec backend node dist/print-keys.js)
-import { CHAIN_IDS, TRUSTED_KEYS_SCHEMA } from '@phi/core';
+import { CHAIN_IDS, TRUSTED_KEYS_SCHEMA } from '@onchain-posts/core';
 import { simulatorKeyStore } from './keys.ts';
 
 const env = process.env;

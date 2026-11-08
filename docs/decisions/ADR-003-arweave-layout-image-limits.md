@@ -16,8 +16,8 @@ ADR-002 puts every byte on Arweave, paid by the platform and permanent. Two forc
 | # | Data item | Content | Uploaded |
 | - | --------- | ------- | -------- |
 | 1 | Image | Binary WebP, metadata stripped | Per post with an image, before the post JSON |
-| 2 | Post JSON | `phi.post/1`, references the image by Arweave ID and hash | Per post |
-| 3 | Batch manifest | `phi.manifest/1`, the leaves of one batch | One per batch and chain |
+| 2 | Post JSON | `onchain-posts.post/1`, references the image by Arweave ID and hash | Per post |
+| 3 | Batch manifest | `onchain-posts.manifest/1`, the leaves of one batch | One per batch and chain |
 
 **Image limits.**
 

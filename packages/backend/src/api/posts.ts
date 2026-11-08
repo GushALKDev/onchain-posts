@@ -9,7 +9,7 @@ import {
   recoverIntentSigner,
   sigCommit,
   type SignedReceipt,
-} from '@phi/core';
+} from '@onchain-posts/core';
 import { hexToBytes, zeroHash, type Hex } from 'viem';
 import { z } from 'zod';
 import { INTENT_RULES } from '../config.ts';

@@ -1,4 +1,4 @@
-# @phi/bench
+# @onchain-posts/bench
 
 Benchmark scripts. Each one writes dated results to `results/*.json`; the tables in the README and in [docs/efficiency.md](../../docs/efficiency.md) are taken from those files (ADR-001).
 

@@ -72,7 +72,7 @@ contract PostAnchor {
      *      format can evolve without redeploying and a 64-byte internal node can never pass as a leaf.
      * @param sender Address that anchored the root; callers must check it is a trusted relayer.
      * @param root Anchored Merkle root.
-     * @param leafData abi.encode(postHash, postArweaveId, sigCommit) for phi.manifest/1 (ADR-014).
+     * @param leafData abi.encode(postHash, postArweaveId, sigCommit) for onchain-posts.manifest/1 (ADR-014).
      * @param proof Sibling hashes from the leaf to the root.
      * @return True if the root is anchored by `sender` and the leaf is in its tree.
      */

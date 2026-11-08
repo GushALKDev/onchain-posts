@@ -25,7 +25,7 @@ Candidate scope (Proposed: to be confirmed when Tier 3 starts).
 | Login | Email login through Openfort; the embedded account is used only to sign ([ADR-011](ADR-011-identity-openfort.md)) |
 | Compose | Caption + optional image. Client-side compression to WebP, EXIF/XMP stripping with the RIFF chunk parser from `packages/core`, NFC normalisation of username and caption, all before signing |
 | Chain selector | 1 to 3 chains among Ethereum Sepolia, Base Sepolia and Arbitrum Sepolia |
-| Sign and submit | EIP-712 `PublishIntent` signed by the embedded account; the receipt (EIP-712, "Phi Receipts" domain) is checked on arrival against a role `receipt` key ([ADR-015](ADR-015-signed-receipts.md)) |
+| Sign and submit | EIP-712 `PublishIntent` signed by the embedded account; the receipt (EIP-712, "Onchain Receipts" domain) is checked on arrival against a role `receipt` key ([ADR-015](ADR-015-signed-receipts.md)) |
 | Live status | Per stage and per chain: Accepted / Published / Settled, with explorer links and a tooltip that defines Settled for that chain ([ADR-017](ADR-017-confirmation-semantics.md)) |
 | Local signature storage | Each signature and its intent fields (`chainIds`, `nonce`, `deadline`) persisted in IndexedDB, keyed by `postHash` and bound to the logged-in Openfort user ([ADR-014](ADR-014-data-model.md)) |
 | Download proof bundle | Public bundle from `GET /proof/:postHash` plus the local signature and intent fields ([ADR-014](ADR-014-data-model.md)) |

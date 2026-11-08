@@ -1,4 +1,4 @@
-import { inclusionProof, treeFromManifest, type Manifest, type SignedReceipt } from '@phi/core';
+import { inclusionProof, treeFromManifest, type Manifest, type SignedReceipt } from '@onchain-posts/core';
 import { bytesToHex, getAddress, hexToBytes, type Hex } from 'viem';
 import type { Sql } from '../db.ts';
 import { ApiError } from '../errors.ts';

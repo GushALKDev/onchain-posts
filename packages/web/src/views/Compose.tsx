@@ -1,4 +1,4 @@
-import { LIMITS, normalizeCaption, normalizeUsername } from '@phi/core';
+import { LIMITS, normalizeCaption, normalizeUsername } from '@onchain-posts/core';
 import { useState } from 'react';
 import { submitPost } from '../api.ts';
 import { buildSubmission } from '../compose.ts';

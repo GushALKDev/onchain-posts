@@ -50,7 +50,7 @@ export async function openfortSigner(openfort: Openfort, label: string): Promise
       const { domain, types, message } = definition as unknown as { domain: Record<string, unknown>; types: Record<string, { name: string; type: string }[]>; message: Record<string, unknown> };
       const signature = (await openfort.embeddedWallet.signTypedData(domain as never, types as never, jsonSafe(message) as never)) as Hex;
       // The signature must recover to this account for exactly this payload; this also catches a signer that would add
-      // a chainId to the chain-agnostic "Phi Posts" domain (ADR-011, ADR-012).
+      // a chainId to the chain-agnostic "Onchain Posts" domain (ADR-011, ADR-012).
       const recovered = await recoverTypedDataAddress({ ...(definition as object), signature } as Parameters<typeof recoverTypedDataAddress>[0]);
       if (recovered !== address) throw new Error('Openfort returned a signature that does not match this payload and account');
       return signature;

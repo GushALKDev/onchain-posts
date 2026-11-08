@@ -3,7 +3,7 @@ import { encodeAbiParameters, keccak256, type Hex } from 'viem';
 import { arweaveIdToBytes32 } from './arweave.ts';
 import { MANIFEST_SCHEMA } from './constants.ts';
 
-/** phi.manifest/1 leaf: abi.encode(postHash, postArweaveId, sigCommit) (ADR-014). */
+/** onchain-posts.manifest/1 leaf: abi.encode(postHash, postArweaveId, sigCommit) (ADR-014). */
 export const LEAF_ENCODING = ['bytes32', 'bytes32', 'bytes32'] as const;
 
 export type LeafValue = [postHash: Hex, postArweaveId: Hex, sigCommit: Hex];

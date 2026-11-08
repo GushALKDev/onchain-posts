@@ -174,7 +174,7 @@ importers:
       '@hono/node-server':
         specifier: 2.1.5
         version: 2.1.5(hono@4.13.14)
-      '@phi/core':
+      '@onchain-posts/core':
         specifier: workspace:*
         version: link:../core
       hono:
@@ -190,7 +190,7 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
     devDependencies:
-      '@phi/verifier':
+      '@onchain-posts/verifier':
         specifier: workspace:*
         version: link:../verifier
       '@types/node':
@@ -229,7 +229,7 @@ importers:
 
   packages/verifier:
     dependencies:
-      '@phi/core':
+      '@onchain-posts/core':
         specifier: workspace:*
         version: link:../core
       viem:
@@ -251,10 +251,10 @@ importers:
       '@openfort/openfort-js':
         specifier: 2.6.4
         version: 2.6.4(bufferutil@4.1.0)(debug@4.4.3)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@phi/core':
+      '@onchain-posts/core':
         specifier: workspace:*
         version: link:../core
-      '@phi/verifier':
+      '@onchain-posts/verifier':
         specifier: workspace:*
         version: link:../verifier
       react:

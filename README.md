@@ -1,4 +1,4 @@
-# phi-onchain-posts
+# onchain-posts
 
 Design exercise for EulerPhi (Phi): publish social posts on-chain as efficiently as possible, on up to three chains at once, without ever revealing the author's address.
 
@@ -43,7 +43,7 @@ Context only, not requirements: long term, Phi cares about account abstraction (
 
 Interactive version (download and open in a browser): [docs/diagrams/html/01-architecture.html](docs/diagrams/html/01-architecture.html)
 
-The web app (which imports `@phi/core` and the `@phi/verifier` library) talks to one backend: a stateless API plus workers (storage, one batcher and one anchor worker per chain, a tracker), with Postgres as both database and queue. All platform keys (relayer, receipt, Arweave data-item signer, signature-encryption key) live in an external key store: a KMS in production, a simulator behind the same interface in the PoC. Content goes to Arweave through Turbo; roots go to the same `PostAnchor` contract on three chains. Openfort provides email login and the signing identity only. The verifier reads only public sources (an Arweave gateway, public RPCs) plus `config/trusted-keys.json`. Details: [ADR-016](docs/decisions/ADR-016-backend-architecture.md).
+The web app (which imports `@onchain-posts/core` and the `@onchain-posts/verifier` library) talks to one backend: a stateless API plus workers (storage, one batcher and one anchor worker per chain, a tracker), with Postgres as both database and queue. All platform keys (relayer, receipt, Arweave data-item signer, signature-encryption key) live in an external key store: a KMS in production, a simulator behind the same interface in the PoC. Content goes to Arweave through Turbo; roots go to the same `PostAnchor` contract on three chains. Openfort provides email login and the signing identity only. The verifier reads only public sources (an Arweave gateway, public RPCs) plus `config/trusted-keys.json`. Details: [ADR-016](docs/decisions/ADR-016-backend-architecture.md).
 
 ## 4. Publish flow
 
@@ -68,12 +68,12 @@ Interactive version (download and open in a browser): [docs/diagrams/html/05-dat
 | Object | Where | Shape |
 | ------ | ----- | ----- |
 | `Post` | Signed by the user, identical on every chain | EIP-712 `Post { string username; string contentType; string caption; bytes32 imageHash; uint64 createdAt }`; `postHash = hashStruct(Post)` |
-| `PublishIntent` | Signed by the user, never published | `PublishIntent { Post post; uint256[] chainIds; bytes32 nonce; uint64 deadline }`, domain "Phi Posts" without chainId |
+| `PublishIntent` | Signed by the user, never published | `PublishIntent { Post post; uint256[] chainIds; bytes32 nonce; uint64 deadline }`, domain "Onchain Posts" without chainId |
 | Leaf | Inside the Merkle tree | `keccak256(bytes.concat(keccak256(abi.encode(postHash, postArweaveId, sigCommit))))`, no chainId |
-| Manifest | Arweave, one per batch and chain | `phi.manifest/1`: chainId, root, leaf encoding and the leaves |
+| Manifest | Arweave, one per batch and chain | `onchain-posts.manifest/1`: chainId, root, leaf encoding and the leaves |
 | Arweave tags | Public, indexed | `App-Name`, `Type`, `Post-Hash` / `Image-Hash` / `Merkle-Root`, `Chain-Id`; **no username tag** |
-| Proof bundle | `GET /proof/:postHash` (public) and the user's private copy | `phi.proof/1`: anchors per chain with Merkle proofs, pending chains with `anchorBy`, the receipt; the signature and the private intent fields (`chainIds`, `nonce`, `deadline`, needed to recompute the signed digest) only in the private copy |
-| Receipt | Returned at acceptance | EIP-712 domain "Phi Receipts": `Receipt { bytes32 postHash; bytes32 sigCommit; uint64 acceptedAt; Deadline[] deadlines }` |
+| Proof bundle | `GET /proof/:postHash` (public) and the user's private copy | `onchain-posts.proof/1`: anchors per chain with Merkle proofs, pending chains with `anchorBy`, the receipt; the signature and the private intent fields (`chainIds`, `nonce`, `deadline`, needed to recompute the signed digest) only in the private copy |
+| Receipt | Returned at acceptance | EIP-712 domain "Onchain Receipts": `Receipt { bytes32 postHash; bytes32 sigCommit; uint64 acceptedAt; Deadline[] deadlines }` |
 
 Details: [ADR-012](docs/decisions/ADR-012-signature-scheme-eip712.md) (signatures), [ADR-014](docs/decisions/ADR-014-data-model.md) (data model, tags, proof bundle, versioning), [ADR-015](docs/decisions/ADR-015-signed-receipts.md) (receipts).
 
@@ -151,10 +151,10 @@ Interactive version (download and open in a browser): [docs/diagrams/html/04-lif
 
 Interactive version (download and open in a browser): [docs/diagrams/html/06-verification.html](docs/diagrams/html/06-verification.html)
 
-Anyone can verify a post without trusting us, with the `@phi/verifier` package. Principle: **untrusted hints, independent verification.**
+Anyone can verify a post without trusting us, with the `@onchain-posts/verifier` package. Principle: **untrusted hints, independent verification.**
 
 - Hints can come from our API (`GET /proof/:postHash`) or from the user's proof bundle. They only save discovery time; without hints the verifier scans `BatchAnchored` events of the trusted relayers (slow fallback).
-- The verifier re-derives and re-checks everything against public sources and `config/trusted-keys.json`: it fetches the post JSON and image by Arweave ID, recomputes `imageHash` and `postHash`, rebuilds the root from the manifest and checks the proof, checks `anchoredAt` / `verifyPost` for a sender listed as relayer with the anchor time inside the key's window, and verifies the receipt with the "Phi Receipts" EIP-712 domain against a listed receipt key.
+- The verifier re-derives and re-checks everything against public sources and `config/trusted-keys.json`: it fetches the post JSON and image by Arweave ID, recomputes `imageHash` and `postHash`, rebuilds the root from the manifest and checks the proof, checks `anchoredAt` / `verifyPost` for a sender listed as relayer with the anchor time inside the key's window, and verifies the receipt with the "Onchain Receipts" EIP-712 domain against a listed receipt key.
 - Per chain it reports: anchored (flagged late if anchored after `anchorBy`), pending inside deadline, deadline passed but not scanned (or scan incomplete), or omitted. **A verdict of "omitted" is never derived from hints alone**: it requires the bounded scan of the trusted relayers' `BatchAnchored` events between `acceptedAt` and `anchorBy` plus a margin, with every manifest in that window searched ([ADR-015](docs/decisions/ADR-015-signed-receipts.md)).
 
 Implemented in [`packages/verifier`](packages/verifier/README.md): a library and the `pnpm verify <postHash> [--hints <bundle.json>] [--scan]` CLI, tested end to end against local nodes running `PostAnchor` at its real address (17 tests, including omission only after a complete bounded scan, untrusted or revoked relayers, tampered hints and tampered content).
@@ -220,7 +220,7 @@ docker compose up --build
 docker compose exec backend node dist/print-keys.js   # public relayer and receipt addresses for config/trusted-keys.json
 ```
 
-Web app (see [packages/web/README.md](packages/web/README.md)): the VITE_* variables of the root `.env`, then `pnpm --filter @phi/web dev` on http://localhost:5173. It signs with the Openfort embedded wallet when the Openfort keys are set, and with a development key otherwise. Demo URL: pending.
+Web app (see [packages/web/README.md](packages/web/README.md)): the VITE_* variables of the root `.env`, then `pnpm --filter @onchain-posts/web dev` on http://localhost:5173. It signs with the Openfort embedded wallet when the Openfort keys are set, and with a development key otherwise. Demo URL: pending.
 
 **Deployment.** `PostAnchor` is live at `0x36b5D5F0D176b96013678FC69C34038897fAF382` on the three testnets, with identical runtime bytecode (keccak `0x6cf2bcf7...0aa3`, equal to the local build):
 

@@ -94,7 +94,7 @@ Follow-ups:
 
 Empirical checks (2026-11-08, `@openfort/openfort-js` 2.6.4, guest sign-in on the owner's Openfort project, headless Chrome against the local backend):
 
-- **Domain without `chainId`: accepted.** `embeddedWallet.signTypedData(domain, types, message)` with the "Phi Posts" domain (name, version, verifyingContract) returned a signature that recovers locally to the embedded EOA for exactly that payload, and the backend accepted the post after recovering the same signer.
+- **Domain without `chainId`: accepted.** `embeddedWallet.signTypedData(domain, types, message)` with the "Onchain Posts" domain (name, version, verifyingContract) returned a signature that recovers locally to the embedded EOA for exactly that payload, and the backend accepted the post after recovering the same signer.
 - **The payload did not leave the iframe.** All network traffic of the page and its iframes was recorded while signing and submitting: Openfort received a `GET /iam/v2/auth/get-session` from the page and a `GET` plus `OPTIONS` of `/v1/devices/<id>` from the iframe, all without body; no URL or body contained the caption or the postHash; no WebSocket frame was sent (the only WebSocket was the local dev server). Only the backend's `POST /posts` carried the payload. This is one observation of the current SDK, not a provider commitment.
 - The username ownership check held with real accounts: a second guest account posting with a username claimed by the first was rejected.
 

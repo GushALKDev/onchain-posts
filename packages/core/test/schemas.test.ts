@@ -7,7 +7,7 @@ import { sampleArweaveId } from './helpers.ts';
 const h = (s: string) => keccak256(toBytes(s));
 
 const postJson = {
-  schema: 'phi.post/1',
+  schema: 'onchain-posts.post/1',
   type: 'post',
   username: 'ana',
   caption: 'hello',
@@ -24,7 +24,7 @@ describe('schemas', () => {
 
   it('rejects a relayer key without chainId and a receipt key with one', () => {
     const base = { address: `0x${'11'.repeat(20)}`, validFrom: '2026-11-07T00:00:00Z', revokedAt: null, note: '' };
-    const file = (key: object) => ({ schema: 'phi.trusted-keys/1', description: '', keys: [key] });
+    const file = (key: object) => ({ schema: 'onchain-posts.trusted-keys/1', description: '', keys: [key] });
     expect(TrustedKeysFileSchema.safeParse(file({ ...base, role: 'relayer', chainId: null })).success).toBe(false);
     expect(TrustedKeysFileSchema.safeParse(file({ ...base, role: 'receipt', chainId: 84532 })).success).toBe(false);
   });
@@ -44,7 +44,7 @@ describe('schemas', () => {
   it('accepts a public proof bundle and rejects a receipt with more than three deadlines', () => {
     const receipt = { postHash: h('post'), sigCommit: h('sig'), acceptedAt: 1762480000, deadlines: [{ chainId: 84532, anchorBy: 1762480120 }], signature: `0x${'ab'.repeat(65)}` };
     const bundle = {
-      schema: 'phi.proof/1',
+      schema: 'onchain-posts.proof/1',
       postHash: h('post'),
       postArweaveId: sampleArweaveId('post'),
       imageArweaveId: null,

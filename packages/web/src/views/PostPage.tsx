@@ -1,5 +1,5 @@
-import { POSTS_DOMAIN, imageHash, isTrustedKey, receiptFromJson, recoverReceiptSigner } from '@phi/core';
-import { createPublicSources, verifyPublishedPost, type VerificationReport } from '@phi/verifier';
+import { POSTS_DOMAIN, imageHash, isTrustedKey, receiptFromJson, recoverReceiptSigner } from '@onchain-posts/core';
+import { createPublicSources, verifyPublishedPost, type VerificationReport } from '@onchain-posts/verifier';
 import { useEffect, useRef, useState } from 'react';
 import type { Address, Hex } from 'viem';
 import { demoFlush, getPost, getProof } from '../api.ts';
@@ -253,7 +253,7 @@ function ReceiptCheck({ post }: { post: PostDetail }) {
       {signer === undefined ? (
         <Spinner label="Recovering the receipt signer" />
       ) : (
-        <Check state={signer && trusted && matches ? 'ok' : 'fail'} title={signer && trusted ? 'Signed by a trusted receipt key ("Phi Receipts" EIP-712 domain)' : 'Receipt signer is not a trusted receipt key'}>
+        <Check state={signer && trusted && matches ? 'ok' : 'fail'} title={signer && trusted ? 'Signed by a trusted receipt key ("Onchain Receipts" EIP-712 domain)' : 'Receipt signer is not a trusted receipt key'}>
           <div className="mono small break">signer {signer ?? 'unrecoverable'}</div>
           {!matches && <div className="error small">the receipt does not commit to this postHash and sigCommit</div>}
         </Check>
@@ -366,7 +366,7 @@ function Privacy({ post }: { post: PostDetail }) {
 
 function BundleTools({ post, local }: { post: PostDetail; local: LocalPost | null }) {
   const [error, setError] = useState<string | null>(null);
-  const [token, setToken] = useState(() => sessionStorage.getItem('phi-demo-flush-token') ?? '');
+  const [token, setToken] = useState(() => sessionStorage.getItem('onchain-posts-demo-flush-token') ?? '');
   const [flushed, setFlushed] = useState<string | null>(null);
 
   async function download(withSignature: boolean) {
@@ -375,7 +375,7 @@ function BundleTools({ post, local }: { post: PostDetail; local: LocalPost | nul
       const bundle = await getProof(post.postHash);
       if (!bundle) throw new Error('not stored on Arweave yet, try again in a few seconds');
       const file = withSignature && local ? privateBundle(bundle, local) : bundle;
-      downloadJson(`phi-proof-${post.postHash.slice(0, 10)}${withSignature ? '-private' : ''}.json`, file);
+      downloadJson(`onchain-posts-proof-${post.postHash.slice(0, 10)}${withSignature ? '-private' : ''}.json`, file);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -383,7 +383,7 @@ function BundleTools({ post, local }: { post: PostDetail; local: LocalPost | nul
 
   async function flush() {
     setError(null);
-    sessionStorage.setItem('phi-demo-flush-token', token);
+    sessionStorage.setItem('onchain-posts-demo-flush-token', token);
     try {
       const { flushing } = await demoFlush(token);
       setFlushed(flushing.length ? `flushing on ${flushing.map(chainName).join(', ')}` : 'nothing to flush');

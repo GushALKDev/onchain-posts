@@ -1,4 +1,4 @@
-import { ProofBundleSchema, imageHash, recoverIntentSigner } from '@phi/core';
+import { ProofBundleSchema, imageHash, recoverIntentSigner } from '@onchain-posts/core';
 import { keccak256, toBytes, zeroHash } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { describe, expect, it } from 'vitest';
@@ -52,7 +52,7 @@ describe('development signer and private bundle', () => {
   it('adds the local signature and intent fields to the public hints, giving a schema-valid private bundle', () => {
     const h = (s: string) => keccak256(toBytes(s));
     const publicBundle = {
-      schema: 'phi.proof/1' as const,
+      schema: 'onchain-posts.proof/1' as const,
       postHash: h('post'),
       postArweaveId: 'A'.repeat(43),
       imageArweaveId: null,

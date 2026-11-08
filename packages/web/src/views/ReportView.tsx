@@ -1,4 +1,4 @@
-import { formatReport, type ChainResult, type VerificationReport } from '@phi/verifier';
+import { formatReport, type ChainResult, type VerificationReport } from '@onchain-posts/verifier';
 import { Check, ChainPill, type CheckState } from '../components.tsx';
 import { dateTime } from '../format.ts';
 
@@ -34,7 +34,7 @@ export function ReportView({ report }: { report: VerificationReport }) {
       </Check>
       <h3>Receipt</h3>
       {report.receipt.present ? (
-        <Check state={report.receipt.valid ? 'ok' : 'fail'} title={report.receipt.valid ? 'Signed by a trusted receipt key ("Phi Receipts" EIP-712 domain)' : 'Receipt not valid: its deadlines are ignored'}>
+        <Check state={report.receipt.valid ? 'ok' : 'fail'} title={report.receipt.valid ? 'Signed by a trusted receipt key ("Onchain Receipts" EIP-712 domain)' : 'Receipt not valid: its deadlines are ignored'}>
           <div className="mono small">signer {report.receipt.signer}{report.receipt.acceptedAt ? `, accepted ${dateTime(report.receipt.acceptedAt)}` : ''}</div>
           {report.receipt.errors.map((e) => <div key={e} className="error small">{e}</div>)}
         </Check>

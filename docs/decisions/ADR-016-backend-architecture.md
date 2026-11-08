@@ -104,7 +104,7 @@ Follow-ups:
 ## Evidence
 
 - `FOR UPDATE SKIP LOCKED`: "With SKIP LOCKED, any selected rows that cannot be immediately locked are skipped"; the same paragraph says this inconsistent view suits queue-like tables, not general-purpose work (Verified 2026-11-07: https://www.postgresql.org/docs/current/sql-select.html).
-- Tests (`packages/backend`, 37 at this commit, against a real Postgres in Docker and two local chains): every acceptance check, the privacy boundary (no address or signature in clear in the database), disclosure, demo flush, the full pipeline to SETTLED with `@phi/verifier` accepting the result, and the anchor worker failure cases of ADR-008.
+- Tests (`packages/backend`, 37 at this commit, against a real Postgres in Docker and two local chains): every acceptance check, the privacy boundary (no address or signature in clear in the database), disclosure, demo flush, the full pipeline to SETTLED with `@onchain-posts/verifier` accepting the result, and the anchor worker failure cases of ADR-008.
 - Smoke run on 2026-11-08: the Docker image against a local chain and Postgres accepted two posts, anchored them in one batch after a demo flush, and served a proof bundle that verifies against the anchored root.
 - To verify: AWS KMS support for secp256k1 signing keys suitable for Ethereum transactions and EIP-712 signatures.
 - To verify: Turbo upload rate limits ([ADR-010](ADR-010-gasless-relayer.md)).

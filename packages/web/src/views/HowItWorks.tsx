@@ -1,4 +1,4 @@
-import { POST_ANCHOR_ADDRESS } from '@phi/core';
+import { POST_ANCHOR_ADDRESS } from '@onchain-posts/core';
 import architecture from '../../../../docs/diagrams/png/01-architecture.png';
 import publishFlow from '../../../../docs/diagrams/png/02-publish-flow.png';
 import verification from '../../../../docs/diagrams/png/06-verification.png';

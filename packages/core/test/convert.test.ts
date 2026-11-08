@@ -7,7 +7,7 @@ describe('JSON to EIP-712 conversion', () => {
   it('postFromJson rebuilds the signed Post, so postHash can be recomputed from Arweave content', () => {
     const post = samplePost(5);
     const json: PostJson = {
-      schema: 'phi.post/1',
+      schema: 'onchain-posts.post/1',
       type: 'post',
       username: post.username,
       caption: post.caption,

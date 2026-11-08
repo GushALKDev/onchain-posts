@@ -1,5 +1,5 @@
 {
-  "schema": "phi.bench.gas/1",
+  "schema": "onchain-posts.bench.gas/1",
   "date": "2026-11-07",
   "environment": {
     "anvil": "anvil Version: 1.7.1",

@@ -1,6 +1,6 @@
 export type { Hex } from 'viem';
-export type { ProofBundle, SignedReceipt } from '@phi/core';
-import type { SignedReceipt } from '@phi/core';
+export type { ProofBundle, SignedReceipt } from '@onchain-posts/core';
+import type { SignedReceipt } from '@onchain-posts/core';
 
 export type Stage = 'accepted' | 'published' | 'settled' | 'failed';
 

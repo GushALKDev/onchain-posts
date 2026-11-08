@@ -1,16 +1,16 @@
-# @phi/verifier
+# @onchain-posts/verifier
 
-A browser-compatible library (fetch + viem, no Node-only APIs outside `src/cli.ts`) with a thin CLI on top. It verifies a post using only public sources: an Arweave gateway, public RPCs and `config/trusted-keys.json`. The web Verify page and the CLI run the same library code. It never imports `@phi/backend`.
+A browser-compatible library (fetch + viem, no Node-only APIs outside `src/cli.ts`) with a thin CLI on top. It verifies a post using only public sources: an Arweave gateway, public RPCs and `config/trusted-keys.json`. The web Verify page and the CLI run the same library code. It never imports `@onchain-posts/backend`.
 
 ## What it checks
 
 Principle: **untrusted hints, independent verification** (README section 9, ADR-014, ADR-015).
 
-1. **Hints** (a `phi.proof/1` bundle from `GET /proof/:postHash` or the user's private copy) are parsed and only used to save discovery time. Hints for another `postHash` are ignored.
-2. **Receipt**: the signer is recovered from the "Phi Receipts" EIP-712 domain and must be a `receipt` key in the trust root at `acceptedAt` (a consistency check only, ADR-015). An invalid receipt means no deadline is trusted, so no "pending" or "omitted" claim is made from it.
+1. **Hints** (a `onchain-posts.proof/1` bundle from `GET /proof/:postHash` or the user's private copy) are parsed and only used to save discovery time. Hints for another `postHash` are ignored.
+2. **Receipt**: the signer is recovered from the "Onchain Receipts" EIP-712 domain and must be a `receipt` key in the trust root at `acceptedAt` (a consistency check only, ADR-015). An invalid receipt means no deadline is trusted, so no "pending" or "omitted" claim is made from it.
 3. **Anchors**: each one is accepted only if `PostAnchor.anchoredAt(sender, root)` is non-zero, the sender is a `relayer` key for that chain at the anchor timestamp, the leaf belongs to this post and `PostAnchor.verifyPost` accepts the proof.
 4. **Scan** (`scan: true`): reads `BatchAnchored` events of the trusted relayers, fetches each manifest, checks that it rebuilds to the anchored root and looks for the post. Without a receipt it needs a start time (`since`). With a receipt it is the bounded scan from `acceptedAt` to `anchorBy` + margin (120 s by default, design parameter).
-5. **Content**: the post JSON is fetched by the Arweave ID pinned in the leaf (or from the hints when there is no verified anchor), trying public gateways in order (`turbo-gateway.com`, `ardrive.net`, `arweave.net` by default: arweave.net can take minutes to serve a new Turbo upload), validated against `phi.post/1`, and its fields must hash to the `postHash`; the image bytes must hash to `image.hash`. Chunks outside the WebP allowlist are reported as warnings.
+5. **Content**: the post JSON is fetched by the Arweave ID pinned in the leaf (or from the hints when there is no verified anchor), trying public gateways in order (`turbo-gateway.com`, `ardrive.net`, `arweave.net` by default: arweave.net can take minutes to serve a new Turbo upload), validated against `onchain-posts.post/1`, and its fields must hash to the `postHash`; the image bytes must hash to `image.hash`. Chunks outside the WebP allowlist are reported as warnings.
 6. **Authorship** (private bundle with `signature` and `intent`): the signer is recovered from the `PublishIntent`, `keccak256(signature)` must equal the `sigCommit` in the anchored leaf, and every anchored chain must be one the author signed.
 
 ## Verdicts per chain
@@ -30,7 +30,7 @@ The overall `status` is `verified` when the content is valid, at least one chain
 Library:
 
 ```ts
-import { createPublicSources, verifyPublishedPost } from '@phi/verifier';
+import { createPublicSources, verifyPublishedPost } from '@onchain-posts/verifier';
 const report = await verifyPublishedPost(postHash, { hints, scan: true }, { sources: createPublicSources({ rpcUrls, gateway }), trustedKeys });
 ```
 

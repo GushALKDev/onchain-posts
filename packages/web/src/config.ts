@@ -1,5 +1,5 @@
-import { CHAIN_IDS } from '@phi/core';
-import { DEFAULT_GATEWAYS } from '@phi/verifier';
+import { CHAIN_IDS } from '@onchain-posts/core';
+import { DEFAULT_GATEWAYS } from '@onchain-posts/verifier';
 
 export type ChainInfo = { chainId: number; name: string; short: string; layer: 'L1' | 'L2'; rpcUrl: string; explorer: string; color: string };
 

@@ -1,5 +1,5 @@
 {
-  "schema": "phi.bench.calldata-probe/1",
+  "schema": "onchain-posts.bench.calldata-probe/1",
   "date": "2026-11-07",
   "method": "eth_estimateGas, see header of calldata-floor-probe.mjs",
   "rows": [

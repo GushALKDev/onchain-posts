@@ -9,12 +9,12 @@ COPY packages/verifier/package.json packages/verifier/
 COPY packages/backend/package.json packages/backend/
 COPY packages/bench/package.json packages/bench/
 COPY packages/web/package.json packages/web/
-RUN pnpm install --frozen-lockfile --filter @phi/backend...
+RUN pnpm install --frozen-lockfile --filter @onchain-posts/backend...
 COPY packages/core packages/core
 COPY packages/verifier packages/verifier
 COPY packages/backend packages/backend
-RUN pnpm --filter @phi/core build && pnpm --filter @phi/verifier build && pnpm --filter @phi/backend exec tsc -p tsconfig.json
-RUN pnpm --filter @phi/backend deploy --prod --legacy /out
+RUN pnpm --filter @onchain-posts/core build && pnpm --filter @onchain-posts/verifier build && pnpm --filter @onchain-posts/backend exec tsc -p tsconfig.json
+RUN pnpm --filter @onchain-posts/backend deploy --prod --legacy /out
 
 FROM node:24-slim
 WORKDIR /app

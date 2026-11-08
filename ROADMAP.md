@@ -51,7 +51,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 
 ### `packages/core`
 
-- [x] EIP-712 types and domains: `Post`, `PublishIntent` ("Phi Posts"), `Receipt` / `Deadline` ("Phi Receipts"), checked against an independent encoding written from the specification ([packages/core/src/eip712.ts](packages/core/src/eip712.ts))
+- [x] EIP-712 types and domains: `Post`, `PublishIntent` ("Onchain Posts"), `Receipt` / `Deadline` ("Onchain Receipts"), checked against an independent encoding written from the specification ([packages/core/src/eip712.ts](packages/core/src/eip712.ts))
 - [x] `postHash`, `imageHash`, `sigCommit`, leaf encoding, Merkle helpers on `@openzeppelin/merkle-tree`; the generated fixture is verified by `contracts/test/CoreFixture.t.sol` against `PostAnchor`
 - [x] Schemas: post JSON, manifest, proof bundle, signed receipt, trusted keys (zod); `config/trusted-keys.json` validated in the tests
 - [x] Username and caption normalisation (NFC, `[a-z0-9_]`, 3 to 30 characters, 1,000 code points)
@@ -90,7 +90,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] `GET /proof/:postHash`, `GET /status/:postHash`, on-demand signature disclosure with audit log
 - [x] `DEMO_MODE` with the protected flush-now endpoint ([ADR-018](docs/decisions/ADR-018-abuse-cost-control.md))
 - [x] Backend service in `docker-compose.yml`; Docker smoke run against a local chain
-- [x] 37 tests with Postgres and two local chains, including the full pipeline verified by `@phi/verifier`
+- [x] 37 tests with Postgres and two local chains, including the full pipeline verified by `@onchain-posts/verifier`
 - [x] First real Turbo upload (free tier, 0 winc); `arweave.net` served it about 6 minutes later (ADR-002, ADR-008)
 - [x] Anchoring on the three testnets: 47,058 gas on Base and Arbitrum Sepolia as measured locally, 129,078 on Ethereum Sepolia (different schedule)
 

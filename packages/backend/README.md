@@ -1,4 +1,4 @@
-# @phi/backend
+# @onchain-posts/backend
 
 API, workers and the KMS-simulator key store, in one process for the PoC ([ADR-016](../../docs/decisions/ADR-016-backend-architecture.md)). Postgres is both the database and the job queue.
 
@@ -7,20 +7,20 @@ API, workers and the KMS-simulator key store, in one process for the PoC ([ADR-0
 | Endpoint | Purpose |
 | -------- | ------- |
 | `POST /posts` | Body `{ intent, signature, image }` (image as base64 WebP, or null). Runs every check below, stores the post and returns `202 { postHash, receipt }` with one `anchorBy` per chain. |
-| `GET /proof/:postHash` | **Untrusted verification hints**: the public `phi.proof/1` bundle, partial while chains are pending (`anchors` with Merkle proofs, `pending` with `anchorBy`, the receipt). Never contains the user signature. `202` while the post is not stored yet. |
+| `GET /proof/:postHash` | **Untrusted verification hints**: the public `onchain-posts.proof/1` bundle, partial while chains are pending (`anchors` with Merkle proofs, `pending` with `anchorBy`, the receipt). Never contains the user signature. `202` while the post is not stored yet. |
 | `GET /status/:postHash` | Per-chain stage for the web app: `accepted`, `published` (anchored, soft) or `settled` (safe head), plus the internal state, tx hash and block. |
 | `POST /disclosure` | Body `{ postHash, issuedAt, signature }`, where the signature is an EIP-191 signature of the disclosure message by the author's key. Returns the stored signature and private intent fields to the author only, and writes the audit log (ADR-013). |
 | `POST /demo/flush` | Only when `DEMO_MODE=true`. Needs header `x-demo-flush-token`; one flush per chain per minute (ADR-018). |
 | `GET /health` | Liveness. |
 
-Checks on `POST /posts` (ADR-003, ADR-012, ADR-016): body shape, `contentType` is `post`, chains supported and not repeated, deadline in the future and at most 1 hour ahead, `createdAt` within 5 minutes of server time, username and caption already normalised, image is a WebP with only allowlisted chunks, at most 95 KiB and 1080 px per side, image bytes hash to `imageHash`, a 65-byte EOA signature that recovers, username owned by the signer, nonce not reused, post not already submitted, per-account and per-IP rate limits, daily cap. Every limit is a design parameter in `src/config.ts` or `@phi/core`.
+Checks on `POST /posts` (ADR-003, ADR-012, ADR-016): body shape, `contentType` is `post`, chains supported and not repeated, deadline in the future and at most 1 hour ahead, `createdAt` within 5 minutes of server time, username and caption already normalised, image is a WebP with only allowlisted chunks, at most 95 KiB and 1080 px per side, image bytes hash to `imageHash`, a 65-byte EOA signature that recovers, username owned by the signer, nonce not reused, post not already submitted, per-account and per-IP rate limits, daily cap. Every limit is a design parameter in `src/config.ts` or `@onchain-posts/core`.
 
 ## Pipeline
 
 | Worker | What it does |
 | ------ | ------------ |
 | Storage | Uploads the image, then the post JSON, with the platform Arweave key (Turbo) and the ADR-014 tags (no username tag). Only stored posts are queued for batching. Gives up after 5 failed attempts. |
-| Batcher (per chain) | Flushes the queue at Nmax, after Tmax, or on a demo flush; builds the tree and `phi.manifest/1`, uploads the manifest. A batch is anchored only after its manifest is stored. |
+| Batcher (per chain) | Flushes the queue at Nmax, after Tmax, or on a demo flush; builds the tree and `onchain-posts.manifest/1`, uploads the manifest. A batch is anchored only after its manifest is stored. |
 | Anchor (per chain) | One in-flight transaction per chain. Checks `anchoredAt` before sending (adopts a root already on-chain after a crash), marks a batch FAILED when the anchor would revert, replaces a stuck transaction with the same nonce and higher fees after 60 s, reusing the original gas limit. |
 | Tracker (per chain) | ANCHORED becomes SETTLED when the chain's `safe` block covers the anchor block. |
 
@@ -43,7 +43,7 @@ docker compose exec backend node dist/print-keys.js   # public relayer and recei
 
 The relayer address printed by `print-keys` needs testnet ETH on each enabled chain. With `STORAGE_MODE=turbo` every upload goes to Arweave: permanent and public. Items up to 105 KiB are free within Turbo's 10 MiB lifetime allowance per wallet (ADR-002), enough for the PoC.
 
-Without Docker: `pnpm --filter @phi/backend build && node packages/backend/dist/main.js` with the same variables.
+Without Docker: `pnpm --filter @onchain-posts/backend build && node packages/backend/dist/main.js` with the same variables.
 
 ## Tests
 
@@ -51,7 +51,7 @@ Without Docker: `pnpm --filter @phi/backend build && node packages/backend/dist/
 
 - foundation: config, migrations, KMS simulator, HMAC, signature encryption, log redaction;
 - API: acceptance, 13 rejection cases, oversize image, username ownership, nonce reuse, duplicate post, rate limit, proof and status before storage, disclosure, demo flush, and the no-address-in-the-database check;
-- pipeline: three posts from submission to SETTLED on two chains in one batch per chain, accepted by `@phi/verifier` (including authorship after disclosure); demo flush; stuck-transaction replacement with a single anchor on-chain; crash adoption; would-revert batch marked FAILED; storage failures.
+- pipeline: three posts from submission to SETTLED on two chains in one batch per chain, accepted by `@onchain-posts/verifier` (including authorship after disclosure); demo flush; stuck-transaction replacement with a single anchor on-chain; crash adoption; would-revert batch marked FAILED; storage failures.
 
 ## PoC simplifications
 

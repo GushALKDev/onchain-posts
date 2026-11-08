@@ -204,7 +204,7 @@
       "from": "verifier",
       "to": "trusted",
       "y": 915,
-      "label": "receipt signer (Phi Receipts)",
+      "label": "receipt signer (Onchain Receipts)",
       "variant": "security",
       "note": "Role receipt; acceptedAt in window is a consistency check only"
     },

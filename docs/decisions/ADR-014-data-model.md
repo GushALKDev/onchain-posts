@@ -22,7 +22,7 @@ They also have to respect A1 (no user address or public key anywhere public, [AD
 ### Post JSON on Arweave
 
 ```json
-{ "schema": "phi.post/1", "type": "post", "username": "ana", "caption": "...", "createdAt": 1762480000,
+{ "schema": "onchain-posts.post/1", "type": "post", "username": "ana", "caption": "...", "createdAt": 1762480000,
   "image": { "arweaveId": "...", "hash": "0x...", "mime": "image/webp", "bytes": 81234, "width": 1080, "height": 1080 },
   "postHash": "0x..." }
 ```
@@ -47,7 +47,7 @@ leaf = keccak256(bytes.concat(keccak256(abi.encode(postHash, postArweaveId, sigC
 ### Manifest JSON (one per batch and chain, on Arweave)
 
 ```json
-{ "schema": "phi.manifest/1", "chainId": 84532, "root": "0x...", "leafEncoding": ["bytes32","bytes32","bytes32"],
+{ "schema": "onchain-posts.manifest/1", "chainId": 84532, "root": "0x...", "leafEncoding": ["bytes32","bytes32","bytes32"],
   "leaves": [["<postHash>","<postArweaveId>","<sigCommit>"], ...] }
 ```
 
@@ -61,8 +61,8 @@ leaf = keccak256(bytes.concat(keccak256(abi.encode(postHash, postArweaveId, sigC
 
 | Data item | Tags |
 | --------- | ---- |
-| Image | `Content-Type: image/webp`, `App-Name: Phi-Posts`, `Type: post-image`, `Image-Hash` |
-| Post JSON | `Content-Type: application/json`, `App-Name`, `Schema: phi.post/1`, `Type: post`, `Post-Hash` |
+| Image | `Content-Type: image/webp`, `App-Name: Onchain-Posts`, `Type: post-image`, `Image-Hash` |
+| Post JSON | `Content-Type: application/json`, `App-Name`, `Schema: onchain-posts.post/1`, `Type: post`, `Post-Hash` |
 | Manifest | `Content-Type: application/json`, `App-Name`, `Type: batch-manifest`, `Chain-Id`, `Merkle-Root` |
 
 No `username` tag. We control the index; we do not publish an indexable user dimension. The content itself remains public by design.
@@ -76,7 +76,7 @@ No `username` tag. We control the index; we do not publish an indexable user dim
 Consumed by the verifier as untrusted hints ([ADR-015](ADR-015-signed-receipts.md), README section 9).
 
 ```json
-{ "schema": "phi.proof/1", "postHash": "0x...", "postArweaveId": "...", "imageArweaveId": "...",
+{ "schema": "onchain-posts.proof/1", "postHash": "0x...", "postArweaveId": "...", "imageArweaveId": "...",
   "anchors": [ { "chainId": 84532, "sender": "0x...", "root": "0x...", "manifestId": "...", "txHash": "0x...",
                  "leafData": "0x...", "proof": ["0x...", "..."] } ],
   "pending": [ { "chainId": 11155111, "anchorBy": 1762480600 } ],
@@ -95,7 +95,7 @@ Who produces what:
 | Private | The web app, in the client | The public bundle plus the locally held `signature` and `intent` fields | The backend never adds the signature to a bundle |
 
 - `pending` is a hint like everything else from the backend: it can show that a deadline has passed, but it cannot establish an omission on its own. The "omitted" verdict requires the bounded event scan described in [ADR-015](ADR-015-signed-receipts.md).
-- The `anchorBy` values are trustworthy only because they are read from the receipt, which is signed (EIP-712, "Phi Receipts" domain, [ADR-015](ADR-015-signed-receipts.md)) by a key listed with role `receipt` in `config/trusted-keys.json`.
+- The `anchorBy` values are trustworthy only because they are read from the receipt, which is signed (EIP-712, "Onchain Receipts" domain, [ADR-015](ADR-015-signed-receipts.md)) by a key listed with role `receipt` in `config/trusted-keys.json`.
 - Local storage rule: the web app persists each signature and its `intent` fields in IndexedDB, keyed by `postHash` and bound to the logged-in Openfort user, so the private bundle can be built in a later session.
 - Limits: a shared or compromised browser leaks the signatures stored there; clearing site data or losing the device loses the local copy, and the only fallback is the on-demand disclosure from the backend ([ADR-013](ADR-013-author-privacy-sigcommit.md)).
 - The backend never decrypts the user's signature to put it in a bundle, and never sends it over the network except in that explicit, authenticated, logged disclosure.

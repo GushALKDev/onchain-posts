@@ -135,7 +135,7 @@
       "y": 485,
       "label": "signed receipt = Accepted",
       "variant": "return",
-      "note": "One anchorBy per chain (Phi Receipts domain)"
+      "note": "One anchorBy per chain (Onchain Receipts domain)"
     },
     {
       "id": "store-job",

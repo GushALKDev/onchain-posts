@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// phi-verify: verifies a post from public sources only. Run it from the public repository at a pinned commit, or
+// onchain-posts-verify: verifies a post from public sources only. Run it from the public repository at a pinned commit, or
 // with a trusted-keys file you supply, for verification that does not depend on the platform (README section 9).
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
-import { CHAIN_IDS, TrustedKeysFileSchema } from '@phi/core';
+import { CHAIN_IDS, TrustedKeysFileSchema } from '@onchain-posts/core';
 import { DEFAULT_GATEWAYS, createPublicSources } from './sources.ts';
 import { formatReport } from './format.ts';
 import { verifyPublishedPost } from './verify.ts';
@@ -15,7 +15,7 @@ const DEFAULT_RPCS: Record<number, string> = {
 };
 const DEFAULT_TRUSTED_KEYS = new URL('../../../config/trusted-keys.json', import.meta.url);
 
-const USAGE = `Usage: phi-verify <postHash> [options]
+const USAGE = `Usage: onchain-posts-verify <postHash> [options]
 
   --hints <file>          proof bundle (public or private copy); untrusted, re-checked
   --hints-url <url>       fetch hints from GET /proof/:postHash; untrusted, re-checked

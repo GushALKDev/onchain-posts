@@ -9,7 +9,7 @@ import {
   normalizeUsername,
   postHash as hashPost,
   type PublishIntent,
-} from '@phi/core';
+} from '@onchain-posts/core';
 import { bytesToHex, type Hex } from 'viem';
 import type { PostSigner } from './signer.ts';
 

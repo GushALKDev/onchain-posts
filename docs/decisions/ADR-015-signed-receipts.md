@@ -21,8 +21,8 @@ After validation, and before the Arweave upload (for fast UX), the backend retur
 ### Typed data (fixed, so no implementation invents it)
 
 ```
-Domain:   { name: "Phi Receipts", version: "1" }
-          (no chainId, no verifyingContract; deliberately different from the "Phi Posts" intent domain,
+Domain:   { name: "Onchain Receipts", version: "1" }
+          (no chainId, no verifyingContract; deliberately different from the "Onchain Posts" intent domain,
            so a receipt can never be mistaken for an intent or the reverse)
 
 Receipt  { bytes32 postHash; bytes32 sigCommit; uint64 acceptedAt; Deadline[] deadlines }

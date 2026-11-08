@@ -1,4 +1,4 @@
-# @phi/core
+# @onchain-posts/core
 
 Shared TypeScript, browser-compatible (no Node-only APIs in `src`). Used by `web`, `backend` and `verifier` so that hashing, normalisation and metadata checks are identical everywhere.
 
@@ -7,7 +7,7 @@ Shared TypeScript, browser-compatible (no Node-only APIs in `src`). Used by `web
 | Module | Exports | Decision |
 | ------ | ------- | -------- |
 | `eip712.ts` | `POSTS_DOMAIN`, `POST_TYPES`, `RECEIPTS_DOMAIN`, `RECEIPT_TYPES`, `postHash`, `imageHash`, `publishIntentDigest`, `recoverIntentSigner`, `sigCommit`, `receiptDigest`, `recoverReceiptSigner` | ADR-012, ADR-013, ADR-015 |
-| `merkle.ts` | `leafData`, `leafHash`, `buildBatch` (tree + `phi.manifest/1`), `treeFromManifest`, `manifestRootMatches`, `inclusionProof`, `verifyInclusion` | ADR-005, ADR-014 |
+| `merkle.ts` | `leafData`, `leafHash`, `buildBatch` (tree + `onchain-posts.manifest/1`), `treeFromManifest`, `manifestRootMatches`, `inclusionProof`, `verifyInclusion` | ADR-005, ADR-014 |
 | `arweave.ts` | `arweaveIdToBytes32`, `bytes32ToArweaveId` (rejects non-canonical IDs that would alias another one) | ADR-014 |
 | `normalize.ts` | `normalizeUsername`, `normalizeCaption` (client, before signing); `checkUsername`, `checkCaption` (server, check only) | ADR-003, ADR-012 |
 | `webp.ts` | `parseWebpChunks`, `inspectWebp` (dimensions + chunks outside the allowlist), `stripWebpMetadata` | ADR-003 |

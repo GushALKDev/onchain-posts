@@ -1,4 +1,4 @@
-import { ManifestSchema, bytes32ToArweaveId, inclusionProof, manifestRootMatches, treeFromManifest, type Manifest } from '@phi/core';
+import { ManifestSchema, bytes32ToArweaveId, inclusionProof, manifestRootMatches, treeFromManifest, type Manifest } from '@onchain-posts/core';
 import type { Address, Hex } from 'viem';
 import type { AnchorEvent, ArweaveSource, ChainSource } from './sources.ts';
 
@@ -54,7 +54,7 @@ export async function blockAtOrBefore(chain: ChainSource, t: bigint): Promise<bi
 async function loadManifest(arweave: ArweaveSource, event: AnchorEvent, chainId: number): Promise<Manifest> {
   const id = bytes32ToArweaveId(event.manifestId);
   const parsed = ManifestSchema.safeParse(JSON.parse(new TextDecoder().decode(await arweave.get(id))));
-  if (!parsed.success) throw new Error(`manifest ${id} does not match phi.manifest/1`);
+  if (!parsed.success) throw new Error(`manifest ${id} does not match onchain-posts.manifest/1`);
   const manifest = parsed.data as Manifest;
   if (manifest.chainId !== chainId) throw new Error(`manifest ${id} is for chain ${manifest.chainId}`);
   if (manifest.root.toLowerCase() !== event.root.toLowerCase() || !manifestRootMatches(manifest)) throw new Error(`manifest ${id} does not rebuild to the anchored root`);

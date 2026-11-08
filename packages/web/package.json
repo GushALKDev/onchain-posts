@@ -1,20 +1,20 @@
 {
-  "name": "@phi/web",
+  "name": "@onchain-posts/web",
   "private": true,
   "version": "0.0.0",
   "description": "Minimal web app (ADR-019): compose, per-chain status, proof bundle download and a Verify page on the verifier library.",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @phi/verifier build && vite",
-    "build": "pnpm --filter @phi/verifier build && tsc -p tsconfig.json && vite build",
-    "typecheck": "pnpm --filter @phi/verifier build && tsc -p tsconfig.json",
-    "test": "pnpm --filter @phi/verifier build && vitest run",
+    "dev": "pnpm --filter @onchain-posts/verifier build && vite",
+    "build": "pnpm --filter @onchain-posts/verifier build && tsc -p tsconfig.json && vite build",
+    "typecheck": "pnpm --filter @onchain-posts/verifier build && tsc -p tsconfig.json",
+    "test": "pnpm --filter @onchain-posts/verifier build && vitest run",
     "preview": "vite preview"
   },
   "dependencies": {
     "@openfort/openfort-js": "2.6.4",
-    "@phi/core": "workspace:*",
-    "@phi/verifier": "workspace:*",
+    "@onchain-posts/core": "workspace:*",
+    "@onchain-posts/verifier": "workspace:*",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "viem": "2.57.8"

@@ -42,7 +42,7 @@ describe('EIP-712 content and intent', () => {
     const domainSeparator = keccak256(
       encodeAbiParameters(
         [{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'bytes32' }, { type: 'address' }],
-        [str('EIP712Domain(string name,string version,address verifyingContract)'), str('Phi Posts'), str('1'), POST_ANCHOR_ADDRESS],
+        [str('EIP712Domain(string name,string version,address verifyingContract)'), str('Onchain Posts'), str('1'), POST_ANCHOR_ADDRESS],
       ),
     );
     const intentType = `PublishIntent(Post post,uint256[] chainIds,bytes32 nonce,uint64 deadline)${POST_TYPE}`;
@@ -90,7 +90,7 @@ describe('EIP-712 receipts', () => {
 
   it('the receipt domain has only name and version', () => {
     const domainSeparator = keccak256(
-      encodeAbiParameters([{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'bytes32' }], [str('EIP712Domain(string name,string version)'), str('Phi Receipts'), str('1')]),
+      encodeAbiParameters([{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'bytes32' }], [str('EIP712Domain(string name,string version)'), str('Onchain Receipts'), str('1')]),
     );
     const deadlineType = 'Deadline(uint256 chainId,uint64 anchorBy)';
     const deadlines = keccak256(

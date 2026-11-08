@@ -175,7 +175,7 @@ async function main() {
 
   const date = new Date().toISOString().slice(0, 10);
   const result = {
-    schema: 'phi.bench.cost/1',
+    schema: 'onchain-posts.bench.cost/1',
     date,
     inputs: { gasPrague: prague.file, gasCancun: cancun.file },
     sources: { rpc: RPC, chainlinkEthUsd: CHAINLINK_ETH_USD, baseGasPriceOracle: `${BASE_GAS_PRICE_ORACLE} getL1Fee(bytes)`, arbitrumNodeInterface: `${ARBITRUM_NODE_INTERFACE} gasEstimateL1Component(address,bool,bytes)`, turbo: TURBO_RATES },

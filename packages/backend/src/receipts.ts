@@ -1,4 +1,4 @@
-import { RECEIPTS_DOMAIN, RECEIPT_TYPES, receiptFromJson, type SignedReceipt } from '@phi/core';
+import { RECEIPTS_DOMAIN, RECEIPT_TYPES, receiptFromJson, type SignedReceipt } from '@onchain-posts/core';
 import type { Account, Hex } from 'viem';
 import { RECEIPT_BUDGET, type ChainConfig } from './config.ts';
 
@@ -7,7 +7,7 @@ export function anchorByFor(acceptedAt: number, chain: ChainConfig): number {
   return acceptedAt + RECEIPT_BUDGET.storageSeconds + chain.tmaxSeconds + RECEIPT_BUDGET.submissionSeconds + RECEIPT_BUDGET.inclusionSeconds;
 }
 
-/** Signs the receipt with the dedicated receipt key under the "Phi Receipts" domain (ADR-015). */
+/** Signs the receipt with the dedicated receipt key under the "Onchain Receipts" domain (ADR-015). */
 export async function signReceipt(account: Account, unsigned: Omit<SignedReceipt, 'signature'>): Promise<SignedReceipt> {
   if (!account.signTypedData) throw new Error('receipt account cannot sign typed data');
   const message = receiptFromJson({ ...unsigned, signature: '0x' });

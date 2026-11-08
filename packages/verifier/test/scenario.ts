@@ -15,7 +15,7 @@ import {
   type PostJson,
   type ProofBundle,
   type SignedReceipt,
-} from '@phi/core';
+} from '@onchain-posts/core';
 import { keccak256, toBytes, type Hex } from 'viem';
 import { privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 import type { MemoryArweave, TestChain } from './harness.ts';
@@ -68,7 +68,7 @@ export async function publish(args: {
   const post = { username: 'ana', contentType: CONTENT_TYPE_POST, caption: `hello ${counter++}`, imageHash: imageHash(image), createdAt: BigInt(acceptedAt) };
   const postHash = hashPost(post);
   const postJson: PostJson = {
-    schema: 'phi.post/1',
+    schema: 'onchain-posts.post/1',
     type: 'post',
     username: post.username,
     caption: post.caption,
@@ -109,7 +109,7 @@ export async function publish(args: {
 
   const anchored = new Set(anchors.map((a) => a.chainId));
   const publicBundle: ProofBundle = {
-    schema: 'phi.proof/1',
+    schema: 'onchain-posts.proof/1',
     postHash,
     postArweaveId,
     imageArweaveId,

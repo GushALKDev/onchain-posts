@@ -1,5 +1,5 @@
 {
-  "schema": "phi.bench.cost/1",
+  "schema": "onchain-posts.bench.cost/1",
   "date": "2026-11-07",
   "inputs": {
     "gasPrague": "2026-11-07-gas-local-prague.json",

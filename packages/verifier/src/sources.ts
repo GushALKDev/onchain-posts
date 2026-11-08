@@ -1,4 +1,4 @@
-import { postAnchorAbi } from '@phi/core';
+import { postAnchorAbi } from '@onchain-posts/core';
 import { createPublicClient, getAbiItem, http, type Address, type Hex, type PublicClient } from 'viem';
 
 export type AnchorEvent = { sender: Address; root: Hex; manifestId: Hex; count: number; blockNumber: bigint };

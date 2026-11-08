@@ -1,5 +1,5 @@
 {
-  "name": "@phi/verifier",
+  "name": "@onchain-posts/verifier",
   "private": true,
   "version": "0.0.0",
   "description": "Verifies a post from public sources only (Arweave gateway, public RPCs, config/trusted-keys.json); hints are untrusted.",
@@ -11,18 +11,18 @@
     }
   },
   "bin": {
-    "phi-verify": "./dist/cli.js"
+    "onchain-posts-verify": "./dist/cli.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "pnpm --filter @phi/core build && tsc -p tsconfig.json",
-    "typecheck": "pnpm --filter @phi/core build && tsc -p tsconfig.check.json",
-    "test": "pnpm --filter @phi/core build && vitest run"
+    "build": "pnpm --filter @onchain-posts/core build && tsc -p tsconfig.json",
+    "typecheck": "pnpm --filter @onchain-posts/core build && tsc -p tsconfig.check.json",
+    "test": "pnpm --filter @onchain-posts/core build && vitest run"
   },
   "dependencies": {
-    "@phi/core": "workspace:*",
+    "@onchain-posts/core": "workspace:*",
     "viem": "2.57.8"
   },
   "devDependencies": {

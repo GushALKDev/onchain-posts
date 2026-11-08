@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Phi on-chain posts: system architecture",
+    "title": "On-chain posts: system architecture",
     "locale": "en",
     "output": "docs/diagrams/html/01-architecture.html",
     "quality_profile": "showcase"
@@ -27,7 +27,7 @@
       "id": "web",
       "type": "frontend",
       "label": "Web app",
-      "sublabel": "Vite + React, @phi/core, verifier lib",
+      "sublabel": "Vite + React, @onchain-posts/core, verifier lib",
       "pos": [
         330,
         40

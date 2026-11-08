@@ -1,4 +1,4 @@
-import { POST_ANCHOR_ADDRESS } from '@phi/core';
+import { POST_ANCHOR_ADDRESS } from '@onchain-posts/core';
 import { createPublicClient, createWalletClient, defineChain, http, type Account, type Address, type PublicClient, type WalletClient } from 'viem';
 import type { ChainConfig } from './config.ts';
 

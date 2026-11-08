@@ -1,5 +1,5 @@
 {
-  "name": "@phi/core",
+  "name": "@onchain-posts/core",
   "private": true,
   "version": "0.0.0",
   "description": "Shared, browser-compatible hashing, EIP-712 types, Merkle helpers, schemas, normalisation and WebP checks for web, backend and verifier.",

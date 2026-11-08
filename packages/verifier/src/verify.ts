@@ -16,7 +16,7 @@ import {
   type ProofBundle,
   type SignedReceipt,
   type TrustedKey,
-} from '@phi/core';
+} from '@onchain-posts/core';
 import { decodeAbiParameters, keccak256, type Address, type Hex } from 'viem';
 import { scanForPost, type ScanOutcome } from './scan.ts';
 import type { Sources } from './sources.ts';
@@ -187,7 +187,7 @@ function parseHints(raw: unknown, postHash: Hex, report: VerificationReport): Pr
   if (raw === undefined) return null;
   const parsed = ProofBundleSchema.safeParse(raw);
   if (!parsed.success) {
-    report.notes.push(`hints ignored: not a valid phi.proof/1 bundle (${parsed.error.issues[0]?.message ?? 'schema error'})`);
+    report.notes.push(`hints ignored: not a valid onchain-posts.proof/1 bundle (${parsed.error.issues[0]?.message ?? 'schema error'})`);
     return null;
   }
   if (!same(parsed.data.postHash, postHash)) {
@@ -274,7 +274,7 @@ async function checkContent(sources: Sources, postHash: Hex, postArweaveId: stri
   }
   const parsed = PostJsonSchema.safeParse(json);
   if (!parsed.success) {
-    content.errors.push('post JSON does not match phi.post/1');
+    content.errors.push('post JSON does not match onchain-posts.post/1');
     return null;
   }
   const post = postFromJson(parsed.data);

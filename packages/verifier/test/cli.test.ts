@@ -29,13 +29,13 @@ afterAll(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-describe('phi-verify CLI', () => {
+describe('onchain-posts-verify CLI', () => {
   it('verifies a post from a hints file, a trusted-keys file, an RPC and a gateway, and exits 0', async () => {
     const p = await publish({ arweave, allChains: [base], signedChainIds: [84532], receiptChainIds: [84532], anchors: [{ chain: base }] });
     const hints = path.join(dir, 'bundle.json');
     const keys = path.join(dir, 'trusted-keys.json');
     writeFileSync(hints, JSON.stringify(p.publicBundle));
-    writeFileSync(keys, JSON.stringify({ schema: 'phi.trusted-keys/1', description: 'test', keys: trustedKeysFor([base], receiptKey) }));
+    writeFileSync(keys, JSON.stringify({ schema: 'onchain-posts.trusted-keys/1', description: 'test', keys: trustedKeysFor([base], receiptKey) }));
 
     const { stdout } = await run('node', [CLI, p.postHash, '--hints', hints, '--trusted-keys', keys, '--rpc', `84532=${base.url}`, '--gateway', gateway.url, '--json']);
     const report: VerificationReport = JSON.parse(stdout);
@@ -55,6 +55,6 @@ describe('phi-verify CLI', () => {
   it('prints usage and exits 2 for a malformed postHash', async () => {
     const failure = await run('node', [CLI, 'not-a-hash']).catch((e) => e);
     expect(failure.code).toBe(2);
-    expect(failure.stdout).toContain('Usage: phi-verify');
+    expect(failure.stdout).toContain('Usage: onchain-posts-verify');
   });
 });

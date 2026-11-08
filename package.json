@@ -1,13 +1,13 @@
 {
-  "name": "phi-onchain-posts",
+  "name": "onchain-posts",
   "private": true,
   "version": "0.0.0",
   "description": "Gasless, privacy-preserving publication of social posts on Arweave with Merkle-root anchoring on three EVM chains.",
   "packageManager": "pnpm@12.16.1",
   "scripts": {
-    "verify": "pnpm -s --filter @phi/verifier build && node packages/verifier/dist/cli.js",
-    "build": "pnpm --filter @phi/verifier build",
-    "bench": "pnpm --filter @phi/bench gas",
-    "test": "pnpm --filter @phi/core test && pnpm --filter @phi/verifier test && pnpm --filter @phi/backend test && pnpm --filter @phi/web test && cd contracts && forge test"
+    "verify": "pnpm -s --filter @onchain-posts/verifier build && node packages/verifier/dist/cli.js",
+    "build": "pnpm --filter @onchain-posts/verifier build",
+    "bench": "pnpm --filter @onchain-posts/bench gas",
+    "test": "pnpm --filter @onchain-posts/core test && pnpm --filter @onchain-posts/verifier test && pnpm --filter @onchain-posts/backend test && pnpm --filter @onchain-posts/web test && cd contracts && forge test"
   }
 }

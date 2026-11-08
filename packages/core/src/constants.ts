@@ -14,10 +14,10 @@ export const POST_ANCHOR_ADDRESS: Address = '0x36b5D5F0D176b96013678FC69C3403889
 
 export const CONTENT_TYPE_POST = 'post';
 
-export const POST_SCHEMA = 'phi.post/1';
-export const MANIFEST_SCHEMA = 'phi.manifest/1';
-export const PROOF_SCHEMA = 'phi.proof/1';
-export const TRUSTED_KEYS_SCHEMA = 'phi.trusted-keys/1';
+export const POST_SCHEMA = 'onchain-posts.post/1';
+export const MANIFEST_SCHEMA = 'onchain-posts.manifest/1';
+export const PROOF_SCHEMA = 'onchain-posts.proof/1';
+export const TRUSTED_KEYS_SCHEMA = 'onchain-posts.trusted-keys/1';
 
 /** Limits, all design parameters (ADR-003, ADR-012). */
 export const LIMITS = {

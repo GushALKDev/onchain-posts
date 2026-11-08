@@ -1,5 +1,5 @@
-import { ProofBundleSchema, TrustedKeysFileSchema, type TrustedKey } from '@phi/core';
-import { createPublicSources, verifyPublishedPost, type VerificationReport } from '@phi/verifier';
+import { ProofBundleSchema, TrustedKeysFileSchema, type TrustedKey } from '@onchain-posts/core';
+import { createPublicSources, verifyPublishedPost, type VerificationReport } from '@onchain-posts/verifier';
 import { useState } from 'react';
 import { getProof } from '../api.ts';
 import { Spinner } from '../components.tsx';
@@ -22,7 +22,7 @@ export function Verify({ initialPostHash }: { initialPostHash: string }) {
     if (!file) return setBundle(undefined);
     try {
       const json = JSON.parse(await file.text());
-      if (!ProofBundleSchema.safeParse(json).success) throw new Error('not a phi.proof/1 bundle');
+      if (!ProofBundleSchema.safeParse(json).success) throw new Error('not a onchain-posts.proof/1 bundle');
       setBundle(json);
       if (!postHash) setPostHash(json.postHash);
     } catch (e) {
@@ -36,7 +36,7 @@ export function Verify({ initialPostHash }: { initialPostHash: string }) {
     try {
       setCustomKeys(TrustedKeysFileSchema.parse(JSON.parse(await file.text())).keys);
     } catch {
-      setError('not a valid phi.trusted-keys/1 file');
+      setError('not a valid onchain-posts.trusted-keys/1 file');
     }
   }
 

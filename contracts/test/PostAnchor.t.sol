@@ -222,7 +222,7 @@ contract PostAnchorTest is Test {
     }
 
     /**
-     * @dev phi.manifest/1 leaf: abi.encode(postHash, postArweaveId, sigCommit).
+     * @dev onchain-posts.manifest/1 leaf: abi.encode(postHash, postArweaveId, sigCommit).
      */
     function _leafData(uint256 i) internal pure returns (bytes memory) {
         return abi.encode(keccak256(abi.encode("postHash", i)), keccak256(abi.encode("arweaveId", i)), keccak256(abi.encode("sig", i)));

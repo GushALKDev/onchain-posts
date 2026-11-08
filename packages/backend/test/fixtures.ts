@@ -1,4 +1,4 @@
-import { CONTENT_TYPE_POST, POSTS_DOMAIN, POST_TYPES, imageHash } from '@phi/core';
+import { CONTENT_TYPE_POST, POSTS_DOMAIN, POST_TYPES, imageHash } from '@onchain-posts/core';
 import { keccak256, toBytes, zeroHash, type Hex } from 'viem';
 import { privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 import type { ChainConfig, Config } from '../src/config.ts';

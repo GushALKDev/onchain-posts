@@ -1,4 +1,4 @@
-import { CHAIN_IDS } from '@phi/core';
+import { CHAIN_IDS } from '@onchain-posts/core';
 import { z } from 'zod';
 
 export type ChainConfig = { chainId: number; name: string; rpcUrl: string; tmaxSeconds: number; nmax: number };

@@ -175,7 +175,7 @@ async function main() {
 
     const date = new Date().toISOString().slice(0, 10);
     const result = {
-      schema: 'phi.bench.gas/1',
+      schema: 'onchain-posts.bench.gas/1',
       date,
       environment: {
         anvil: toolVersion('anvil'),

@@ -2,7 +2,7 @@ import { hashStruct, hashTypedData, keccak256, recoverTypedDataAddress, zeroHash
 import { POST_ANCHOR_ADDRESS } from './constants.ts';
 
 /** Intent domain: no chainId, because the same signature covers up to three chains (ADR-012). */
-export const POSTS_DOMAIN = { name: 'Phi Posts', version: '1', verifyingContract: POST_ANCHOR_ADDRESS } as const;
+export const POSTS_DOMAIN = { name: 'Onchain Posts', version: '1', verifyingContract: POST_ANCHOR_ADDRESS } as const;
 
 export const POST_TYPES = {
   Post: [
@@ -21,7 +21,7 @@ export const POST_TYPES = {
 } as const;
 
 /** Receipt domain: deliberately different from the intent domain, so neither can pass for the other (ADR-015). */
-export const RECEIPTS_DOMAIN = { name: 'Phi Receipts', version: '1' } as const;
+export const RECEIPTS_DOMAIN = { name: 'Onchain Receipts', version: '1' } as const;
 
 export const RECEIPT_TYPES = {
   Receipt: [

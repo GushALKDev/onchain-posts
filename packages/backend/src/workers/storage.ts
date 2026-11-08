@@ -1,4 +1,4 @@
-import { POST_SCHEMA, type PostJson } from '@phi/core';
+import { POST_SCHEMA, type PostJson } from '@onchain-posts/core';
 import { bytesToHex } from 'viem';
 import type { Deps } from '../deps.ts';
 import { log, redact } from '../log.ts';

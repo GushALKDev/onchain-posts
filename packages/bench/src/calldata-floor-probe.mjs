@@ -51,6 +51,6 @@ for (const chain of CHAINS) rows.push(await probe(chain));
 const date = new Date().toISOString().slice(0, 10);
 mkdirSync(resultsDir, { recursive: true });
 const outFile = path.join(resultsDir, `${date}-calldata-floor-probe.json`);
-writeFileSync(outFile, `${JSON.stringify({ schema: 'phi.bench.calldata-probe/1', date, method: 'eth_estimateGas, see header of calldata-floor-probe.mjs', rows }, null, 2)}\n`);
+writeFileSync(outFile, `${JSON.stringify({ schema: 'onchain-posts.bench.calldata-probe/1', date, method: 'eth_estimateGas, see header of calldata-floor-probe.mjs', rows }, null, 2)}\n`);
 console.table(rows.map(({ chain, chainId, empty, nonZero1000, zero1000, client }) => ({ chain, chainId, empty, nonZero1000, zero1000, client })));
 console.log(`written to ${path.relative(path.resolve(here, '../../..'), outFile)}`);

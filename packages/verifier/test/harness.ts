@@ -7,7 +7,7 @@ import {
   POST_ANCHOR_ADDRESS,
   bytes32ToArweaveId,
   type TrustedKey,
-} from '@phi/core';
+} from '@onchain-posts/core';
 import { concat, createPublicClient, createTestClient, createWalletClient, defineChain, http, keccak256, toBytes, type Hex, type PublicClient } from 'viem';
 import { privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 import { chainSourceFromClient, type ArweaveSource, type ChainSource } from '../src/index.ts';

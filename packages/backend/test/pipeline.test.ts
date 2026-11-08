@@ -1,5 +1,5 @@
-import { postAnchorAbi, verifyInclusion, type LeafValue, type TrustedKey } from '@phi/core';
-import { verifyPublishedPost } from '@phi/verifier';
+import { postAnchorAbi, verifyInclusion, type LeafValue, type TrustedKey } from '@onchain-posts/core';
+import { verifyPublishedPost } from '@onchain-posts/verifier';
 import type { Hono } from 'hono';
 import { decodeAbiParameters, getAbiItem, type Hex } from 'viem';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

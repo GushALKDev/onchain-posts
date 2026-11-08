@@ -1,4 +1,4 @@
-import { buildBatch, type BatchEntry } from '@phi/core';
+import { buildBatch, type BatchEntry } from '@onchain-posts/core';
 import { bytesToHex, hexToBytes } from 'viem';
 import type { ChainConfig } from '../config.ts';
 import type { Deps } from '../deps.ts';

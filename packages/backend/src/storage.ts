@@ -1,5 +1,5 @@
 import { ArweaveSigner, TurboFactory } from '@ardrive/turbo-sdk';
-import { bytes32ToArweaveId } from '@phi/core';
+import { bytes32ToArweaveId } from '@onchain-posts/core';
 import { keccak256 } from 'viem';
 import type { ArweaveJwk } from './keys.ts';
 
@@ -10,7 +10,7 @@ export interface Storage {
   upload(data: Uint8Array, tags: Tag[]): Promise<string>;
 }
 
-export const APP_NAME = 'Phi-Posts';
+export const APP_NAME = 'Onchain-Posts';
 
 /** Turbo bundler: items are signed with the platform Arweave key, so the ANS-104 owner is never the user (ADR-002). */
 export function turboStorage(jwk: ArweaveJwk): Storage {

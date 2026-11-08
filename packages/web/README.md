@@ -1,6 +1,6 @@
-# @phi/web
+# @onchain-posts/web
 
-Minimal web app ([ADR-019](../../docs/decisions/ADR-019-web-app-scope.md)): Vite + React, importing `@phi/core` and the `@phi/verifier` library. The live demo is not the efficiency proof (small batches, demo mode); the benchmark is.
+Minimal web app ([ADR-019](../../docs/decisions/ADR-019-web-app-scope.md)): Vite + React, importing `@onchain-posts/core` and the `@onchain-posts/verifier` library. The live demo is not the efficiency proof (small batches, demo mode); the benchmark is.
 
 ## Pages
 
@@ -20,13 +20,13 @@ In demo mode a "Flush now" button on the post page asks for the operator token (
 
 The app signs through a `PostSigner` interface (`src/signer.ts`). With `VITE_OPENFORT_PUBLISHABLE_KEY` and `VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY` set, it signs with the **Openfort embedded EOA** (ADR-011): email code or guest sign-in, EOA account type, password recovery. Every Openfort signature is checked locally before use: it must recover to the account for the exact payload. Without those keys, the app falls back to a **development key** generated in the browser and says so on every page.
 
-Observed on 2026-11-08 with `@openfort/openfort-js` 2.6.4: Openfort signs the chain-agnostic "Phi Posts" domain as given, and no request to Openfort carried the payload while signing (details in ADR-011).
+Observed on 2026-11-08 with `@openfort/openfort-js` 2.6.4: Openfort signs the chain-agnostic "Onchain Posts" domain as given, and no request to Openfort carried the payload while signing (details in ADR-011).
 
 ## Running locally
 
 ```bash
 # The web app reads the repository-root .env (see .env.example): set VITE_API_URL and the RPCs
-pnpm --filter @phi/web dev                        # http://localhost:5173
+pnpm --filter @onchain-posts/web dev                        # http://localhost:5173
 ```
 
 The backend must list the web origin in `WEB_ORIGINS`. Arweave gateways come from `VITE_ARWEAVE_GATEWAYS` (comma-separated, tried in order; default `turbo-gateway.com`, `ardrive.net`, `arweave.net`). ar.io gateways serve a Turbo upload at once, while `arweave.net` lagged about 6 minutes on 2026-11-08 (ADR-002). With `STORAGE_MODE=memory`, set it to the backend's `/dev-gateway`. The post page also reads the ar.io GraphQL index (`VITE_ARWEAVE_GRAPHQL`) and Turbo's public status endpoint.

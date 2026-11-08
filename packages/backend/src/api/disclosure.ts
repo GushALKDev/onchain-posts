@@ -7,7 +7,7 @@ import { decryptSignature, hmacAddress } from '../privacy.ts';
 export const DISCLOSURE_MAX_AGE_SECONDS = 300;
 
 /** Message the author signs with the same key to prove they own the post they ask about. */
-export const disclosureMessage = (postHash: Hex, issuedAt: number) => `Phi signature disclosure\npostHash: ${postHash}\nissuedAt: ${issuedAt}`;
+export const disclosureMessage = (postHash: Hex, issuedAt: number) => `Onchain Posts signature disclosure\npostHash: ${postHash}\nissuedAt: ${issuedAt}`;
 
 const DisclosureSchema = z.strictObject({
   postHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/),

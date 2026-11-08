@@ -1,4 +1,4 @@
-import { POST_ANCHOR_ADDRESS, bytes32ToArweaveId, isTrustedKey, leafHash, verifyInclusion, type LeafValue } from '@phi/core';
+import { POST_ANCHOR_ADDRESS, bytes32ToArweaveId, isTrustedKey, leafHash, verifyInclusion, type LeafValue } from '@onchain-posts/core';
 import { useEffect, useState } from 'react';
 import { concat, decodeAbiParameters, formatEther, formatGwei, keccak256, type Address, type Hex } from 'viem';
 import { ChainPill, Check, Hash, STAGE_HELP } from '../components.tsx';

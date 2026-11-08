@@ -1,4 +1,4 @@
-import { ManifestSchema, PostJsonSchema, manifestRootMatches, postFromJson, postHash as hashPost, type Manifest } from '@phi/core';
+import { ManifestSchema, PostJsonSchema, manifestRootMatches, postFromJson, postHash as hashPost, type Manifest } from '@onchain-posts/core';
 import { useEffect, useState, type ReactNode } from 'react';
 import { keccak256 } from 'viem';
 import { fetchItem, gatewayUrl, indexedItem, turboStatus, type ItemIndex, type TurboStatus } from '../arweave.ts';
@@ -159,7 +159,7 @@ function ItemContent({ item, post, bytes }: { item: Item; post: PostDetail; byte
   const contains = m?.leaves.some((leaf) => leaf[0].toLowerCase() === post.postHash.toLowerCase());
   return (
     <>
-      <Check state={m && manifestRootMatches(m) ? 'ok' : 'fail'} title={m ? `phi.manifest/1 with ${m.leaves.length} leaves; rebuilds to root ${m.root.slice(0, 10)}...` : 'Not a phi.manifest/1'}>
+      <Check state={m && manifestRootMatches(m) ? 'ok' : 'fail'} title={m ? `onchain-posts.manifest/1 with ${m.leaves.length} leaves; rebuilds to root ${m.root.slice(0, 10)}...` : 'Not a onchain-posts.manifest/1'}>
         {m && <span className="small">{contains ? 'contains this post' : 'does NOT contain this post'}</span>}
       </Check>
       <JsonView value={json} collapsed />

@@ -19,7 +19,7 @@ The signature must also be checkable by the backend, recomputable by any verifie
 Content (`Post`) and intent (`PublishIntent`) are separate EIP-712 structs.
 
 ```
-Domain: { name: "Phi Posts", version: "1", verifyingContract: <PostAnchor CREATE2 address, same on all chains> }
+Domain: { name: "Onchain Posts", version: "1", verifyingContract: <PostAnchor CREATE2 address, same on all chains> }
         (no chainId; see the ADR-011 fallback if the signer requires one: a constant chainId used as a namespace)
 
 Post          { string username; string contentType; string caption; bytes32 imageHash; uint64 createdAt }

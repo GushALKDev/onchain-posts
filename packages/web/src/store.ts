@@ -13,7 +13,7 @@ export type LocalPost = {
   receipt: SignedReceipt;
 };
 
-const DB = 'phi-web';
+const DB = 'onchain-posts-web';
 const STORE = 'posts';
 
 function open(): Promise<IDBDatabase> {

@@ -14,7 +14,7 @@ export interface PostSigner {
   signMessage(message: string): Promise<Hex>;
 }
 
-const DEV_KEY = 'phi-development-key';
+const DEV_KEY = 'onchain-posts-development-key';
 
 /** Development signer: a random key in localStorage. Not a wallet: clearing site data loses it. */
 export function developmentSigner(storage: Pick<Storage, 'getItem' | 'setItem'> = localStorage): PostSigner {

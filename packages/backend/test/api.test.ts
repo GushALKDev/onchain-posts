@@ -1,4 +1,4 @@
-import { ProofBundleSchema, recoverReceiptSigner, receiptFromJson } from '@phi/core';
+import { ProofBundleSchema, recoverReceiptSigner, receiptFromJson } from '@onchain-posts/core';
 import type { Hono } from 'hono';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.ts';

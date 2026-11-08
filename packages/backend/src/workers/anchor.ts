@@ -1,4 +1,4 @@
-import { arweaveIdToBytes32, postAnchorAbi } from '@phi/core';
+import { arweaveIdToBytes32, postAnchorAbi } from '@onchain-posts/core';
 import { BaseError, ContractFunctionRevertedError, bytesToHex, getAbiItem, hexToBytes, type Hex } from 'viem';
 import type { ChainContext } from '../chains.ts';
 import type { Deps } from '../deps.ts';

@@ -1,4 +1,4 @@
-import { LIMITS, inspectWebp, stripWebpMetadata } from '@phi/core';
+import { LIMITS, inspectWebp, stripWebpMetadata } from '@onchain-posts/core';
 
 /** Lowest WebP quality tried before rejecting (design parameter, ADR-003). */
 export const MIN_QUALITY = 0.5;
