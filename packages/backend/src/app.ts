@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import { cors } from 'hono/cors';
 import type { Hex } from 'viem';
 import { acceptPost } from './api/posts.ts';
 import { disclose } from './api/disclosure.ts';
@@ -8,14 +9,22 @@ import { postStatus, proofBundle } from './api/read.ts';
 import type { Deps } from './deps.ts';
 import { ApiError } from './errors.ts';
 import { log } from './log.ts';
+import type { MemoryStorage } from './storage.ts';
 
 const POST_HASH = /^0x[0-9a-fA-F]{64}$/;
 
 const sameSecret = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
-/** HTTP API (ADR-016). `clientIp` comes from the socket in production and from a header in tests. */
-export function createApp(deps: Deps, clientIp: (c: Context) => string) {
+/**
+ * HTTP API (ADR-016). `clientIp` comes from the socket in production and from a header in tests. `devGateway` serves
+ * in-memory uploads like an Arweave gateway, for local runs with STORAGE_MODE=memory only.
+ */
+export function createApp(deps: Deps, clientIp: (c: Context) => string, options: { devGateway?: MemoryStorage } = {}) {
   const app = new Hono();
+
+  if (deps.config.webOrigins.length > 0) {
+    app.use('*', cors({ origin: deps.config.webOrigins, allowHeaders: ['content-type', 'x-demo-flush-token'], allowMethods: ['GET', 'POST'] }));
+  }
 
   app.use('*', async (c, next) => {
     if (!deps.limiter.allow(`ip:${clientIp(c)}`, deps.config.limits.requestsPerIpPerMinute, 60)) throw new ApiError(429, 'rate-limited', 'too many requests');
@@ -53,6 +62,15 @@ export function createApp(deps: Deps, clientIp: (c: Context) => string) {
   });
 
   app.get('/health', (c) => c.json({ ok: true }));
+
+  const devGateway = options.devGateway;
+  if (devGateway) {
+    app.get('/dev-gateway/:id', async (c) => {
+      const bytes = await devGateway.get(c.req.param('id')).catch(() => null);
+      if (!bytes) throw new ApiError(404, 'not-found', 'unknown item');
+      return c.body(bytes as Uint8Array<ArrayBuffer>, 200, { 'content-type': 'application/octet-stream' });
+    });
+  }
 
   app.onError((error, c) => {
     if (error instanceof ApiError) return c.json({ error: error.code, message: error.message }, error.status);

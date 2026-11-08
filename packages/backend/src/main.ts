@@ -30,7 +30,7 @@ async function main() {
 
   const chains = config.chains.map((c) => chainContext(c, relayer));
   const workers = startWorkers(deps, storage, chains);
-  const app = createApp(deps, (c) => getConnInfo(c).remote.address ?? 'unknown');
+  const app = createApp(deps, (c) => getConnInfo(c).remote.address ?? 'unknown', { devGateway: storage instanceof MemoryStorage ? storage : undefined });
   const server = serve({ fetch: app.fetch, port: config.port });
   log.info('backend started', { port: config.port, chains: config.chains.map((c) => c.chainId).join(','), demo: config.demo.enabled });
 

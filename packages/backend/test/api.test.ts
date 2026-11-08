@@ -7,6 +7,7 @@ import { disclosureMessage } from '../src/api/disclosure.ts';
 import type { ChainConfig } from '../src/config.ts';
 import type { Sql } from '../src/db.ts';
 import type { Deps } from '../src/deps.ts';
+import { MemoryStorage } from '../src/storage.ts';
 import { freshDatabase } from './db-helpers.ts';
 import { otherUser, submission, testConfig, testDeps, testKeyStore, user, webp } from './fixtures.ts';
 
@@ -159,5 +160,23 @@ describe('POST /demo/flush', () => {
     expect((await flush('a-long-demo-flush-token')).status).toBe(202);
     expect(demoDeps.flushRequests.has(BASE.chainId)).toBe(true);
     expect((await flush('a-long-demo-flush-token')).status).toBe(429);
+  });
+});
+
+describe('browser access', () => {
+  it('answers CORS preflight only for the configured web origin', async () => {
+    const corsApp = createApp(testDeps(sql, testConfig([BASE], { webOrigins: ['http://localhost:5173'] }), () => NOW), () => 'ip');
+    const preflight = (origin: string) => corsApp.request('/posts', { method: 'OPTIONS', headers: { origin, 'access-control-request-method': 'POST' } });
+    expect((await preflight('http://localhost:5173')).headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+    expect((await preflight('https://evil.example')).headers.get('access-control-allow-origin')).toBeNull();
+  });
+
+  it('serves in-memory uploads through the dev gateway only when one is given', async () => {
+    const storage = new MemoryStorage();
+    const id = await storage.upload(new TextEncoder().encode('hello'), []);
+    const withGateway = createApp(deps, () => 'ip', { devGateway: storage });
+    expect(await (await withGateway.request(`/dev-gateway/${id}`)).text()).toBe('hello');
+    expect((await withGateway.request('/dev-gateway/unknown')).status).toBe(404);
+    expect((await app.request(`/dev-gateway/${id}`, { headers: { 'x-test-ip': '1' } })).status).toBe(404);
   });
 });

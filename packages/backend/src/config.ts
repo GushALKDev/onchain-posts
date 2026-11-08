@@ -10,6 +10,8 @@ export type Config = {
   keystorePath: string;
   keyRefs: { relayer: string; receipt: string; arweave: string; signatureEncryption: string };
   storageMode: 'turbo' | 'memory';
+  /** Origins allowed to call the API from a browser (the web app). */
+  webOrigins: string[];
   chains: ChainConfig[];
   demo: { enabled: boolean; tmaxSeconds: number; flushToken: string | null };
   limits: { postsPerSignerPerMinute: number; requestsPerIpPerMinute: number; postsPerDay: number };
@@ -44,6 +46,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
       ARWEAVE_SIGNER_KEY_REF: z.string().default('arweave'),
       SIGNATURE_ENCRYPTION_KEY_REF: z.string().default('signature-encryption'),
       STORAGE_MODE: z.enum(['turbo', 'memory']).default('turbo'),
+      WEB_ORIGINS: z.string().default(''),
       DEMO_MODE: z.enum(['true', 'false']).default('false'),
       DEMO_TMAX_SECONDS: intFrom(5),
       DEMO_FLUSH_TOKEN: z.string().optional(),
@@ -68,6 +71,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     keystorePath: base.KMS_SIMULATOR_KEYSTORE_PATH,
     keyRefs: { relayer: base.RELAYER_SIGNER_KEY_REF, receipt: base.RECEIPT_SIGNER_KEY_REF, arweave: base.ARWEAVE_SIGNER_KEY_REF, signatureEncryption: base.SIGNATURE_ENCRYPTION_KEY_REF },
     storageMode: base.STORAGE_MODE,
+    webOrigins: base.WEB_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean),
     chains,
     demo: { enabled: demo, tmaxSeconds: base.DEMO_TMAX_SECONDS, flushToken: base.DEMO_FLUSH_TOKEN ?? null },
     limits: { postsPerSignerPerMinute: 10, requestsPerIpPerMinute: 120, postsPerDay: 10_000 },
