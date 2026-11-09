@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DEMO_MODE } from './config.ts';
-import { OPENFORT_CONFIGURED, openfortClient } from './openfort.ts';
+import { EmbeddedState, OPENFORT_CONFIGURED, openfortClient, openfortSigner } from './openfort.ts';
 import { developmentSigner, type PostSigner } from './signer.ts';
 import { Access } from './views/Access.tsx';
 import { Compose } from './views/Compose.tsx';
@@ -35,6 +35,21 @@ const NAV = [
 export function App() {
   // Openfort when configured (ADR-011); otherwise a development key in this browser.
   const [signer, setSigner] = useState<PostSigner | null>(() => (OPENFORT_CONFIGURED ? null : developmentSigner()));
+  const [restoring, setRestoring] = useState(OPENFORT_CONFIGURED);
+
+  // Restore an existing Openfort session on any page, not only where the sign-in form is mounted.
+  useEffect(() => {
+    if (!OPENFORT_CONFIGURED) return;
+    const openfort = openfortClient();
+    openfort.embeddedWallet
+      .getEmbeddedState()
+      .then(async (state) => {
+        if (state === EmbeddedState.READY) setSigner(await openfortSigner(openfort, 'Openfort embedded wallet'));
+      })
+      // On failure the app stays signed out; the sign-in form reports the error where signing is needed.
+      .catch(() => undefined)
+      .finally(() => setRestoring(false));
+  }, []);
   const [route = '', param] = useRoute();
   const view = route || 'feed';
   const active = view === 'post' ? 'feed' : view;
@@ -54,7 +69,11 @@ export function App() {
           ))}
         </nav>
         <div className="account">
-          {signer ? <span title={signer.label}>{signer.kind === 'openfort' ? 'Signed in' : 'Dev key'}</span> : <span className="muted">Not signed in</span>}
+          {signer ? (
+            <span title={signer.label}>{signer.kind === 'openfort' ? 'Signed in' : 'Dev key'}</span>
+          ) : (
+            <span className="muted">{restoring ? 'Checking session...' : 'Not signed in'}</span>
+          )}
           {signer?.kind === 'openfort' && (
             <button
               className="link"
