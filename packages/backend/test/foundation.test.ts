@@ -8,6 +8,7 @@ import { migrate } from '../src/db.ts';
 import { simulatorKeyStore } from '../src/keys.ts';
 import { redact } from '../src/log.ts';
 import { decryptSignature, encryptSignature, hmacAddress } from '../src/privacy.ts';
+import { RateLimiter } from '../src/rate-limit.ts';
 import { freshDatabase } from './db-helpers.ts';
 
 const refs = { relayer: 'relayer', receipt: 'receipt', arweave: 'arweave', signatureEncryption: 'signature-encryption' };
@@ -81,6 +82,20 @@ describe('config', () => {
   it('rejects a short HMAC secret and the unimplemented KMS mode', () => {
     expect(() => loadConfig({ ...env, DB_HMAC_SECRET: 'short' })).toThrow(/32 characters/);
     expect(() => loadConfig({ ...env, SIGNER_MODE: 'kms' })).toThrow(/not implemented/);
+  });
+});
+
+describe('rate limiter', () => {
+  it('limits per key and window, and forgets keys whose window has expired', () => {
+    let now = 1_000;
+    const limiter = new RateLimiter(() => now);
+    expect([limiter.allow('ip:a', 2, 60), limiter.allow('ip:a', 2, 60), limiter.allow('ip:a', 2, 60)]).toEqual([true, true, false]);
+    for (let i = 0; i < 1_000; i++) limiter.allow(`ip:visitor-${i}`, 120, 60);
+    expect(limiter.size).toBe(1_001);
+
+    now += 60; // every window above has expired
+    expect(limiter.allow('ip:a', 2, 60)).toBe(true);
+    expect(limiter.size).toBe(1); // only the key seen in the current window is kept
   });
 });
 
