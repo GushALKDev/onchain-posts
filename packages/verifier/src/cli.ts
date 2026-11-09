@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// onchain-posts-verify: verifies a post from public sources only. Run it from the public repository at a pinned commit, or
+// onchain-posts-verify: verifies a post from public sources only. Run it from the source repository at a pinned commit, or
 // with a trusted-keys file you supply, for verification that does not depend on the platform (README section 9).
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';

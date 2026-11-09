@@ -319,7 +319,7 @@ function InlineVerify({ post, local }: { post: PostDetail; local: LocalPost | nu
     <div>
       <p className="notice">
         This runs the same verifier as the CLI, in your browser. The platform still serves this page and its copy of trusted-keys.json, so for fully
-        independent verification run <code>pnpm verify {post.postHash.slice(0, 10)}...</code> from the public repository.
+        independent verification run <code>pnpm verify {post.postHash.slice(0, 10)}...</code> from the source repository.
         {local && ' Your private copy (with your signature) is used, so authorship is checked too.'}
       </p>
       <div className="actions">

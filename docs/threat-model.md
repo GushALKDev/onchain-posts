@@ -52,7 +52,7 @@ The user's address and signature appear nowhere public.
 | `config/trusted-keys.json` | Relayer addresses per chain (role `relayer`) and receipt key addresses (role `receipt`, which sign receipts under the EIP-712 "Onchain Receipts" domain), each with `validFrom` and `revokedAt` ([ADR-009](decisions/ADR-009-anchor-contract.md), [ADR-015](decisions/ADR-015-signed-receipts.md)) | Off-chain only: set `revokedAt`. The contract has no admin. For relayer entries the window is compared with `block.timestamp`, set by the chain; for receipt entries it is compared with the self-declared `acceptedAt` (consistency check only, see receipt key compromise below) |
 | Openfort key custody | That only the user can sign with the embedded account | OpenSigner: 2 of 3 shares (device, hot, cold). Holds only with passkey, password or OTP-protected automatic recovery; automatic recovery without OTP lets the developer backend reconstruct the key, so it is excluded ([ADR-011](decisions/ADR-011-identity-openfort.md)) |
 
-Independent verification means running the verifier CLI from the public repository at a pinned commit, or with a `trusted-keys.json` the user supplies. The Verify page in the web app is served by the platform together with its copy of the file, so it is a convenience, not independent verification.
+Independent verification means running the verifier CLI from the source repository at a pinned commit, or with a `trusted-keys.json` the user supplies. The Verify page in the web app is served by the platform together with its copy of the file, so it is a convenience, not independent verification.
 
 ## Trust assumptions
 

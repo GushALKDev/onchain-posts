@@ -40,7 +40,7 @@ CLI (from the repository root):
 pnpm verify <postHash> [--hints <bundle.json> | --hints-url <url>] [--trusted-keys <file>] [--rpc <chainId>=<url>]... [--gateway <url>] [--scan] [--since <time>] [--json]
 ```
 
-Exit code 0 when verified, 1 when not verified, 2 on usage errors, 3 when pending. `--gateway` is repeatable. Independent verification means running the CLI from the public repository at a pinned commit, or with a trusted-keys file you supply. The Verify page in the web app runs the same library, but the platform serves both the page and its copy of the trust root, so it is a convenience.
+Exit code 0 when verified, 1 when not verified, 2 on usage errors, 3 when pending. `--gateway` is repeatable. Independent verification means running the CLI from the source repository at a pinned commit, or with a trusted-keys file you supply. The Verify page in the web app runs the same library, but the platform serves both the page and its copy of the trust root, so it is a convenience.
 
 ## Tests
 

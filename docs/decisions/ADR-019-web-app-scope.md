@@ -33,7 +33,7 @@ Candidate scope (Proposed: to be confirmed when Tier 3 starts).
 | Flush now | Visible only in DEMO_MODE, labelled as demo behaviour, backed by the protected endpoint ([ADR-018](ADR-018-abuse-cost-control.md)) |
 | Efficiency panel | Links to the benchmark results in `packages/bench/results` |
 
-The Verify page shows a visible note: this page is served by the platform together with its copy of `config/trusted-keys.json`, so it is a convenience and not independent verification. The independent path is the CLI from the public repository at a pinned commit, or with a `trusted-keys.json` the user supplies (README section 9).
+The Verify page shows a visible note: this page is served by the platform together with its copy of `config/trusted-keys.json`, so it is a convenience and not independent verification. The independent path is the CLI from the source repository at a pinned commit, or with a `trusted-keys.json` the user supplies (README section 9).
 
 ### Out of scope
 

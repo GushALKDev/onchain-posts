@@ -65,7 +65,7 @@ export function Verify({ initialPostHash }: { initialPostHash: string }) {
       <div className="card">
         <p className="notice">
           This page runs the same verifier library as the CLI, but the platform serves both this code and its copy of trusted-keys.json, so it is a
-          convenience, not independent verification. For that, run <code>pnpm verify &lt;postHash&gt;</code> from the public repository at a pinned
+          convenience, not independent verification. For that, run <code>pnpm verify &lt;postHash&gt;</code> from the source repository at a pinned
           commit, or with a trusted-keys file you supply.
         </p>
         <label>

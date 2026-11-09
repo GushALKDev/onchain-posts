@@ -163,7 +163,7 @@ Implemented in [`packages/verifier`](packages/verifier/README.md): a library and
 
 **Real post on the testnets**: to be recorded (postHash, Arweave IDs, one anchor per chain and the `pnpm verify` command to check it without our backend).
 
-Honest note: **the Verify page inside the web app is a convenience, not independent verification**, because the platform serves both the code and its copy of `trusted-keys.json`. Independent verification means running the CLI from the public repository at a pinned commit, or with a `trusted-keys.json` the user supplies.
+Honest note: **the Verify page inside the web app is a convenience, not independent verification**, because the platform serves both the code and its copy of `trusted-keys.json`. Independent verification means running the CLI from the source repository at a pinned commit, or with a `trusted-keys.json` the user supplies. While this repository is private, that path needs access to it; the intended production setup publishes the verifier so that anyone can run it.
 
 ## 10. Decision log
 

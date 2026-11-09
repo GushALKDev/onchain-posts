@@ -97,7 +97,7 @@
       "y": 180,
       "label": "verify(postHash, hints?)",
       "variant": "emphasis",
-      "note": "Independent path: CLI from the public repo at a pinned commit, or with a trusted-keys.json the user supplies"
+      "note": "Independent path: CLI from the source repo at a pinned commit, or with a trusted-keys.json the user supplies"
     },
     {
       "id": "page-call",
