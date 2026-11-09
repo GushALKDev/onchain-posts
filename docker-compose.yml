@@ -48,8 +48,9 @@ services:
       DEMO_MODE: ${DEMO_MODE:-false}
       DEMO_TMAX_SECONDS: ${DEMO_TMAX_SECONDS:-}
       DEMO_FLUSH_TOKEN: ${DEMO_FLUSH_TOKEN:-}
+    # Loopback only: behind a reverse proxy (Dokploy's Traefik) the proxy reaches the container over the Docker network.
     ports:
-      - "8080:8080"
+      - "127.0.0.1:${PORT:-8080}:${PORT:-8080}"
     volumes:
       - keystore:/data
     depends_on:
