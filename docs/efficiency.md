@@ -2,7 +2,7 @@
 
 How efficiency is defined, measured and reported. The decisions behind this page are [ADR-001](decisions/ADR-001-efficiency-definition.md) (definition and method) and [ADR-006](decisions/ADR-006-batching-policy.md) (batching).
 
-Status: gas and USD cost measured on 2026-11-07 (gas with real transactions, prices from a mainnet snapshot); latency pending until the pipeline exists (Tier 2). Every number on this page is labelled Verified, Estimate, To verify or Illustrative; limits and defaults we choose are marked "(design parameter)".
+Status: gas and USD cost measured on 2026-11-07 (gas with real transactions, prices from a mainnet snapshot); latency per stage not measured in this delivery. Every number on this page is labelled Verified, Estimate, To verify or Illustrative; limits and defaults we choose are marked "(design parameter)".
 
 ## Metrics
 
@@ -197,4 +197,4 @@ node packages/bench/src/gas-bench.mjs --hardfork cancun   # Arbitrum execution-g
 node packages/bench/src/cost-snapshot.mjs                 # USD per post from a mainnet price snapshot -> results/<date>-cost-snapshot.json
 ```
 
-The cost snapshot reads live prices, so a rerun on another day gives other USD values; the gas files are deterministic. Latency will be added to `packages/bench` once the pipeline exists.
+The cost snapshot reads live prices, so a rerun on another day gives other USD values; the gas files are deterministic. Latency per stage (p50 / p95) is not measured in this delivery; the backend records the timestamps of every stage per post and chain, so it can be added to `packages/bench` from real anchors.

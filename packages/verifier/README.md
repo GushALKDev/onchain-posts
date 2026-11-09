@@ -44,9 +44,9 @@ Exit code 0 when verified, 1 when not verified, 2 on usage errors, 3 when pendin
 
 ## Tests
 
-`pnpm test` (17 tests) starts two local anvil nodes with the chain IDs of Base Sepolia and Arbitrum Sepolia, deploys `PostAnchor` at its real CREATE2 address, plays the platform with an in-memory Arweave, and checks: the happy path with a pending third chain, discovery without hints, `omitted` only after a complete bounded scan, an incomplete scan, a late anchor, untrusted and revoked relayers, a receipt from an untrusted key, a tampered proof, a leaf from another post, altered post JSON and image, authorship proof, and an anchor on a chain the author did not sign. The CLI is tested as a child process against anvil and a local HTTP gateway.
+`pnpm test` (24 tests) starts two local anvil nodes with the chain IDs of Base Sepolia and Arbitrum Sepolia, deploys `PostAnchor` at its real CREATE2 address, plays the platform with an in-memory Arweave, and checks: the happy path with a pending third chain, discovery without hints, `omitted` only after a complete bounded scan, an incomplete scan, a late anchor, untrusted and revoked relayers, a receipt from an untrusted key, a tampered proof, a leaf from another post, altered post JSON and image, authorship proof, and an anchor on a chain the author did not sign. The CLI is tested as a child process against anvil and a local HTTP gateway.
 
 ## Limits
 
-- `config/trusted-keys.json` still holds zero-address placeholders and `PostAnchor` is not deployed on the testnets yet, so the CLI cannot verify a real post until both exist (ROADMAP).
+- Scanning without a receipt needs `--since`; public RPCs limit log ranges and prune old history, so a scan far back in time is slow or impossible. A real post verified both with hints and by scanning is recorded in README section 9 (`pnpm verify 0xe3ba791982b36067fd7cf01ce2dec1a571ae1bcd29fb950803ed526f6df1938a --scan --since 1794217000`).
 - Discovery without hints and without a receipt scans from `since` to the head; on chains with fast blocks that means many log requests (chunks of 10,000 blocks).

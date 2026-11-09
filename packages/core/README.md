@@ -20,7 +20,7 @@ Limits (design parameters): image at most 95 KiB and 1080 px per side; caption a
 ## Commands
 
 ```bash
-pnpm test        # vitest: 40 tests
+pnpm test        # vitest: 42 tests
 pnpm typecheck   # src, tests and scripts
 pnpm build       # dist/ with type declarations
 pnpm fixtures    # regenerate test/fixtures/merkle-fixture.json after changing leaf or tree code

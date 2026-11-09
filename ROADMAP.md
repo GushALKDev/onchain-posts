@@ -63,13 +63,13 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] Library: hints parsing, Arweave fetch by ID, hash recomputation, root rebuild, on-chain checks, trusted-keys windows, receipt verification, authorship from the private bundle ([packages/verifier/src/verify.ts](packages/verifier/src/verify.ts))
 - [x] Bounded scan and the per-chain verdicts, with the late flag and incomplete scans never yielding "omitted" ([ADR-015](docs/decisions/ADR-015-signed-receipts.md))
 - [x] CLI: `pnpm verify <postHash> [--hints <bundle.json>] [--scan]`, tested as a child process
-- [x] Integration tests against local nodes with `PostAnchor` at its real CREATE2 address (17 tests)
+- [x] Integration tests against local nodes with `PostAnchor` at its real CREATE2 address (24 tests)
 - [x] Verified the first real post from public sources only, with hints and by scanning without hints; scanning adapted to pruned history and log-range limits of public RPCs
 
 ### Docs and diagrams
 
 - [x] PNG export script for the Archify diagrams, versioned in the repo ([docs/diagrams/export-png.mjs](docs/diagrams/export-png.mjs))
-- [ ] Timeline (batching example) and Waterfall (latency breakdown) diagrams from real benchmark data
+- [ ] Timeline (batching example) and Waterfall (latency breakdown) diagrams from real benchmark data: not produced in this delivery, they need the latency measurements
 - [x] Key benchmark numbers in the README TL;DR (gas and USD)
 
 ### Research (To verify items that can change the design)

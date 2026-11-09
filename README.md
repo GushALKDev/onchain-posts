@@ -14,6 +14,8 @@ Design exercise for EulerPhi (Phi): publish social posts on-chain as efficiently
 - Each leaf commits to the post hash, its Arweave ID and `keccak256(signature)` (`sigCommit`), so an author can prove authorship on demand while posts stay unlinkable.
 - A signed receipt with a per-chain deadline makes omission provable, and a standalone verifier checks any post against public sources only.
 
+**Reading guide.** In 15 minutes: this section, [section 6](#6-efficiency) (the measured gas and USD tables and [why a Merkle root](#why-a-merkle-root-when-the-brief-says-it-is-not-required)), [section 7](#7-privacy-and-threat-model) and the [decision log](#10-decision-log). The evidence behind the numbers is in [packages/bench/results](packages/bench/results/); the contract is [contracts/src/PostAnchor.sol](contracts/src/PostAnchor.sol); a real post verified from public sources only is in [section 9](#9-verification).
+
 Key benchmark numbers (measured 2026-11-07, gas only, Ethereum mainnet rules, [docs/efficiency.md](docs/efficiency.md)): one batch costs **47,058 gas whatever its size** (47 gas per post at N = 1000), against **22,922 gas per post** with one transaction per post; a plain hash list stays cheaper **below 20 posts per batch**. In money (2026-11-07 snapshot): anchoring costs **USD 0.000067 per post on Ethereum at N = 100**, and a post with a 95 KiB image costs **USD 0.0068 on all three chains**, 96% of it the image storage.
 
 ## 2. Requirements
@@ -98,7 +100,15 @@ Efficiency is four metrics, not one: end-to-end cost per post, on-chain bytes pe
 - ours vs B1: ours costs more at N = 1 and 2 (the price of on-chain idempotency and contract readability) and is cheaper from **N >= 3**.
 - ours vs B2: cheaper from **N >= 20** (estimated at 34 before measuring: B2 pays the EIP-7623 calldata floor, about 1,280 gas per post instead of 770). ours-lite vs B2: from **N >= 2**.
 - The storage slot that gives on-chain idempotency costs 22,432 gas per batch (ours minus ours-lite).
-- Stated openly: **below 20 posts per batch on L1 a plain hash list is cheaper.** Merkle with a slot is chosen for constant on-chain size at any N, idempotency and contract-level inclusion proofs, not because it is always cheaper ([ADR-005](docs/decisions/ADR-005-commitment-merkle-tree.md) states when to revisit).
+
+### Why a Merkle root when the brief says it is not required
+
+The brief says Merkle trees are not required, so the choice is argued and measured, not assumed ([ADR-005](docs/decisions/ADR-005-commitment-merkle-tree.md)):
+
+- **The non-Merkle alternatives were built and measured as baselines**, not dismissed: B2 (a hash list of N postHashes in one event per batch) and ours-lite (a root in an event, no storage). Stated openly: **below 20 posts per batch on L1 a plain hash list (B2) is cheaper**, and below N = 3 one transaction per post (B1) is cheaper than ours.
+- **What the Merkle root buys from N = 20 on**: constant on-chain size per batch at any N (32 bytes of root, whatever the batch size), on-chain idempotency through one storage slot (the contract rejects an already anchored root, so retries cannot double-anchor), and inclusion proofs of ceil(log2 N) hashes that any contract can check with `verifyPost` without trusting us. A hash list grows linearly with N in calldata and gives a contract no cheap inclusion check.
+- **Where the cost actually is**: from N = 100 on, the image storage is 96% of the end-to-end cost, so the commitment structure moves the total by a few percent at most. The decision that matters for efficiency is the batching, the gasless relayer and the image cap, not Merkle versus hash list.
+- **When to revisit**: if typical batch sizes stay below 20 and contract-level inclusion proofs are not needed, ours-lite or B2 is the better choice; ADR-005 records this criterion so the decision can be reversed with data.
 
 **USD per post** (snapshot 2026-11-07: `node packages/bench/src/cost-snapshot.mjs`, results in [`packages/bench/results/2026-11-07-cost-snapshot.json`](packages/bench/results/2026-11-07-cost-snapshot.json); ETH/USD 2,233.09, base fee 0.0637 gwei on Ethereum, 0.005 on Base, 0.0201 on Arbitrum One)
 
@@ -111,9 +121,9 @@ Efficiency is four metrics, not one: end-to-end cost per post, on-chain bytes pe
 
 The image storage (USD 0.0065 at list price) dominates from N = 100 on: past that point the cost is moved by the image cap and the storage price, not by Merkle versus hash list. Arbitrum's execution gas is measured without the calldata floor (it applies none) and cross-checked on mainnet with `eth_estimateGas`; details in [docs/efficiency.md](docs/efficiency.md).
 
-**Limitations.** Gas is measured on local nodes with each chain's calldata rules and cross-checked with mainnet estimates, not yet on deployed contracts; USD values depend on the snapshot. The live demo runs small batches in demo mode and is not the efficiency proof; the benchmark is.
+**Limitations.** Gas is measured on local nodes with each chain's calldata rules and cross-checked with mainnet estimates; real anchors on Base Sepolia and Arbitrum Sepolia used exactly 47,058 gas, Ethereum Sepolia 129,078 under its current, different schedule ([ADR-009](docs/decisions/ADR-009-anchor-contract.md)). USD values depend on the snapshot. The live demo runs small batches in demo mode and is not the efficiency proof; the benchmark is.
 
-Planned diagrams, produced at the end from real benchmark data: **Timeline** (batching example) and **Waterfall** (latency breakdown).
+Not produced in this delivery: latency per stage as p50 / p95, and the Timeline (batching example) and Waterfall (latency breakdown) diagrams that would be drawn from it.
 
 ## 7. Privacy and threat model
 
@@ -159,11 +169,28 @@ Anyone can verify a post without trusting us, with the `@onchain-posts/verifier`
 - The verifier re-derives and re-checks everything against public sources and `config/trusted-keys.json`: it fetches the post JSON and image by Arweave ID, recomputes `imageHash` and `postHash`, rebuilds the root from the manifest and checks the proof, checks `anchoredAt` / `verifyPost` for a sender listed as relayer with the anchor time inside the key's window, and verifies the receipt with the "Onchain Receipts" EIP-712 domain against a listed receipt key.
 - Per chain it reports: anchored (flagged late if anchored after `anchorBy`), pending inside deadline, deadline passed but not scanned (or scan incomplete), or omitted. **A verdict of "omitted" is never derived from hints alone**: it requires the bounded scan of the trusted relayers' `BatchAnchored` events between `acceptedAt` and `anchorBy` plus a margin, with every manifest in that window searched ([ADR-015](docs/decisions/ADR-015-signed-receipts.md)).
 
-Implemented in [`packages/verifier`](packages/verifier/README.md): a library and the `pnpm verify <postHash> [--hints <bundle.json>] [--scan]` CLI, tested end to end against local nodes running `PostAnchor` at its real address (17 tests, including omission only after a complete bounded scan, untrusted or revoked relayers, tampered hints and tampered content).
+Implemented in [`packages/verifier`](packages/verifier/README.md): a library and the `pnpm verify <postHash> [--hints <bundle.json>] [--scan]` CLI, tested end to end against local nodes running `PostAnchor` at its real address (24 tests, including omission only after a complete bounded scan, untrusted or revoked relayers, tampered hints and tampered content).
 
-**Real post on the testnets**: to be recorded (postHash, Arweave IDs, one anchor per chain and the `pnpm verify` command to check it without our backend).
+**Real post on the testnets**, published from the live demo on 2026-11-09 and anchored on the three chains:
 
-Honest note: **the Verify page inside the web app is a convenience, not independent verification**, because the platform serves both the code and its copy of `trusted-keys.json`. Independent verification means running the CLI from the source repository at a pinned commit, or with a `trusted-keys.json` the user supplies. While this repository is private, that path needs access to it; the intended production setup publishes the verifier so that anyone can run it.
+| Item | Value |
+| ---- | ----- |
+| `postHash` | `0xe3ba791982b36067fd7cf01ce2dec1a571ae1bcd29fb950803ed526f6df1938a` |
+| Post JSON / image (Arweave) | [`kC_0bQIlfEgnj4KuhIM4etjxpu5zUVwFATtSEtyh8TE`](https://arweave.net/kC_0bQIlfEgnj4KuhIM4etjxpu5zUVwFATtSEtyh8TE) / [`-uQaSQ0xFD3DnOvWho-Nc_ClXldu1dZihnXmcmn2-AI`](https://arweave.net/-uQaSQ0xFD3DnOvWho-Nc_ClXldu1dZihnXmcmn2-AI) |
+| Root (same on the three chains) | `0x3e4207be50bcb46ab425ea6d609210bec315cc112b52fdb11c26b8d8b7c7909e` |
+| Ethereum Sepolia anchor | [0x5e8b0be8...](https://sepolia.etherscan.io/tx/0x5e8b0be86ff7c36a65f4cfd5a965b0e6b673dc21c6fa56ff1ac56c9074b5cfd5), block 12,096,684 |
+| Base Sepolia anchor | [0xc11f0d2f...](https://sepolia.basescan.org/tx/0xc11f0d2f8803f3476b22d8f27e3ecc2003fe99f44d8da9c33233b10834a8d501), block 56,476,190 |
+| Arbitrum Sepolia anchor | [0xa258e188...](https://sepolia.arbiscan.io/tx/0xa258e188524c54d47cbcfbd887318884e849a865029ca65a0905fade4814c11b), block 327,519,510 |
+
+Both commands below returned `VERIFIED` on 2026-11-09 (public gateways and public RPCs only; the first takes the hints from our API and re-checks them, the second finds the anchors by scanning the trusted relayer's events without any hint, about 30 s):
+
+```bash
+curl -s https://onchain-posts-backend.tesselium.com/proof/0xe3ba791982b36067fd7cf01ce2dec1a571ae1bcd29fb950803ed526f6df1938a > bundle.json
+pnpm verify 0xe3ba791982b36067fd7cf01ce2dec1a571ae1bcd29fb950803ed526f6df1938a --hints bundle.json
+pnpm verify 0xe3ba791982b36067fd7cf01ce2dec1a571ae1bcd29fb950803ed526f6df1938a --scan --since 1794217000
+```
+
+Honest note: **the Verify page inside the web app is a convenience, not independent verification**, because the platform serves both the code and its copy of `trusted-keys.json`. Independent verification means running the CLI from a copy of this repository at a pinned commit, or with a `trusted-keys.json` the user supplies; the intended production setup publishes the verifier as a package so that anyone can run it.
 
 ## 10. Decision log
 
@@ -189,7 +216,7 @@ Template: [ADR-000](docs/decisions/ADR-000-template.md).
 | [016](docs/decisions/ADR-016-backend-architecture.md) | TypeScript backend, Postgres as database and queue, keys outside the DB | Fewest moving parts for the PoC; DB dump reveals no addresses | High | Reversible |
 | [017](docs/decisions/ADR-017-confirmation-semantics.md) | Accepted / Published / Settled | Three labels with precise per-chain meanings | High | Reversible |
 | [018](docs/decisions/ADR-018-abuse-cost-control.md) | Rate limits, size caps, budget caps, protected demo flush | Permanent storage and gas are paid by us | Medium | Reversible |
-| [019](docs/decisions/ADR-019-web-app-scope.md) | Minimal web app (Proposed) | Enough to demo the flow and the Verify page, nothing more | Medium | Reversible |
+| [019](docs/decisions/ADR-019-web-app-scope.md) | Minimal web app: compose, per-chain status, feed, public post page, Verify page | Enough to show every stage of the design end to end, nothing more | Medium | Reversible |
 
 ## 11. How to run
 
@@ -209,9 +236,8 @@ cd contracts && forge script script/DeployPostAnchor.s.sol --rpc-url <rpc> --bro
 ```
 
 ```bash
-# Verify a post from public sources only (optionally with untrusted hints); real posts need the deployment
-# and the real keys in config/trusted-keys.json first
-pnpm verify <postHash>
+# Verify a post from public sources only, with untrusted hints or by scanning (a real example is in section 9)
+pnpm verify <postHash> --hints <bundle.json>
 pnpm verify <postHash> --hints <bundle.json> --scan
 ```
 
@@ -226,7 +252,7 @@ Web app (see [packages/web/README.md](packages/web/README.md)): the VITE_* varia
 
 **Deployment.** The live demo at https://onchain-posts.gushalk.workers.dev is the static web build served by Cloudflare Workers (`packages/web/wrangler.jsonc`, static assets only). The backend and Postgres run from this `docker-compose.yml` on a VPS with Dokploy, behind its Traefik proxy with HTTPS at https://onchain-posts-backend.tesselium.com. Steps: [packages/web/README.md](packages/web/README.md) and [packages/backend/README.md](packages/backend/README.md).
 
-**Deployment.** `PostAnchor` is live at `0xD0fB2A7F1D12C5AF80E49B31Bcb1B4983AD7C5dB` on the three testnets, with identical runtime bytecode (keccak `0x6b515179...d6d5`, equal to the local build):
+**Contract.** `PostAnchor` is live at `0xD0fB2A7F1D12C5AF80E49B31Bcb1B4983AD7C5dB` on the three testnets, with identical runtime bytecode (keccak `0x6b515179...d6d5`, equal to the local build):
 
 | Chain | Deployment transaction | Block | Gas used |
 | ----- | ---------------------- | ----- | -------- |
@@ -248,12 +274,4 @@ Ethereum Sepolia used 6.5 times the gas of the L2s for the same deployment: it c
 - **Non-EVM adapter** (Solana via the Memo program): dropped for time ([ADR-007](docs/decisions/ADR-007-chain-selection.md)).
 - **Receipt-hash anchoring**: periodic on-chain anchoring of issued receipt hashes, to limit the damage of a receipt key compromise ([ADR-015](docs/decisions/ADR-015-signed-receipts.md)).
 
-**Delivery priority.** Later blocks follow this order; progress is tracked item by item in [ROADMAP.md](ROADMAP.md):
-
-| Tier | Scope | Depends on |
-| ---- | ----- | ---------- |
-| 1: the evidence and the reasoning (must ship) | Contract + invariant tests + benchmark with baselines B0, B1, B2, ours-lite and ours; `packages/core`; verifier; docs and diagrams | Nothing: the gas benchmark runs in Foundry without the backend |
-| 2: minimal pipeline | Backend as a single process with Postgres, Turbo uploads, anchoring on the 3 testnets | Tier 1 |
-| 3: minimal web | Compose, per-stage status, Verify page | Tier 2 |
-
-Solana is dropped ([ADR-007](docs/decisions/ADR-007-chain-selection.md)).
+**Status at delivery.** The three planned tiers are done: the evidence (contract, invariant tests, benchmark with baselines, `packages/core`, verifier, docs and diagrams), the minimal pipeline (backend, Postgres, Turbo, anchoring on the three testnets) and the minimal web app. Deliberately not done: the items above, latency measurements with their Timeline and Waterfall diagrams, and a few open research questions. Item-by-item status: [ROADMAP.md](ROADMAP.md).

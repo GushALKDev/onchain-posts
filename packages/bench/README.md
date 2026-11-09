@@ -15,4 +15,4 @@ Requirements: Foundry (anvil, forge, cast) and Node 20 or later. No dependencies
 
 ## Not implemented yet
 
-- Latency per stage (Accepted, Published, Settled) as p50 / p95, once the pipeline exists (Tier 2).
+- Latency per stage (Accepted, Published, Settled) as p50 / p95: not measured in this delivery; the backend records the timestamps of every stage per post and chain.

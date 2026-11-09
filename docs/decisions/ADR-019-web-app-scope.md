@@ -16,7 +16,7 @@ Two constraints from other decisions shape it:
 
 ## Decision
 
-Candidate scope (Proposed: to be confirmed when Tier 3 starts).
+Scope as implemented on 2026-11-08 (extended the same day, see Scope update).
 
 ### In scope
 
@@ -72,7 +72,7 @@ Reason for not keeping the feed out: the enumeration concern above is about per-
 
 | Option | Pros | Cons | Why not chosen |
 | ------ | ---- | ---- | -------------- |
-| Minimal compose + status + Verify page (proposed) | Shows every stage of the design; reuses `core` and `verifier` | Not a social product | Proposed |
+| Minimal compose + status + Verify page (chosen) | Shows every stage of the design; reuses `core` and `verifier` | Not a social product | Chosen |
 | No web app, CLI only | Least work | A3 asks for a web app; the gasless and signing UX would stay invisible | Fails A3 |
 | Full social client (feed, profiles) | Closer to a product | Time spent on UI the evaluator does not weigh; feed and profiles add privacy questions (enumeration) | Out of scope for this exercise |
 | Verify page with its own verification code | Simpler bundling | Two implementations that can drift from the CLI | The library is shared instead |
@@ -92,7 +92,6 @@ Negative:
 
 Follow-ups:
 
-- Confirm the scope when Tier 3 starts; cut the efficiency panel first if time is short.
 - Document the extra chain-switch step if the constant-`chainId` fallback of [ADR-011](ADR-011-identity-openfort.md) is needed.
 
 ## Evidence
@@ -100,4 +99,4 @@ Follow-ups:
 - No measurements: this ADR sets scope. The efficiency evidence lives in the benchmark ([ADR-001](ADR-001-efficiency-definition.md)).
 - Browser run on 2026-11-08 (headless Chrome against a local stack: backend, Postgres, two local chains with `PostAnchor`): a 4032x3378 PNG of 962 KB was resized and re-encoded in the browser to a 1080x905 WebP of 64.3 KiB at quality 0.9; the username "Ana_Browser" was signed as "ana_browser" and a decomposed accent normalised to NFC; after a demo flush both chains showed Published with explorer links, and the Verify page reported VERIFIED with a trust root supplied by file. No page exceptions.
 - Unit tests in `packages/web/test` (6) cover submission building and signature recovery, base64 of large images, the development signer and the private bundle.
-- To verify: the Openfort items still open in [ADR-011](ADR-011-identity-openfort.md) (EIP-712 domain without `chainId`, whether the payload leaves the iframe), tested at the start of Tier 3; the compose flow depends on them.
+- The Openfort items the compose flow depends on (EIP-712 domain without `chainId`, payload staying in the iframe) were observed on 2026-11-08 ([ADR-011](ADR-011-identity-openfort.md)).

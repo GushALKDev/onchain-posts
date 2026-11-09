@@ -123,7 +123,7 @@ Negative:
 
 Follow-ups:
 
-- Identify the gas schedule currently active on Ethereum Sepolia. Its effect is already measured: the `PostAnchor` deployment used 1,829,478 gas there against 280,500 on Base and Arbitrum Sepolia, and the first real anchor 129,078 against 47,058 (ADR-009).
+- Identify the gas schedule currently active on Ethereum Sepolia. Its effect is already measured: the `PostAnchor` v2 deployment used 1,899,086 gas there against 290,246 on Base and Arbitrum Sepolia, and the first real anchor 129,078 against 47,058 (ADR-009).
 - Rerun the cost snapshot before delivery: USD figures age with gas prices.
 
 ## Evidence
