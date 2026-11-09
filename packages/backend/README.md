@@ -9,7 +9,7 @@ API, workers and the KMS-simulator key store, in one process for the PoC ([ADR-0
 | `POST /posts` | Body `{ intent, signature, image }` (image as base64 WebP, or null). Runs every check below, stores the post and returns `202 { postHash, receipt }` with one `anchorBy` per chain. |
 | `GET /proof/:postHash` | **Untrusted verification hints**: the public `onchain-posts.proof/1` bundle, partial while chains are pending (`anchors` with Merkle proofs, `pending` with `anchorBy`, the receipt). Never contains the user signature. `202` while the post is not stored yet. |
 | `GET /status/:postHash` | Per-chain stage for the web app: `accepted`, `published` (anchored, soft) or `settled` (safe head), plus the internal state, tx hash and block. |
-| `POST /disclosure` | Body `{ postHash, issuedAt, signature }`, where the signature is an EIP-191 signature of the disclosure message by the author's key. Returns the stored signature and private intent fields to the author only, and writes the audit log (ADR-013). |
+| `POST /disclosure` | Body `{ postHash, issuedAt, signature }`, where the signature is an EIP-191 signature of the disclosure message by the author's key. Returns the stored signature and private intent fields to the author only, and writes the audit log (ADR-013). Each signed request is served once: a replay inside the 5-minute freshness window gets 409. |
 | `POST /demo/flush` | Only when `DEMO_MODE=true`. Needs header `x-demo-flush-token`; one flush per chain per minute (ADR-018). |
 | `GET /health` | Liveness. |
 
@@ -59,8 +59,8 @@ The live backend runs this repository's `docker-compose.yml` as a Dokploy Compos
 `pnpm test` (37 tests) runs against a throwaway Postgres container (Docker) and, for the pipeline, two local anvil nodes with `PostAnchor` at its real CREATE2 address:
 
 - foundation: config, migrations, KMS simulator, HMAC, signature encryption, log redaction;
-- API: acceptance, 13 rejection cases, oversize image, username ownership, nonce reuse, duplicate post, rate limit, proof and status before storage, disclosure, demo flush, and the no-address-in-the-database check;
-- pipeline: three posts from submission to SETTLED on two chains in one batch per chain, accepted by `@onchain-posts/verifier` (including authorship after disclosure); demo flush; stuck-transaction replacement with a single anchor on-chain; crash adoption; would-revert batch marked FAILED; storage failures.
+- API: acceptance, 13 rejection cases, oversize image, username ownership, nonce reuse, duplicate post, rate limit, proof and status before storage, disclosure and its replay, demo flush, and the no-address-in-the-database check;
+- pipeline: three posts from submission to SETTLED on two chains in one batch per chain, accepted by `@onchain-posts/verifier` (including authorship after disclosure); demo flush; stuck-transaction replacement with a single anchor on-chain, also after the node dropped the original; crash adoption; would-revert batch marked FAILED; storage failures.
 
 ## PoC simplifications
 

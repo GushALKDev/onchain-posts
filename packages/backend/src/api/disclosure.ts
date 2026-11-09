@@ -17,7 +17,8 @@ const DisclosureSchema = z.strictObject({
 
 /**
  * POST /disclosure: returns the stored signature and private intent fields only to the author, proven by a fresh
- * signature over a disclosure message, and records the disclosure in the audit log (ADR-013).
+ * signature over a disclosure message, and records the disclosure in the audit log (ADR-013). Each signed request is
+ * served once: the log entry is written before decrypting and its unique index rejects a replay of the same request.
  */
 export async function disclose(deps: Deps, body: unknown) {
   const parsed = DisclosureSchema.safeParse(body);
@@ -38,7 +39,12 @@ export async function disclose(deps: Deps, body: unknown) {
   const requesterHmac = hmacAddress(deps.config.dbHmacSecret, requester);
   if (!post || !post.signer_hmac.equals(requesterHmac)) throw new ApiError(403, 'not-author', 'only the author can request this signature');
 
+  try {
+    await deps.sql`INSERT INTO disclosure_log (post_hash, signer_hmac, issued_at) VALUES (${key}, ${requesterHmac}, ${issuedAt})`;
+  } catch (error) {
+    if ((error as { constraint_name?: string }).constraint_name === 'disclosure_log_request_key') throw new ApiError(409, 'replayed-request', 'this disclosure request was already served');
+    throw error;
+  }
   const userSignature = decryptSignature(deps.keyStore.symmetricKey(deps.config.keyRefs.signatureEncryption), postHash, post.signature_enc);
-  await deps.sql`INSERT INTO disclosure_log (post_hash, signer_hmac) VALUES (${key}, ${requesterHmac})`;
   return { signature: userSignature, intent: { chainIds: post.chain_ids, nonce: bytesToHex(post.intent_nonce), deadline: Number(post.intent_deadline) } };
 }

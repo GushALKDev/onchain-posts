@@ -104,4 +104,12 @@ CREATE INDEX posts_accepted_desc_idx ON posts (accepted_at DESC);
 ALTER TABLE batches ADD COLUMN gas_limit numeric;
 `,
   },
+  {
+    version: '004_disclosure_replay',
+    sql: `
+-- One disclosure per signed request: the author's issuedAt makes each request unique, so a replay hits the index.
+ALTER TABLE disclosure_log ADD COLUMN issued_at bigint;
+CREATE UNIQUE INDEX disclosure_log_request_key ON disclosure_log (post_hash, signer_hmac, issued_at);
+`,
+  },
 ];

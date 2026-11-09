@@ -145,6 +145,21 @@ describe('POST /disclosure', () => {
     const rows = await sql`SELECT count(*)::int AS count FROM disclosure_log WHERE post_hash = ${Buffer.from(postHash.slice(2), 'hex')}`;
     expect(rows[0]?.count).toBe(1);
   });
+
+  it('rejects a replayed disclosure request and accepts a fresh one from the author', async () => {
+    const body = await submission(NOW, { chainIds: [BASE.chainId], username: 'ana' });
+    const { postHash } = await (await post(body)).json();
+    const request = async (issuedAt: number) =>
+      JSON.stringify({ postHash, issuedAt, signature: await user.signMessage({ message: disclosureMessage(postHash, issuedAt) }) });
+    const send = (payload: string) => app.request('/disclosure', { method: 'POST', headers: { 'content-type': 'application/json', 'x-test-ip': '10.0.0.1' }, body: payload });
+
+    const captured = await request(NOW);
+    expect((await send(captured)).status).toBe(200);
+    const replay = await send(captured); // the same signed request, sent again inside the freshness window
+    expect(replay.status).toBe(409);
+    expect(await replay.json()).not.toHaveProperty('signature');
+    expect((await send(await request(NOW + 1))).status).toBe(200);
+  });
 });
 
 describe('POST /demo/flush', () => {

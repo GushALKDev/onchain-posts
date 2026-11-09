@@ -52,7 +52,7 @@ On-demand disclosure flow:
 1. The authenticated user requests the signature of one of their posts.
 2. The backend decrypts it with the external key.
 3. It returns the signature, with the private intent fields needed to recompute the signed digest (`chainIds`, `nonce`, `deadline`), only to that user, over the authenticated session.
-4. It records the disclosure (who, when, which `postHash`) in an audit log.
+4. It records the disclosure (who, when, which `postHash`) in an audit log, before decrypting; the log entry is unique per signed request, so a replayed request is rejected.
 
 The backend never decrypts for any other purpose.
 
