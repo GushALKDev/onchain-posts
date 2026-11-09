@@ -2,9 +2,11 @@
 
 Design exercise for EulerPhi (Phi): publish social posts on-chain as efficiently as possible, on up to three chains at once, without ever revealing the author's address.
 
+**Author:** Gustavo Martín (individual submission).
+
 **Live demo (testnets, demo mode):** https://onchain-posts.gushalk.workers.dev
 
-> **How to read numbers in this repository.** Every number is labelled **Verified** (source URL and date checked), **Estimate** (with a one-line derivation), **To verify** (what must be checked) or **Illustrative** (worked examples). Limits and defaults we choose are marked "(design parameter)" and justified in the ADR that sets them.
+> **How to read numbers in this repository.** Every number is labelled **Verified** (source URL and date checked), **Estimate** (with a one-line derivation), **To verify** (what must be checked) or **Illustrative** (worked examples). Limits and defaults I choose are marked "(design parameter)" and justified in the ADR that sets them.
 
 ## 1. TL;DR
 
@@ -31,13 +33,13 @@ Key benchmark numbers (measured 2026-11-07, gas only, Ethereum mainnet rules, [d
 - Delivery: a repository link. Deadline: Friday 13 November 2026.
 - Evaluated: efficiency and way of thinking, not whether the system works.
 
-### 2b. Added requirements (ours, not in the brief)
+### 2b. Added requirements (mine, not in the brief)
 
 | ID | Requirement | Origin |
 | -- | ----------- | ------ |
-| A1 | **The user's address or public key never appears on-chain, on Arweave, or to other users.** | In the interview the founder said users must be able to use the platform without revealing their public key or wallet address, and that other users must not see it. He said it about the "universal interface"; we apply it voluntarily to posting ([ADR-013](docs/decisions/ADR-013-author-privacy-sigcommit.md)). |
-| A2 | A decision log documenting every decision: decision, alternatives, trade-offs, reason. | Ours ([section 10](#10-decision-log)). |
-| A3 | A small working web app, minimal scope: compose, per-chain status, Verify page. | Ours ([ADR-019](docs/decisions/ADR-019-web-app-scope.md)). |
+| A1 | **The user's address or public key never appears on-chain, on Arweave, or to other users.** | In the interview the founder said users must be able to use the platform without revealing their public key or wallet address, and that other users must not see it. He said it about the "universal interface"; I apply it voluntarily to posting ([ADR-013](docs/decisions/ADR-013-author-privacy-sigcommit.md)). |
+| A2 | A decision log documenting every decision: decision, alternatives, trade-offs, reason. | Mine ([section 10](#10-decision-log)). |
+| A3 | A small working web app, minimal scope: compose, per-chain status, Verify page. | Mine ([ADR-019](docs/decisions/ADR-019-web-app-scope.md)). |
 
 Context only, not requirements: long term, Phi cares about account abstraction (Dynamic and smart accounts were mentioned), permissioned tokens, compliance in several countries, on/off ramps and monitoring. Gasless is mandatory in spirit: "instead of making people pay to post content on-chain, we need to find a way to make it gasless".
 
@@ -106,7 +108,7 @@ Efficiency is four metrics, not one: end-to-end cost per post, on-chain bytes pe
 The brief says Merkle trees are not required, so the choice is argued and measured, not assumed ([ADR-005](docs/decisions/ADR-005-commitment-merkle-tree.md)):
 
 - **The non-Merkle alternatives were built and measured as baselines**, not dismissed: B2 (a hash list of N postHashes in one event per batch) and ours-lite (a root in an event, no storage). Stated openly: **below 20 posts per batch on L1 a plain hash list (B2) is cheaper**, and below N = 3 one transaction per post (B1) is cheaper than ours.
-- **What the Merkle root buys from N = 20 on**: constant on-chain size per batch at any N (32 bytes of root, whatever the batch size), on-chain idempotency through one storage slot (the contract rejects an already anchored root, so retries cannot double-anchor), and inclusion proofs of ceil(log2 N) hashes that any contract can check with `verifyPost` without trusting us. A hash list grows linearly with N in calldata and gives a contract no cheap inclusion check.
+- **What the Merkle root buys from N = 20 on**: constant on-chain size per batch at any N (32 bytes of root, whatever the batch size), on-chain idempotency through one storage slot (the contract rejects an already anchored root, so retries cannot double-anchor), and inclusion proofs of ceil(log2 N) hashes that any contract can check with `verifyPost` without trusting the platform. A hash list grows linearly with N in calldata and gives a contract no cheap inclusion check.
 - **Where the cost actually is**: from N = 100 on, the image storage is 96% of the end-to-end cost, so the commitment structure moves the total by a few percent at most. The decision that matters for efficiency is the batching, the gasless relayer and the image cap, not Merkle versus hash list.
 - **When to revisit**: if typical batch sizes stay below 20 and contract-level inclusion proofs are not needed, ours-lite or B2 is the better choice; ADR-005 records this criterion so the decision can be reversed with data.
 
@@ -149,7 +151,7 @@ The user's address and signature appear nowhere public. Openfort is the only thi
 
 Interactive version (download and open in a browser): [docs/diagrams/html/04-lifecycle.html](docs/diagrams/html/04-lifecycle.html)
 
-- **Lifecycle.** Per post: `RECEIVED -> STORED`. Per (post, chain): `QUEUED -> BATCHED(root) -> SUBMITTED(txHash) -> ANCHORED (soft) -> SETTLED (safe)`, with `RETRYING` and `FAILED` (alert) ([ADR-016](docs/decisions/ADR-016-backend-architecture.md)).
+- **Lifecycle.** Per post: `RECEIVED -> STORED`. Per (post, chain): `QUEUED -> BATCHED(root) -> SUBMITTED(txHash) -> ANCHORED (soft) -> SETTLED (safe)`, with `RETRYING` and `FAILED` (alert) ([ADR-016](docs/decisions/ADR-016-backend-architecture.md)). In the implementation `RETRYING` is not a stored state: a stuck batch stays `SUBMITTED` while it is replaced with the same nonce, and re-batching it with newer posts is not implemented ([packages/backend/README.md](packages/backend/README.md) lists the stored states).
 - **Receipts.** At acceptance the backend returns a receipt signed by a dedicated receipt key, with one `anchorBy` per chain; `anchorBy` refers to inclusion ("Published"), not to "Settled" ([ADR-015](docs/decisions/ADR-015-signed-receipts.md)).
 - **Retries and idempotency.** The contract rejects an already anchored (sender, root). Stuck transactions are replaced with the same nonce; reverted ones raise an alert without blind retry; unknown outcomes are resolved by checking the receipt first. A re-batch of a stuck batch must reuse the stuck transaction's nonce so only one version can land ([ADR-008](docs/decisions/ADR-008-multichain-orchestration.md)).
 - **Trust root: `config/trusted-keys.json`.** The relayer addresses (per chain) and the receipt-signing address, each with `validFrom` and `revokedAt`, versioned in this repository and read by the verifier. Rotation adds an entry; **revocation is off-chain only** (the contract has no admin). Anchors made by a compromised relayer key before detection stay on-chain and are excluded only by the revocation date ([ADR-009](docs/decisions/ADR-009-anchor-contract.md)).
@@ -163,13 +165,13 @@ Interactive version (download and open in a browser): [docs/diagrams/html/04-lif
 
 Interactive version (download and open in a browser): [docs/diagrams/html/06-verification.html](docs/diagrams/html/06-verification.html)
 
-Anyone can verify a post without trusting us, with the `@onchain-posts/verifier` package. Principle: **untrusted hints, independent verification.**
+Anyone can verify a post without trusting the platform, with the `@onchain-posts/verifier` package. Principle: **untrusted hints, independent verification.**
 
-- Hints can come from our API (`GET /proof/:postHash`) or from the user's proof bundle. They only save discovery time; without hints the verifier scans `BatchAnchored` events of the trusted relayers (slow fallback).
+- Hints can come from the platform API (`GET /proof/:postHash`) or from the user's proof bundle. They only save discovery time; without hints the verifier scans `BatchAnchored` events of the trusted relayers (slow fallback).
 - The verifier re-derives and re-checks everything against public sources and `config/trusted-keys.json`: it fetches the post JSON and image by Arweave ID, recomputes `imageHash` and `postHash`, rebuilds the root from the manifest and checks the proof, checks `anchoredAt` / `verifyPost` for a sender listed as relayer with the anchor time inside the key's window, and verifies the receipt with the "Onchain Receipts" EIP-712 domain against a listed receipt key.
 - Per chain it reports: anchored (flagged late if anchored after `anchorBy`), pending inside deadline, deadline passed but not scanned (or scan incomplete), or omitted. **A verdict of "omitted" is never derived from hints alone**: it requires the bounded scan of the trusted relayers' `BatchAnchored` events between `acceptedAt` and `anchorBy`, widened by a margin on both sides for clock skew, with every manifest in that window searched ([ADR-015](docs/decisions/ADR-015-signed-receipts.md)).
 
-Implemented in [`packages/verifier`](packages/verifier/README.md): a library and the `pnpm verify <postHash> [--hints <bundle.json>] [--scan]` CLI, tested end to end against local nodes running `PostAnchor` at its real address (24 tests, including omission only after a complete bounded scan, untrusted or revoked relayers, tampered hints and tampered content).
+Implemented in [`packages/verifier`](packages/verifier/README.md): a library and the `pnpm verify <postHash> [--hints <bundle.json>] [--scan]` CLI, tested end to end against local nodes running `PostAnchor` at its real address (25 tests, including omission only after a complete bounded scan, untrusted or revoked relayers, tampered hints and tampered content).
 
 **Real post on the testnets**, published from the live demo on 2026-11-09 and anchored on the three chains:
 
@@ -182,7 +184,7 @@ Implemented in [`packages/verifier`](packages/verifier/README.md): a library and
 | Base Sepolia anchor | [0xc11f0d2f...](https://sepolia.basescan.org/tx/0xc11f0d2f8803f3476b22d8f27e3ecc2003fe99f44d8da9c33233b10834a8d501), block 56,476,190 |
 | Arbitrum Sepolia anchor | [0xa258e188...](https://sepolia.arbiscan.io/tx/0xa258e188524c54d47cbcfbd887318884e849a865029ca65a0905fade4814c11b), block 327,519,510 |
 
-Both commands below returned `VERIFIED` on 2026-11-09 (public gateways and public RPCs only; the first takes the hints from our API and re-checks them, the second finds the anchors by scanning the trusted relayer's events without any hint, about 30 s):
+Both commands below returned `VERIFIED` on 2026-11-09 (public gateways and public RPCs only; the first takes the hints from the platform API and re-checks them, the second finds the anchors by scanning the trusted relayer's events without any hint, about 30 s):
 
 ```bash
 curl -s https://onchain-posts-backend.tesselium.com/proof/0xe3ba791982b36067fd7cf01ce2dec1a571ae1bcd29fb950803ed526f6df1938a > bundle.json
@@ -190,7 +192,7 @@ pnpm verify 0xe3ba791982b36067fd7cf01ce2dec1a571ae1bcd29fb950803ed526f6df1938a -
 pnpm verify 0xe3ba791982b36067fd7cf01ce2dec1a571ae1bcd29fb950803ed526f6df1938a --scan --since 1794217000
 ```
 
-Honest note: **the Verify page inside the web app is a convenience, not independent verification**, because the platform serves both the code and its copy of `trusted-keys.json`. Independent verification means running the CLI from a copy of this repository at a pinned commit, or with a `trusted-keys.json` the user supplies; the intended production setup publishes the verifier as a package so that anyone can run it.
+Note: **the Verify page inside the web app is a convenience, not independent verification**, because the platform serves both the code and its copy of `trusted-keys.json`. Independent verification means running the CLI from a copy of this repository at a pinned commit, or with a `trusted-keys.json` the user supplies; the intended production setup publishes the verifier as a package so that anyone can run it.
 
 ## 10. Decision log
 
@@ -200,13 +202,13 @@ Template: [ADR-000](docs/decisions/ADR-000-template.md).
 | - | -------- | --------------- | ---------- | ------------- |
 | [001](docs/decisions/ADR-001-efficiency-definition.md) | Efficiency = four metrics, measured against baselines B0, B1, B2, ours-lite | One number hides the trade-offs; honest rivals make wins credible | High | Reversible |
 | [002](docs/decisions/ADR-002-storage-arweave-turbo.md) | Arweave via the Turbo bundler, platform signing key | Only cheaper options exist and they give up permanence | High | Reversible |
-| [003](docs/decisions/ADR-003-arweave-layout-image-limits.md) | Three data items; image at most 95 KiB, rejected otherwise | Permanent storage paid by us: bounded cost per post, no server-side transforms after signing | Medium | Reversible |
+| [003](docs/decisions/ADR-003-arweave-layout-image-limits.md) | Three data items; image at most 95 KiB, rejected otherwise | Permanent storage paid by the platform: bounded cost per post, no server-side transforms after signing | Medium | Reversible |
 | [004](docs/decisions/ADR-004-what-goes-on-chain.md) | Only the batch root + one storage slot on-chain | Constant cost per batch; nothing about the user on-chain | High | One-way door |
 | [005](docs/decisions/ADR-005-commitment-merkle-tree.md) | Binary Merkle tree (OpenZeppelin conventions) | Constant size at any N and contract-level inclusion proofs; benchmarked against a hash list | Medium | One-way door |
 | [006](docs/decisions/ADR-006-batching-policy.md) | Per-chain queue, flush at Nmax or Tmax | Receipts decouple UX from anchoring, so batching costs little latency | High | Reversible |
 | [007](docs/decisions/ADR-007-chain-selection.md) | Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia | L1 shows the savings, L2s show latency, one codebase; Solana dropped for time | Medium | Reversible |
 | [008](docs/decisions/ADR-008-multichain-orchestration.md) | Independent anchoring per chain, same-nonce replacement for retries | No bridge needed; duplicates blocked on-chain | High | Reversible |
-| [009](docs/decisions/ADR-009-anchor-contract.md) | Permissionless `PostAnchor` keyed by sender, no admin | No privileged role; front-running cannot block us; trust roots off-chain | High | One-way door |
+| [009](docs/decisions/ADR-009-anchor-contract.md) | Permissionless `PostAnchor` keyed by sender, no admin | No privileged role; front-running cannot block the relayer; trust roots off-chain | High | One-way door |
 | [010](docs/decisions/ADR-010-gasless-relayer.md) | Platform relayer sends all transactions | Every user-sent or AA alternative exposes the user's address as sender | High | Reversible |
 | [011](docs/decisions/ADR-011-identity-openfort.md) | Openfort embedded account as signing identity only | Email login and recovery without exposing the account on-chain | Medium | Reversible |
 | [012](docs/decisions/ADR-012-signature-scheme-eip712.md) | EIP-712, content (`Post`) separated from intent (`PublishIntent`) | Deterministic encoding of exactly what is signed; same postHash on every chain | High | Reversible |
@@ -215,7 +217,7 @@ Template: [ADR-000](docs/decisions/ADR-000-template.md).
 | [015](docs/decisions/ADR-015-signed-receipts.md) | Signed receipts with a per-chain `anchorBy` | Makes omission provable; separate key and domain | High | Reversible |
 | [016](docs/decisions/ADR-016-backend-architecture.md) | TypeScript backend, Postgres as database and queue, keys outside the DB | Fewest moving parts for the PoC; DB dump reveals no addresses | High | Reversible |
 | [017](docs/decisions/ADR-017-confirmation-semantics.md) | Accepted / Published / Settled | Three labels with precise per-chain meanings | High | Reversible |
-| [018](docs/decisions/ADR-018-abuse-cost-control.md) | Rate limits, size caps, budget caps, protected demo flush | Permanent storage and gas are paid by us | Medium | Reversible |
+| [018](docs/decisions/ADR-018-abuse-cost-control.md) | Rate limits, size caps, budget caps, protected demo flush | Permanent storage and gas are paid by the platform | Medium | Reversible |
 | [019](docs/decisions/ADR-019-web-app-scope.md) | Minimal web app: compose, per-chain status, feed, public post page, Verify page | Enough to show every stage of the design end to end, nothing more | Medium | Reversible |
 
 ## 11. How to run

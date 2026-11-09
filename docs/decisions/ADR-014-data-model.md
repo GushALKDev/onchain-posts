@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: Medium
 Reversibility: One-way door (per schema version: stored Arweave data and anchored leaves are permanent; a new version can change the format for future posts)
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -65,11 +66,11 @@ leaf = keccak256(bytes.concat(keccak256(abi.encode(postHash, postArweaveId, sigC
 | Post JSON | `Content-Type: application/json`, `App-Name`, `Schema: onchain-posts.post/1`, `Type: post`, `Post-Hash` |
 | Manifest | `Content-Type: application/json`, `App-Name`, `Type: batch-manifest`, `Chain-Id`, `Merkle-Root` |
 
-No `username` tag. We control the index; we do not publish an indexable user dimension. The content itself remains public by design.
+No `username` tag. The platform controls the index and does not publish an indexable user dimension. The content itself remains public by design.
 
 - This adds friction against third-party profile enumeration; it is not real privacy, because the post JSON with the username is public.
 - It also minimises personal data in permanently indexed metadata and avoids stale tags after a username change.
-- Trade-off: third-party clients cannot query by user; we rely on our own indexer.
+- Trade-off: third-party clients cannot query by user; the platform relies on its own index.
 
 ### Proof bundle
 
@@ -135,7 +136,7 @@ Negative:
 
 Follow-ups:
 
-- JSON schemas and TypeScript types in `packages/core` (later block), with fixtures shared by web, backend and verifier.
+- Done: zod schemas and TypeScript types in `packages/core` (`src/schemas.ts`), used by web, backend and verifier, with a Merkle fixture also checked by Foundry.
 
 Deviation from the initial design notes: the private bundle carries an `intent` object (`chainIds`, `nonce`, `deadline`) next to `signature`. Without those fields the `PublishIntent` digest cannot be recomputed, so the signature alone would not prove authorship ([ADR-013](ADR-013-author-privacy-sigcommit.md)).
 

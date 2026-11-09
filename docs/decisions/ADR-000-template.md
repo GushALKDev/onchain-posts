@@ -4,6 +4,7 @@ Status: Accepted | Proposed
 Confidence: High | Medium | Low
 Reversibility: One-way door | Reversible
 Date: 2026-11-07
+Updated: <date of the last material change, only when later than Date>
 
 ## Context
 
@@ -11,7 +12,7 @@ What problem forces a decision, which constraints apply (brief, added requiremen
 
 ## Decision
 
-What we do, stated so that an implementer cannot misread it.
+What is decided, stated so that an implementer cannot misread it.
 
 ## Alternatives considered
 
@@ -46,4 +47,4 @@ Number labels used in every ADR (hard rule of this repository):
 - **To verify**: what must be checked before the number or fact can be relied on.
 - **Illustrative**: numbers inside worked examples that are neither measurements nor estimates.
 
-Limits and defaults that we choose (for example Nmax = 500) are decisions, not claims about the world. They are marked "(design parameter)" and justified in the ADR that sets them.
+Limits and defaults that I choose (for example Nmax = 500) are decisions, not claims about the world. They are marked "(design parameter)" and justified in the ADR that sets them.

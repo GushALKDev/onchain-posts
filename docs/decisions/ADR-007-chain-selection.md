@@ -43,7 +43,7 @@ Listed as future work; not planned for this delivery.
 | OP Mainnet (Sepolia) | Mature L2, cheap | Historically the same stack family as Base, so low diversity (To verify, given the Base lineage note above) | Arbitrum gives more stack diversity |
 | Polygon PoS | Large ecosystem, RWA presence | Different security model (not a rollup); adds a third execution environment to reason about | Less useful for the L1 vs L2 comparison |
 | Solana via the Memo program | Non-EVM demonstration; very cheap | TypeScript-only adapter, different tooling, off-chain dedup | Dropped for time |
-| Irys L1 | Storage-native chain | Young chain; overlaps with the storage decision (ADR-002) | Not a settlement chain we need |
+| Irys L1 | Storage-native chain | Young chain; overlaps with the storage decision (ADR-002) | Not a settlement chain this design needs |
 
 ## Consequences
 
@@ -54,7 +54,7 @@ Positive:
 
 Negative:
 
-- **What we give up:** the non-EVM "any chain" demonstration.
+- **What is given up:** the non-EVM "any chain" demonstration.
 - Mitigation: a per-chain adapter design (submit, track, read events), so a non-EVM adapter can be added without touching the rest of the pipeline.
 
 Follow-ups:

@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: High
 Reversibility: Reversible
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -36,7 +37,7 @@ Centralisation is an accepted trade-off, consistent with the founder's platform-
 | User EIP-7702 delegation | EOA gains smart-account features without a new address | The transaction sender (or authority) is the user's EOA | Breaks A1 |
 | "Sign once, execute on several chains" UserOps (multichain validators, for example Biconomy MEE / Supertransactions and the Safe Unified Account proposal) | One user signature authorises operations on several chains; on-chain verifiable authorship without trusting the platform | Same counterfactual account address exposed as sender on every chain; no amortisation across users (one UserOp per post per chain plus EntryPoint overhead); account deployment per chain; still needs bundler and paymaster infrastructure | Breaks A1 and costs more per post |
 
-What the rejected account abstraction options would have gained, stated honestly: on-chain verifiable authorship. With a user-controlled sender, the chain itself would show that the user authorised the post, without trusting the platform. We give that up for A1 and for amortisation, and recover part of it off-chain with `sigCommit` (authorship provable on demand by the genuine author).
+What the rejected account abstraction options would have gained: on-chain verifiable authorship. With a user-controlled sender, the chain itself would show that the user authorised the post, without trusting the platform. This design gives that up for A1 and for amortisation, and recover part of it off-chain with `sigCommit` (authorship provable on demand by the genuine author).
 
 ## Consequences
 
@@ -76,5 +77,5 @@ Nonces are not a throughput cap: several pending transactions with consecutive n
 - Founder quote on gasless posting: interview notes (brief context, section 1 of the exercise prompt).
 - Biconomy: the page cited in the research notes (`https://docs.biconomy.io/Modules/multichain`) returned 404 on 2026-11-07. Current docs say that with MEE "your users sign once to execute operations across multiple chains" (Verified 2026-11-07: https://docs.biconomy.io/ and https://docs.biconomy.io/overview/abstractjs/cross-chain). The research notes described this as the user signing a Merkle root of UserOp hashes; the current pages do not describe the mechanism (To verify: how MEE commits to the per-chain operations under one signature).
 - Safe Unified Account: forum proposal, "sign once for operations across multiple chains using Merkle proofs"; the post says separate transactions per chain are still needed, the demo runs on Sepolia only, a security audit is pending and mainnet adoption is not sought yet (Verified 2026-11-07: https://forum.safefoundation.org/t/safe-unified-account-one-signature-every-chain/6926). Treated as a proposal, not a product.
-- Gas per batch and per post: see [ADR-001](ADR-001-efficiency-definition.md) (Estimates, to be replaced by the benchmark in `contracts/bench`).
+- Gas per batch and per post: see [ADR-001](ADR-001-efficiency-definition.md) (measured with the benchmark in `contracts/bench` and `packages/bench`).
 - To verify: Turbo upload rate limits.

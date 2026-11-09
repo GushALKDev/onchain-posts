@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: Medium
 Reversibility: Reversible
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -25,7 +26,7 @@ ADR-002 puts every byte on Arweave, paid by the platform and permanent. Two forc
 - Client-side recompression loop: lower the WebP quality step by step down to a minimum quality of 0.5 (design parameter, `packages/web/src/image.ts`) until the file is at most **95 KiB** (design parameter). The margin keeps the item under Turbo's free-tier threshold of 105 KiB (Verified 2026-11-07: https://docs.ar.io/build/upload/turbo-credits/). Whether ANS-104 headers and tags count toward that threshold: To verify.
 - If it still does not fit: **reject**, in the PoC and in production.
 
-**Why reject instead of paying.** Cost-exhaustion attack: an attacker uploading large images in a loop makes the platform pay for permanent storage that cannot be undone, and the attacker chooses the volume. Per-user rate limits (ADR-018) are the primary defence; the hard cap is mainly about **cost predictability**: it bounds the storage cost of one post at about USD 0.0067 at list price (Estimate: 95 KiB x USD 0.0000701 per KiB, ADR-002). The free tier no longer matters at scale because it is a 10 MiB lifetime allowance per wallet and per subnet (ADR-002), so the cap is what keeps the per-post cost known in advance.
+**Why reject instead of paying.** Cost-exhaustion attack: an attacker uploading large images in a loop makes the platform pay for permanent storage that cannot be undone, and the attacker chooses the volume. Per-user rate limits (ADR-018) are the primary defence; the hard cap is mainly about **cost predictability**: it bounds the storage cost of one post at USD 0.0065 at list price, per-item fee included (Verified 2026-11-07, ADR-002). The free tier no longer matters at scale because it is a 10 MiB lifetime allowance per wallet and per subnet (ADR-002), so the cap is what keeps the per-post cost known in advance.
 
 **Caption limit.** 1,000 characters, counted as Unicode code points after NFC (design parameter). The server also validates the size in bytes: up to about 4 KB in UTF-8 (Estimate: 1,000 code points x at most 4 bytes each).
 
@@ -52,7 +53,7 @@ The server only checks and rejects. For metadata this means parsing the RIFF chu
 | Option | Pros | Cons | Why not chosen |
 | ------ | ---- | ---- | -------------- |
 | Single JSON with the image in base64 | One data item per post | +33% bytes for the image (base64 expands 3 bytes to 4) | Pays permanent storage for encoding overhead |
-| Nested ANS-104 bundle per post | One upload unit | More complex tooling for a gain we do not need | Complexity without benefit |
+| Nested ANS-104 bundle per post | One upload unit | More complex tooling for a gain this design does not need | Complexity without benefit |
 | Arweave path manifest per post | Human-friendly paths | One more data item per post | Extra cost; the post JSON already references the image |
 | Pay for oversized images | Better UX for large photos | Attacker-controlled permanent cost; unpredictable cost per post | Cost exhaustion and unpredictability |
 | Server-side stripping or re-encoding | Simpler client | Changes the bytes after signing, so the signature no longer matches | Not possible with a signed hash over the final bytes |
@@ -80,4 +81,4 @@ Follow-ups:
 
 - Turbo free-tier threshold 105 KiB and 10 MiB lifetime allowance (Verified 2026-11-07: https://docs.ar.io/build/upload/turbo-credits/).
 - Turbo list price and per-KiB derivation: ADR-002 Evidence.
-- To verify: whether headers and tags count toward the size threshold; the parser against real encoder output (the tests use synthetic containers), once the web app produces WebP files.
+- To verify: whether headers and tags count toward the size threshold. The parser has run once against real browser encoder output (the ADR-019 browser run: a PNG re-encoded to WebP and accepted by the backend); the unit tests still use synthetic containers.

@@ -4,12 +4,13 @@ Status: Accepted
 Confidence: High
 Reversibility: Reversible
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
 The backend accepts signed intents, issues receipts, stores content on Arweave, batches per chain, anchors with the relayer, tracks confirmations and serves proof hints. It also holds the privacy boundary of the system ([ADR-013](ADR-013-author-privacy-sigcommit.md)): the mapping between users, signer addresses and posts.
 
-Constraints: one week of delivery time, Tier 2 of the delivery priority (a minimal pipeline), three testnets, honest retries and idempotency ([ADR-008](ADR-008-multichain-orchestration.md)), and keys that must never live in the database.
+Constraints: one week of delivery time, Tier 2 of the delivery priority (a minimal pipeline), three testnets, retries that never anchor twice ([ADR-008](ADR-008-multichain-orchestration.md)), and keys that must never live in the database.
 
 ## Decision
 
@@ -24,12 +25,13 @@ TypeScript, `viem`, `@ardrive/turbo-sdk`, `@openzeppelin/merkle-tree`. Postgres 
 | Batcher (one per chain) | Applies Tmax / Nmax ([ADR-006](ADR-006-batching-policy.md)); builds the tree; uploads the manifest; creates the anchor job |
 | Anchor worker (one per chain) | Signs through the Signer interface (KMS simulator in the PoC); local nonce manager; gas bumping; checks the receipt of the original transaction before any retry; same-nonce replacement for re-batches ([ADR-008](ADR-008-multichain-orchestration.md)) |
 | Tracker | Moves anchors from soft to safe ([ADR-017](ADR-017-confirmation-semantics.md)); produces and updates proof bundles as each chain lands |
-| Indexer | Indexes `BatchAnchored` events keyed by `(chainId, sender, root)` ([ADR-008](ADR-008-multichain-orchestration.md)) |
+| Batches table (index of the platform's anchors) | Every batch the platform anchored, keyed by `(chainId, sender, root)` ([ADR-008](ADR-008-multichain-orchestration.md)), with tx hash, block and timestamps; it replaces a separate event indexer, because the backend only needs its own anchors and the verifier scans `BatchAnchored` events itself |
 
 ### States
 
 - Per post: `RECEIVED -> STORED`.
 - Per (post, chain): `QUEUED -> BATCHED(root) -> SUBMITTED(txHash) -> ANCHORED (soft) -> SETTLED (safe)`, with `RETRYING` and `FAILED` (alert).
+- As implemented: per (post, chain) `WAITING -> QUEUED -> BATCHED`, then the batch carries the rest, `CREATED -> READY (manifest stored) -> SUBMITTED -> ANCHORED -> SETTLED`, or `FAILED`. `RETRYING` is not stored: a stuck batch stays `SUBMITTED` while it is replaced with the same nonce, and re-batching with newer posts is not implemented.
 - A post enters `QUEUED` only after `STORED`: no anchor ever points to missing data ([ADR-008](ADR-008-multichain-orchestration.md)).
 
 ### Key and secret separation
@@ -98,13 +100,13 @@ Negative:
 
 Follow-ups:
 
-- Postgres migrations and the `Signer` interface in `packages/backend` (later block).
+- Done: Postgres migrations (`src/migrations.ts`) and the `KeyStore` interface with the KMS simulator in `packages/backend`. The KMS implementation itself is not done.
 - Alerting on `FAILED`, on budget caps ([ADR-018](ADR-018-abuse-cost-control.md)) and on any receipt deadline at risk.
 
 ## Evidence
 
 - `FOR UPDATE SKIP LOCKED`: "With SKIP LOCKED, any selected rows that cannot be immediately locked are skipped"; the same paragraph says this inconsistent view suits queue-like tables, not general-purpose work (Verified 2026-11-07: https://www.postgresql.org/docs/current/sql-select.html).
-- Tests (`packages/backend`, 37 at this commit, against a real Postgres in Docker and two local chains): every acceptance check, the privacy boundary (no address or signature in clear in the database), disclosure, demo flush, the full pipeline to SETTLED with `@onchain-posts/verifier` accepting the result, and the anchor worker failure cases of ADR-008.
+- Tests (`packages/backend`, 43 at delivery, against a real Postgres in Docker and two local chains): every acceptance check, the privacy boundary (no address or signature in clear in the database), disclosure, demo flush, the full pipeline to SETTLED with `@onchain-posts/verifier` accepting the result, and the anchor worker failure cases of ADR-008.
 - Smoke run on 2026-11-08: the Docker image against a local chain and Postgres accepted two posts, anchored them in one batch after a demo flush, and served a proof bundle that verifies against the anchored root.
 - To verify: AWS KMS support for secp256k1 signing keys suitable for Ethereum transactions and EIP-712 signatures.
 - To verify: Turbo upload rate limits ([ADR-010](ADR-010-gasless-relayer.md)).

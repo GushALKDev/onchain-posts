@@ -2,7 +2,7 @@
 
 How efficiency is defined, measured and reported. The decisions behind this page are [ADR-001](decisions/ADR-001-efficiency-definition.md) (definition and method) and [ADR-006](decisions/ADR-006-batching-policy.md) (batching).
 
-Status: gas and USD cost measured on 2026-11-07 (gas with real transactions, prices from a mainnet snapshot); latency per stage not measured in this delivery. Every number on this page is labelled Verified, Estimate, To verify or Illustrative; limits and defaults we choose are marked "(design parameter)".
+Status: gas and USD cost measured on 2026-11-07 (gas with real transactions, prices from a mainnet snapshot); latency per stage not measured in this delivery. Every number on this page is labelled Verified, Estimate, To verify or Illustrative; limits and defaults I choose are marked "(design parameter)".
 
 ## Metrics
 
@@ -160,7 +160,7 @@ Measured under Ethereum mainnet rules (same results file, `crossovers`; B2 probe
 
 Why the B2 crossover moved from 34 to 20: from N = 10 on, B2's gas equals the EIP-7623 calldata floor exactly (21,000 + 10 x tokens), about 1,280 gas per post instead of the 770 estimated from standard calldata pricing. On Base the same floor applies and the per-byte L1 data fee comes on top, so constant-size calldata wins at least as early. On Arbitrum there is no floor: under cancun rules ours beats B2 from **N >= 31** (B2 per batch 46,718 at N = 30 and 47,528 at N = 31, vs 47,058); the L1 component grows by about 43 L2 gas per post for B2 and stays at 327 per batch for ours, which moves that crossover slightly earlier.
 
-Stated openly: **below 20 posts per batch on L1 a plain hash list (B2) is cheaper than our Merkle root with a storage slot.** Merkle with a slot is chosen for constant size, on-chain idempotency and contract-level inclusion proofs; ADR-005 states when to revisit.
+**Below 20 posts per batch on L1 a plain hash list (B2) is cheaper than the chosen Merkle root with a storage slot.** Merkle with a slot is chosen for constant size, on-chain idempotency and contract-level inclusion proofs; ADR-005 states when to revisit.
 
 ## Batching parameters
 

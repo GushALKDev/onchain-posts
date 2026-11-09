@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: High
 Reversibility: Reversible (via a version bump in the domain and schemas; signatures already committed stay v1)
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -59,7 +60,7 @@ Everything inside the hash must reach its final form in the client, before signi
 
 | Option | Pros | Cons | Why not chosen |
 | ------ | ---- | ---- | -------------- |
-| EIP-712, content and intent separated (chosen) | Exactly what is signed is what is hashed; deterministic encoding; wallet support; verifiable in Solidity if needed | Requires the signer to support typed data (and possibly a domain without `chainId`, To verify in [ADR-011](ADR-011-identity-openfort.md)) | Chosen |
+| EIP-712, content and intent separated (chosen) | Exactly what is signed is what is hashed; deterministic encoding; wallet support; verifiable in Solidity if needed | Requires the signer to support typed data with a domain without `chainId` (Openfort accepts it, observed in [ADR-011](ADR-011-identity-openfort.md)) | Chosen |
 | Canonical JSON (for example JCS) + `personal_sign` | Human-readable payload | Key order, whitespace and unicode-escape issues; needs a canonicaliser in browser, backend and verifier; not natural in Solidity | More ways to disagree on bytes |
 | One struct with `chainIds` inside the content | One hash | `postHash` would differ per chain selection, so "the same post on 3 chains" would not share one identity | Breaks cross-chain identity |
 | Arweave ID of the image inside the signed content | Points to the location | Not known before upload, so the user would sign after upload; commits to a location instead of bytes | `imageHash` can be computed in the browser before upload and is storage-agnostic |
@@ -80,14 +81,14 @@ Negative:
 
 Follow-ups:
 
-- [ADR-011](ADR-011-identity-openfort.md): confirm that Openfort signs a domain without `chainId`; otherwise apply the constant-`chainId` fallback.
+- None for Openfort: it signs a domain without `chainId` (observed 2026-11-08, [ADR-011](ADR-011-identity-openfort.md)), so the constant-`chainId` fallback is not needed.
 
 ### Chain-agnostic domain: replay analysis
 
 | Threat | Outcome |
 | ------ | ------- |
 | A third party reuses the signature | Not possible for third parties: the signature is never published; only `keccak256(signature)` appears inside the leaf (`sigCommit`, [ADR-013](ADR-013-author-privacy-sigcommit.md)) |
-| Anchoring on a chain the user did not choose | Only our relayer could do it under a trusted address; `chainIds` are signed and the backend enforces them; a violation is provable if the user reveals the signature. Third parties can only anchor under their own address, which verifiers do not trust ([ADR-009](ADR-009-anchor-contract.md)) |
+| Anchoring on a chain the user did not choose | Only the platform relayer could do it under a trusted address; `chainIds` are signed and the backend enforces them; a violation is provable if the user reveals the signature. Third parties can only anchor under their own address, which verifiers do not trust ([ADR-009](ADR-009-anchor-contract.md)) |
 | The same intent submitted twice | The backend stores used nonces; the deadline bounds the window |
 | Reuse in another protocol | The domain name, version, verifying contract and the `PublishIntent` type match nothing else; no contract verifies this signature |
 | A signature leaked later | Rejected after `deadline`; within the deadline, the nonce allows one acceptance only |
@@ -97,5 +98,5 @@ The same chain-agnostic domain pattern (one signature valid across chains, the c
 ## Evidence
 
 - EIP-712 domain fields are optional: "Protocol designers only need to include the fields that make sense for their signing domain. Unused fields are left out of the struct type." (Verified 2026-11-07: https://eips.ethereum.org/EIPS/eip-712).
-- Tests to add in a later block: `packages/core` unit tests that hash `Post` and `PublishIntent` identically in browser and Node, and a Foundry test that recomputes `hashStruct(Post)` in Solidity against the TypeScript output.
-- To verify: Openfort support for a domain without `chainId` (empirical test in Tier 3; fallback in [ADR-011](ADR-011-identity-openfort.md)). The signer EOA signature question is settled by using Openfort's EOA account type (ADR-011).
+- Tests: `packages/core/test/eip712.test.ts` checks `postHash` against a manual `hashStruct(Post)`, the domains, and signature recovery for `PublishIntent` and `Receipt`; `contracts/test/CoreFixture.t.sol` checks the leaf encoding and the Merkle root against `PostAnchor`. Not done: recomputing `hashStruct(Post)` in Solidity, because no contract verifies the user signature.
+- Openfort support for a domain without `chainId`: accepted (observed 2026-11-08 with `@openfort/openfort-js` 2.6.4, [ADR-011](ADR-011-identity-openfort.md)). The signer EOA signature question is settled by using Openfort's EOA account type (ADR-011).

@@ -4,10 +4,11 @@ Status: Accepted
 Confidence: High
 Reversibility: One-way door (whatever is published on-chain or on Arweave is permanent)
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
-Added requirement A1 comes from the interview: the founder said users must be able to use the platform without revealing their public key or wallet address, and that other users must not see it. He said it about the "universal interface"; we apply it voluntarily to posting. Exact wording:
+Added requirement A1 comes from the interview: the founder said users must be able to use the platform without revealing their public key or wallet address, and that other users must not see it. He said it about the "universal interface"; I apply it voluntarily to posting. Exact wording:
 
 > The user's address or public key never appears on-chain, on Arweave, or to other users.
 
@@ -109,7 +110,7 @@ Negative:
   - the username (public by design) and writing style;
   - image size;
   - IP addresses seen by the relayer API and by Turbo (Turbo sees the backend's IP, the API sees the user's);
-  - Openfort can link email and address, and possibly posts ([ADR-011](ADR-011-identity-openfort.md), To verify).
+  - Openfort can link email and address; it could link posts only if its SDK sent it the payload, which a recorded run did not show ([ADR-011](ADR-011-identity-openfort.md), an observation, not a provider commitment).
 
 Follow-ups:
 
@@ -123,4 +124,4 @@ Follow-ups:
 - Semaphore v4: "calling `validateProof` for 10 members has an estimated gas cost of 285622"; this is the Semaphore.sol (Circom, v4) figure on that page (Verified 2026-11-07: https://hashcloak.github.io/semaphore-noir-final-report/benchmarks.html).
 - ERC-5564 lets senders "non-interactively generate private accounts exclusively accessible by their recipients": it protects receivers, not authors (Verified 2026-11-07: https://eips.ethereum.org/EIPS/eip-5564, text read from the ERCs repository).
 - OpenSigner custody: 2 of 3 shares; the developer backend can reconstruct a key only in automatic recovery without OTP, which ADR-011 excludes (Verified 2026-11-07, sources in [ADR-011](ADR-011-identity-openfort.md)).
-- To verify: whether Openfort sees `PublishIntent` payloads (signing happens in the iframe; payload transport not documented).
+- Whether Openfort sees `PublishIntent` payloads: not in a recorded run on 2026-11-08, where no request or WebSocket frame to Openfort carried it. An observation of `@openfort/openfort-js` 2.6.4, not a provider commitment ([ADR-011](ADR-011-identity-openfort.md)).

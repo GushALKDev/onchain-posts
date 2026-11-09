@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: High
 Reversibility: Reversible
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -39,7 +40,7 @@ Deadline { uint256 chainId; uint64 anchorBy }
 
 ### Verifiable without the backend
 
-The receipt key's address, with its validity window, is listed with role `receipt` in `config/trusted-keys.json`. A verifier checks a receipt from that file alone: signer listed as `receipt`, and `acceptedAt` inside the key's `[validFrom, revokedAt)` window. This window check is a consistency check, not a bound on a compromised key (see the honest limit below).
+The receipt key's address, with its validity window, is listed with role `receipt` in `config/trusted-keys.json`. A verifier checks a receipt from that file alone: signer listed as `receipt`, and `acceptedAt` inside the key's `[validFrom, revokedAt)` window. This window check is a consistency check, not a bound on a compromised key (see the limit below).
 
 ### Proving omission: the bounded scan
 
@@ -60,7 +61,7 @@ Per-chain verdicts reported by the verifier:
 | Deadline passed, not found in hints (not scanned) | `anchorBy` passed, no anchor in the hints, bounded scan not run or incomplete |
 | Omitted | Bounded scan completed over every trusted `BatchAnchored` event in the window, and no manifest contains the `postHash` |
 
-### Honest limit of receipts after a receipt key compromise
+### Limit of receipts after a receipt key compromise
 
 `acceptedAt` is declared by the signer, not by a chain. An attacker holding the receipt key can sign receipts with an `acceptedAt` before the revocation date, and they pass the trusted-keys window check. Consequence: every receipt signed by that key becomes disputable, including genuine ones. Revocation cannot bound it, and such receipts could be used to accuse the platform falsely of omitting posts that never existed.
 

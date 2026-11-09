@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: High
 Reversibility: Reversible
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -29,7 +30,7 @@ Three user-visible labels, with these meanings in the web app and in the docs:
 | Base Sepolia (L2) | The L2 block is derived from batch data posted to L1 (exact definition of Base's `safe` tag: To verify) | To verify |
 | Ethereum Sepolia (L1) | The block is covered by a justified checkpoint of the beacon chain | To verify |
 
-The web app tooltip for "Settled" states the definition for the chain it is shown on.
+The web app tooltip for "Settled" gives one definition for all chains: the chain's safe head covers the block, which on the L2s means the batch is on Ethereum and safe there.
 
 ### Base after the Denim upgrade
 
@@ -70,7 +71,7 @@ Negative:
 Follow-ups:
 
 - Measure Published and Settled latency per chain in the benchmark (p50 and p95, [ADR-001](ADR-001-efficiency-definition.md)).
-- Resolve the To verify items below before writing the tooltips.
+- Still open: the exact definition of Base's `safe` tag and the typical `safe` delay on Base and Ethereum Sepolia (To verify below). The tracker reads each node's `safe` tag as reported, so these affect the wording, not the pipeline.
 
 ## Evidence
 

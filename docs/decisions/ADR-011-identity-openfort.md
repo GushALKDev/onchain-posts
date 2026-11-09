@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: Medium
 Reversibility: Reversible (with a migration cost: users would need to bind a new signing key to their username)
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -40,8 +41,8 @@ Openfort is an actor in the threat model ([threat model](../threat-model.md)), n
 | On-chain co-signer (2-of-2: user key + platform key), for example a Safe with two owners or a custom validator | Hard lock: no operation without the platform | Not documented by Openfort (docs checked 2026-11-06 and 2026-11-07); would need a custom smart account |
 | EIP-7702 delegated EOA | Smart-account features on the user's EOA | Cannot be locked: the root key keeps full control of the EOA |
 | OpenSigner key management | The key is split into 3 Shamir shares (device, hot, cold); "You need 2 of 3 shares" (Verified 2026-11-07) | Device + cold share rebuild the key without the platform: a soft lock only |
-| Allowed domains per publishable key | Only our origins can use the embedded wallet ("restrict which web origins and native apps can use your publishable key", Verified 2026-11-07) | Enforced by the provider for our publishable key, not by the account; an exported key works anywhere |
-| Paymaster policies and session keys | Limit what WE sponsor; session keys (EIP-7715) restrict permissions by contract, expiry and call limit | Policies do not limit what the account can do; session keys exist only for smart and delegated accounts, not for the EOA chosen above |
+| Allowed domains per publishable key | Only the platform's origins can use the embedded wallet ("restrict which web origins and native apps can use your publishable key", Verified 2026-11-07) | Enforced by the provider for the platform's publishable key, not by the account; an exported key works anywhere |
+| Paymaster policies and session keys | Limit what the platform sponsors; session keys (EIP-7715) restrict permissions by contract, expiry and call limit | Policies do not limit what the account can do; session keys exist only for smart and delegated accounts, not for the EOA chosen above |
 
 ### Fallback for an EIP-712 domain without chainId
 
@@ -92,7 +93,7 @@ Follow-ups:
 - Session keys (EIP-7715, `useGrantPermissions`) only for smart and delegated accounts (Verified 2026-11-07: https://www.openfort.io/docs/products/embedded-wallet/react/hooks/useGrantPermissions).
 - Superseded: the third-party "2 of 3" claim (https://capxul-docs.pages.dev/appendices/openfort-evaluation) is now confirmed by Openfort's own OpenSigner docs.
 
-Empirical checks (2026-11-08, `@openfort/openfort-js` 2.6.4, guest sign-in on the owner's Openfort project, headless Chrome against the local backend):
+Empirical checks (2026-11-08, `@openfort/openfort-js` 2.6.4, guest sign-in on the author's Openfort project, headless Chrome against the local backend):
 
 - **Domain without `chainId`: accepted.** `embeddedWallet.signTypedData(domain, types, message)` with the "Onchain Posts" domain (name, version, verifyingContract) returned a signature that recovers locally to the embedded EOA for exactly that payload, and the backend accepted the post after recovering the same signer.
 - **The payload did not leave the iframe.** All network traffic of the page and its iframes was recorded while signing and submitting: Openfort received a `GET /iam/v2/auth/get-session` from the page and a `GET` plus `OPTIONS` of `/v1/devices/<id>` from the iframe, all without body; no URL or body contained the caption or the postHash; no WebSocket frame was sent (the only WebSocket was the local dev server). Only the backend's `POST /posts` carried the payload. This is one observation of the current SDK, not a provider commitment.

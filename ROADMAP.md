@@ -63,7 +63,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] Library: hints parsing, Arweave fetch by ID, hash recomputation, root rebuild, on-chain checks, trusted-keys windows, receipt verification, authorship from the private bundle ([packages/verifier/src/verify.ts](packages/verifier/src/verify.ts))
 - [x] Bounded scan and the per-chain verdicts, with the late flag and incomplete scans never yielding "omitted" ([ADR-015](docs/decisions/ADR-015-signed-receipts.md))
 - [x] CLI: `pnpm verify <postHash> [--hints <bundle.json>] [--scan]`, tested as a child process
-- [x] Integration tests against local nodes with `PostAnchor` at its real CREATE2 address (24 tests)
+- [x] Integration tests against local nodes with `PostAnchor` at its real CREATE2 address (25 tests)
 - [x] Verified the first real post from public sources only, with hints and by scanning without hints; scanning adapted to pruned history and log-range limits of public RPCs
 
 ### Docs and diagrams
@@ -86,11 +86,11 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] Storage worker: image then post JSON through Turbo with the platform key (memory mode for tests and local runs)
 - [x] Batcher per chain (Tmax / Nmax, demo flush), manifest upload
 - [x] Anchor worker per chain: one in-flight transaction, receipt check before retry, crash adoption, same-nonce fee bump ([ADR-008](docs/decisions/ADR-008-multichain-orchestration.md)); re-batching of stuck batches not implemented (ADR-016)
-- [x] Tracker (soft to safe); the batches table is the index of our own anchors, keyed by chain, sender and root
+- [x] Tracker (soft to safe); the batches table is the index of the platform's own anchors, keyed by chain, sender and root
 - [x] `GET /proof/:postHash`, `GET /status/:postHash`, on-demand signature disclosure with audit log
 - [x] `DEMO_MODE` with the protected flush-now endpoint ([ADR-018](docs/decisions/ADR-018-abuse-cost-control.md))
 - [x] Backend service in `docker-compose.yml`; Docker smoke run against a local chain
-- [x] 37 tests with Postgres and two local chains, including the full pipeline verified by `@onchain-posts/verifier`
+- [x] 43 tests with Postgres and two local chains, including the full pipeline verified by `@onchain-posts/verifier`
 - [x] First real Turbo upload (free tier, 0 winc); `arweave.net` served it about 6 minutes later (ADR-002, ADR-008)
 - [x] Anchoring on the three testnets: 47,058 gas on Base and Arbitrum Sepolia as measured locally, 129,078 on Ethereum Sepolia (different schedule)
 
@@ -121,3 +121,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | 2026-11-08 | Verifier reads several gateways in order and reports verified / pending / failed (a gateway 404 is pending, not invalid). Backend: `GET /posts` and `GET /posts/:postHash` with timeline columns. Web redesign: feed, post page with live checks, How it works, light and dark themes. |
 | 2026-11-08 | `PostAnchor` v2 deployed (`AlreadyAnchored` with parameters, same gas per batch) with new relayer, receipt and Arweave keys; neutral names: `Onchain-Posts` tag, `onchain-posts.*/1` schemas, "Onchain Posts" and "Onchain Receipts" EIP-712 domains; database emptied. |
 | 2026-11-09 | Deployed: the web app as static assets on Cloudflare Workers, the backend and Postgres with Dokploy behind Traefik with HTTPS; new production secrets, keys from the PoC keystore. |
+| 2026-11-09 | Pre-delivery review fixes, each with a test that failed before it: per-IP rate limit behind the proxy (`TRUSTED_PROXY`), bounded scan widened before `acceptedAt` for clock skew, anchor gas limit stored for replacements, disclosure requests served once, expired rate-limit windows evicted. Docs aligned with the implementation. |

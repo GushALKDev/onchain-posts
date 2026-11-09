@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: Medium (depends on the benchmark crossover, see Revisit criterion)
 Reversibility: One-way door (anchored roots are permanent and `verifyPost` checks Merkle proofs; a different structure needs a new contract)
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -19,7 +20,7 @@ A **binary Merkle tree** over the batch leaves (leaf format in ADR-014), built w
 
 Worked example (Illustrative): 4 posts with leaves L1..L4. root = H(H(L1, L2), H(L3, L4)); the proof for L1 is [L2, H(L3, L4)]. With OpenZeppelin, H sorts the pair before hashing, so the verifier does not need left/right flags.
 
-**Why Merkle when the brief says it is not required:** chosen for constant on-chain size and contract-level composability (any contract can check that a post was published, without trusting us), not by reflex, and benchmarked against the non-Merkle alternative (B2 and ours-lite in ADR-001).
+**Why Merkle when the brief says it is not required:** chosen for constant on-chain size and contract-level composability (any contract can check that a post was published, without trusting the platform), not by reflex, and benchmarked against the non-Merkle alternative (B2 and ours-lite in ADR-001).
 
 **Revisit criterion.** If typical batch sizes stay below the crossover (N = 20 vs B2 on L1, measured, ADR-001; it was estimated at 34 before the EIP-7623 calldata floor showed up in the measurement) and contract-level inclusion proofs are not needed, then ours-lite or B2 is the better choice. Choosing Merkle anyway would then be a deliberate trade for composability, and must be described as such in this ADR.
 
@@ -55,11 +56,11 @@ Negative:
 Follow-ups:
 
 - **Future work: a ZK validity proof per batch**, proving that every leaf carries a valid signature of a registered user without revealing who. It removes the need to trust the relayer for "posts come from real users" and is the only mechanism considered in this design that would close the fabrication gap described in ADR-015. Verification cost is paid once per batch, on the order of 200k to 300k gas (To verify by proof system), amortised over N.
-- Apply the revisit criterion once the benchmark exists.
+- Apply the revisit criterion once typical batch sizes are known: the benchmark gives the crossovers, real traffic gives N.
 
 ## Evidence
 
-- Crossover Estimates: ADR-001.
+- Crossovers: measured in ADR-001 (`packages/bench/results/2026-11-07-gas-local-prague.json`).
 - OpenZeppelin `StandardMerkleTree` sorts leaves by default, double-hashes them and hashes internal nodes as sorted pairs (Verified 2026-11-07: https://github.com/OpenZeppelin/merkle-tree, README; re-check against the pinned library versions when implementing).
 - `verifyPost` gas for N = 500: 3,637 (measured, see Decision).
 - To verify: ZK verification cost by proof system.

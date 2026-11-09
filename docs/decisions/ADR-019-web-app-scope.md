@@ -4,6 +4,7 @@ Status: Accepted (implemented 2026-11-08; scope extended the same day with a fee
 Confidence: Medium
 Reversibility: Reversible
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -55,7 +56,7 @@ Implemented in [`packages/web`](../../packages/web/README.md) with the scope abo
 
 ### Scope update (2026-11-08): feed and public post page
 
-At the owner's request, after the first real posts, the app was extended so that a reader can see each post and everything behind it, not only its status:
+After the first real posts, the app was extended so that a reader can see each post and everything behind it, not only its status:
 
 - **Feed** (default page) and **My posts**: cards with the image from Arweave, caption, username and one stage pill per chain. Backed by `GET /posts` (latest, paginated) and `GET /posts/:postHash`, which return only public data: no address, HMAC, signature or intent fields. My posts takes its list from IndexedDB and its details from the API.
 - **Post page**, one section per piece of evidence, each with the check that makes it trustworthy:

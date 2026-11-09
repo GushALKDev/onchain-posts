@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: High
 Reversibility: One-way door (no proxy: the deployed contract is immutable; a change means a new deployment and a new address)
 Date: 2026-11-07
+Updated: 2026-11-09
 
 Implemented in [`contracts/src/PostAnchor.sol`](../../contracts/src/PostAnchor.sol) with the repository's Solidity conventions (NatSpec, section headers); the logic is identical to the snippet below. Tests: [`contracts/test`](../../contracts/test).
 
@@ -48,7 +49,7 @@ contract PostAnchor {
 **Permissionless, records keyed by `msg.sender`.** No owner and no admin functions. Key rotation = start using a new key; old anchors stay valid under the old address. Usable by any app.
 
 - **Many writers are not a problem.** Records are isolated per sender; no shared counter and no loops; other writers pay for their own storage; the indexer filters by the indexed `sender` topic.
-- **Front-running cannot block us.** Anyone who copies a root from the mempool and anchors it first only creates a record under their own address; our relayer's `anchor` still succeeds. With a global `root => timestamp` mapping, the same front-run would make our transaction revert with `AlreadyAnchored` (root squatting).
+- **Front-running cannot block the relayer.** Anyone who copies a root from the mempool and anchors it first only creates a record under their own address; the platform relayer's `anchor` still succeeds. With a global `root => timestamp` mapping, the same front-run would make the relayer's transaction revert with `AlreadyAnchored` (root squatting).
 - **Only risk: confusion** ("anchored on Phi's contract" by someone else). Every verification must include the trusted sender, and the UI shows it.
 
 **Trusted platform keys are an explicit trust root, kept off-chain** in `config/trusted-keys.json`, versioned in the repo and read by the verifier. Without this file the verifier could only learn the receipt key from the backend, which would break the "untrusted hints" principle (ADR-014).
@@ -63,7 +64,7 @@ contract PostAnchor {
 | `note` | string | Human description |
 
 - **Relayer entries**: the window is compared with `block.timestamp` of the anchor (unix seconds, UTC), which the chain sets, not the key holder, so revocation excludes later anchors. On Arbitrum the timestamp comes from the sequencer's clock, must not decrease, and must lie between 24 hours earlier and 1 hour later than current time (Verified 2026-11-07: https://docs.arbitrum.io/build-decentralized-apps/arbitrum-vs-ethereum/block-numbers-and-time). A sequencer could therefore backdate within that range; the sequencer is already trusted for soft confirmations (ADR-017), and the exact bounds on Base are To verify.
-- **Receipt entries**: the only timestamp available is the receipt's own `acceptedAt`, which the signer declares. A verifier checks that the signer is listed as a receipt key and that `acceptedAt` falls inside the window. That is a consistency check, **not a bound on a compromised key** (see ADR-015 for the honest limit).
+- **Receipt entries**: the only timestamp available is the receipt's own `acceptedAt`, which the signer declares. A verifier checks that the signer is listed as a receipt key and that `acceptedAt` falls inside the window. That is a consistency check, **not a bound on a compromised key** (see ADR-015 for the limit).
 - **Revocation of a compromised key is purely off-chain**: the contract has no admin. Anchors made by a compromised relayer key before detection remain on-chain and are excluded only by the revocation date. That is a documented limit.
 
 **One storage slot per batch (`anchoredAt`).** It serves on-chain idempotency (ADR-008) and contract readability (`verifyPost`, any other contract can check an anchor). `manifestId` and `count` go only in the event, for off-chain consumers: storing `manifestId` would add another new slot, about 22k gas, almost +50% per batch (Estimate: 20,000 + 2,100 cold, on top of 47,058). The price of this one slot versus an event-only contract is 22,432 gas per batch (measured: ours minus ours-lite, ADR-001). `uint256` is used because the slot holds a single value: a smaller type would save nothing.
@@ -117,7 +118,7 @@ Status: all six are implemented and pass (`forge test`: 13 unit and fuzz tests w
 
 | Option | Pros | Cons | Why not chosen |
 | ------ | ---- | ---- | -------------- |
-| Immutable single relayer (address fixed at deploy) | Only our key can write | Rotation requires a redeploy and a new address (and a new EIP-712 domain, ADR-012) | Rotation is a normal operation |
+| Immutable single relayer (address fixed at deploy) | Only the platform key can write | Rotation requires a redeploy and a new address (and a new EIP-712 domain, ADR-012) | Rotation is a normal operation |
 | Owner-managed allowlist of relayers | On-chain list of trusted senders | Admin key = more attack surface and more trust; an owner can also be compromised | Off-chain trusted-keys file with per-sender records gives the same verification without an admin |
 | Global `root => timestamp` mapping | Slightly simpler | Root squatting by front-running (see above); one sender's mistake affects all | Per-sender isolation |
 | Store `manifestId` on-chain | Lookup from state | About +22k gas per batch (Estimate) | Event is enough for off-chain consumers |

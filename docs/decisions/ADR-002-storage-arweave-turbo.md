@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: High
 Reversibility: Reversible (for future posts: the post hash commits to bytes, not to a location, ADR-004; data already stored stays permanent)
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -11,7 +12,7 @@ The brief names Arweave "or a better alternative if found". Posts carry an image
 
 ## Decision
 
-Store everything on **Arweave**, uploaded through **Turbo** (the ar.io / ArDrive bundler). Turbo packs signed ANS-104 data items from many users into one Arweave transaction and pays in AR; we pay Turbo with credits.
+Store everything on **Arweave**, uploaded through **Turbo** (the ar.io / ArDrive bundler). Turbo packs signed ANS-104 data items from many users into one Arweave transaction and pays in AR; the platform pays Turbo with credits.
 
 - Data items are signed with a **platform Arweave key, never with the user's key** (privacy constraint below).
 - Three kinds of data items per post and batch are defined in ADR-003.
@@ -27,7 +28,7 @@ Store everything on **Arweave**, uploaded through **Turbo** (the ar.io / ArDrive
 
 If any check fails, keep the Arweave key: the leaf already pins the canonical copy through `postArweaveId` (ADR-014), so duplicate uploads are harmless, only wasteful.
 
-**Honest answer to "better than Arweave?"** Only cheaper options exist, and every one of them gives up permanence (term storage, pinning that someone must keep paying, or pruned data availability). For social content whose on-chain anchor is permanent, an anchor that outlives its data is a broken link, so we keep permanence.
+**Answer to "better than Arweave?"** Only cheaper options exist, and every one of them gives up permanence (term storage, pinning that someone must keep paying, or pruned data availability). For social content whose on-chain anchor is permanent, an anchor that outlives its data is a broken link, so this design keeps permanence.
 
 ## Alternatives considered
 

@@ -4,6 +4,7 @@ Status: Accepted
 Confidence: High
 Reversibility: Reversible
 Date: 2026-11-07
+Updated: 2026-11-09
 
 ## Context
 
@@ -28,7 +29,7 @@ Efficiency is reported as four separate metrics, never collapsed into one:
 | -- | ------------ | ---------------- |
 | B0 naive | Stores username, caption and imageHash in contract storage, one tx per post per chain | The cost of putting content on-chain |
 | B1 | One tx per post per chain, emits only the postHash in an event | The cost of not batching |
-| B2 | One tx per batch per chain, emits the N postHashes in an event (hash list, no tree) | The honest rival of a Merkle root: same batching, linear calldata, leaves available on-chain. The brief says Merkle is not required, so this is the alternative to beat |
+| B2 | One tx per batch per chain, emits the N postHashes in an event (hash list, no tree) | The real rival of a Merkle root: same batching, linear calldata, leaves available on-chain. The brief says Merkle is not required, so this is the alternative to beat |
 | ours-lite | One tx per batch, emits only the root in an event, no storage slot | The price of on-chain idempotency and contract readability (measured instead of argued) |
 | ours | One tx per batch anchoring a Merkle root with one storage slot (ADR-009) | The chosen design |
 
@@ -71,7 +72,7 @@ What the measurement changed:
 | ours-lite vs B2 | N >= 2 | B2 per batch: 24,342 at N = 1, 25,116 at N = 2; ours-lite: 24,629 | N >= 6 |
 | Price of the storage slot | 22,432 gas per batch | ours minus ours-lite | about 22k |
 
-Stated openly: **for batches below 20 posts on L1, a plain hash list (B2) is cheaper than our Merkle root with a storage slot**, and ours-lite is cheaper than both from N = 2. Merkle with a slot is chosen for constant on-chain size at any N, on-chain idempotency and contract-level inclusion proofs (ADR-005, ADR-009), not because it is always cheaper. ADR-005 states the revisit criterion.
+**For batches below 20 posts on L1, a plain hash list (B2) is cheaper than the chosen Merkle root with a storage slot**, and ours-lite is cheaper than both from N = 2. Merkle with a slot is chosen for constant on-chain size at any N, on-chain idempotency and contract-level inclusion proofs (ADR-005, ADR-009), not because it is always cheaper. ADR-005 states the revisit criterion.
 
 **Calldata pricing differs per chain.** Command: `node packages/bench/src/calldata-floor-probe.mjs`; results: [`packages/bench/results/2026-11-07-calldata-floor-probe.json`](../../packages/bench/results/2026-11-07-calldata-floor-probe.json). `eth_estimateGas` of a plain transfer carrying 0 bytes, 1,000 non-zero bytes and 1,000 zero bytes:
 
@@ -106,15 +107,15 @@ Consequences for the crossovers: on Base the floor applies to execution gas as o
 | ------ | ---- | ---- | -------------- |
 | Single headline metric ($ per post only) | Easy to communicate | Hides latency and on-chain footprint; depends on volatile prices | Hides the trade-off that drives batching |
 | Gas only | Deterministic, easy to reproduce | Ignores storage, which dominates the cost per post with an image; ignores the L1 data fee on L2s | Misleading on L2s and for image posts |
-| Synthetic estimates without measurement | Fast | Unverifiable; easy to bias in our favour | Not acceptable for an evaluation of efficiency |
-| Compare only against B0 and B1 | Makes our design look very good | Straw men: anyone batching would beat them | B2 and ours-lite are the honest rivals and are included |
+| Synthetic estimates without measurement | Fast | Unverifiable; easy to bias in favour of the chosen design | Not acceptable for an evaluation of efficiency |
+| Compare only against B0 and B1 | Makes the chosen design look very good | Straw men: anyone batching would beat them | B2 and ours-lite are the honest rivals and are included |
 
 ## Consequences
 
 Positive:
 
 - Every efficiency claim in the README traces to a dated JSON result or to a labelled Estimate.
-- The benchmark shows where our design loses (N < 20 vs B2 on L1, N < 3 vs B1), which makes the regimes where it wins credible.
+- The benchmark shows where the chosen design loses (N < 20 vs B2 on L1, N < 3 vs B1), which makes the regimes where it wins credible.
 
 Negative:
 
