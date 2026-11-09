@@ -57,12 +57,14 @@ export async function publish(args: {
   allChains: TestChain[];
   deadlineSeconds?: number;
   receiptSigner?: PrivateKeyAccount;
+  /** Server clock ahead of the chains: acceptedAt is declared this many seconds later than the chain time. */
+  clockAheadSeconds?: number;
 }): Promise<Published> {
   const { arweave } = args;
   const image = webp();
   const imageArweaveId = arweave.put(image);
   const heads = await Promise.all(args.allChains.map((c) => c.head()));
-  const acceptedAt = Math.min(...heads) - 1;
+  const acceptedAt = Math.min(...heads) - 1 + (args.clockAheadSeconds ?? 0);
   const anchorBy = acceptedAt + (args.deadlineSeconds ?? 60);
 
   const post = { username: 'ana', contentType: CONTENT_TYPE_POST, caption: `hello ${counter++}`, imageHash: imageHash(image), createdAt: BigInt(acceptedAt) };

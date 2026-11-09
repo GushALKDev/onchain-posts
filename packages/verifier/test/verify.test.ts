@@ -1,4 +1,4 @@
-import { keccak256, toBytes } from 'viem';
+import { keccak256, toBytes, type Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { verifyPublishedPost, type VerifierConfig } from '../src/index.ts';
@@ -165,8 +165,23 @@ describe('deadlines, scans and omission', () => {
     expect(withScan).toMatchObject({ ok: false, status: 'failed' });
   });
 
+  it('finds an anchor whose block time is before the declared acceptedAt instead of reporting it omitted', async () => {
+    // The receipt's acceptedAt comes from the server clock, the anchor time from the chain: a server clock ahead of
+    // the chain puts the anchor block before acceptedAt, so the bounded scan must start before acceptedAt too.
+    const p = await publish({ arweave, allChains: [arbitrum], signedChainIds: [ARBITRUM], receiptChainIds: [ARBITRUM], anchors: [{ chain: arbitrum }], clockAheadSeconds: 20 });
+    const [anchor] = p.publicBundle.anchors;
+    const { blockNumber } = await arbitrum.publicClient.getTransactionReceipt({ hash: anchor!.txHash as Hex });
+    expect(Number((await arbitrum.publicClient.getBlock({ blockNumber })).timestamp)).toBeLessThan(p.acceptedAt);
+    await arbitrum.increaseTime(200); // close the window: anchorBy (60 s) + margin (30 s)
+
+    const hintsWithoutAnchors = { ...p.publicBundle, anchors: [], pending: p.publicBundle.receipt!.deadlines };
+    const report = await verifyPublishedPost(p.postHash, { hints: hintsWithoutAnchors, scan: true }, { ...config, now: () => p.acceptedAt + 200 });
+    expect(verdictOf(report, ARBITRUM)).toMatchObject({ verdict: 'anchored', anchor: { source: 'scan' } });
+    expect(report.ok).toBe(true);
+  });
+
   it('never reports "omitted" when a manifest in the window cannot be fetched', async () => {
-    const p = await publish({ arweave, allChains: [base, arbitrum], signedChainIds: [ARBITRUM], receiptChainIds: [ARBITRUM], anchors: [] });
+    const p = await publish({ arweave, allChains: [arbitrum], signedChainIds: [ARBITRUM], receiptChainIds: [ARBITRUM], anchors: [] });
     await anchorDecoy(arweave, arbitrum, { uploadManifest: false });
     await arbitrum.increaseTime(200);
     const report = await verifyPublishedPost(p.postHash, { hints: p.publicBundle, scan: true }, { ...config, now: () => p.acceptedAt + 200 });

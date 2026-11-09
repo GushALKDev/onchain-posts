@@ -130,7 +130,8 @@ export async function verifyPublishedPost(postHash: Hex, options: VerifyOptions,
         continue;
       }
       const deadline = receipt?.deadlines.find((d) => d.chainId === chainId);
-      const fromTime = receipt ? receipt.acceptedAt : options.since;
+      // acceptedAt comes from the server clock and the anchor time from the chain, so the margin applies on both sides.
+      const fromTime = receipt ? receipt.acceptedAt - margin : options.since;
       const toTime = deadline ? deadline.anchorBy + margin : now;
       if (fromTime === undefined) {
         noteFor(chainId, 'not scanned: a valid receipt or a start time (since) is needed to bound the scan');

@@ -45,7 +45,7 @@ The receipt key's address, with its validity window, is listed with role `receip
 
 If the post is not anchored on a chain before that chain's `anchorBy`, the receipt plus on-chain state prove the omission. Proving an absence cannot come from a hint: the `pending` list in `GET /proof/:postHash` is untrusted ([ADR-014](ADR-014-data-model.md)). The verifier establishes "omitted" only by the bounded scan:
 
-1. For that chain, read every `BatchAnchored` event emitted by the trusted relayer addresses (role `relayer`, that `chainId`, window valid at the block timestamp) between `acceptedAt` and `anchorBy` plus a margin (design parameter).
+1. For that chain, read every `BatchAnchored` event emitted by the trusted relayer addresses (role `relayer`, that `chainId`, window valid at the block timestamp) between `acceptedAt` minus a margin and `anchorBy` plus the same margin (design parameter); the margin on both sides covers the skew between the server clock that sets `acceptedAt` and the chain clock that timestamps the anchor.
 2. For each event, fetch the manifest by `manifestId` from an Arweave gateway and rebuild its root.
 3. Confirm that no manifest whose rebuilt root equals the event's `root` contains the `postHash`.
 
@@ -106,6 +106,6 @@ Follow-ups:
 ## Evidence
 
 - EIP-712 allows a domain with only some fields ("Protocol designers only need to include the fields that make sense for their signing domain") (Verified 2026-11-07: https://eips.ethereum.org/EIPS/eip-712).
-- Implemented in `packages/verifier` with a default scan margin of 120 s after `anchorBy` (design parameter). Its integration tests (`packages/verifier/test/verify.test.ts`, local nodes with `PostAnchor` at its real address) cover each verdict: anchored (and late), pending, deadline passed but not scanned (scan not run, and an incomplete scan with a missing manifest), and omitted only after a complete bounded scan; plus a receipt from an untrusted key, whose deadlines are ignored.
+- Implemented in `packages/verifier` with a default scan margin of 120 s before `acceptedAt` and after `anchorBy` (design parameter). Its integration tests (`packages/verifier/test/verify.test.ts`, local nodes with `PostAnchor` at its real address) cover each verdict: anchored (and late), pending, deadline passed but not scanned (scan not run, and an incomplete scan with a missing manifest), and omitted only after a complete bounded scan; plus a receipt from an untrusted key, whose deadlines are ignored, and an anchor timestamped before `acceptedAt` (server clock ahead of the chain), found instead of reported omitted.
 - Receipt round-trip (sign and recover) is tested in `packages/core/test/eip712.test.ts`; signing with the KMS simulator comes with the backend.
 - Tmax defaults: [ADR-006](ADR-006-batching-policy.md) (design parameters, tunable from the benchmark).
