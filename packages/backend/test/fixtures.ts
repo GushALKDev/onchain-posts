@@ -34,6 +34,7 @@ export function testConfig(chains: ChainConfig[], overrides: Partial<Config> = {
     keyRefs: refs,
     storageMode: 'memory',
     webOrigins: [],
+    trustedProxy: false,
     chains,
     demo: { enabled: false, tmaxSeconds: 5, flushToken: null },
     limits: { postsPerSignerPerMinute: 1000, requestsPerIpPerMinute: 10_000, postsPerDay: 10_000 },

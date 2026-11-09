@@ -12,6 +12,8 @@ export type Config = {
   storageMode: 'turbo' | 'memory';
   /** Origins allowed to call the API from a browser (the web app). */
   webOrigins: string[];
+  /** When true the client IP for rate limiting is read from X-Forwarded-For (set only behind a reverse proxy). */
+  trustedProxy: boolean;
   chains: ChainConfig[];
   demo: { enabled: boolean; tmaxSeconds: number; flushToken: string | null };
   limits: { postsPerSignerPerMinute: number; requestsPerIpPerMinute: number; postsPerDay: number };
@@ -49,6 +51,7 @@ export function loadConfig(rawEnv: NodeJS.ProcessEnv): Config {
       SIGNATURE_ENCRYPTION_KEY_REF: z.string().default('signature-encryption'),
       STORAGE_MODE: z.enum(['turbo', 'memory']).default('turbo'),
       WEB_ORIGINS: z.string().default(''),
+      TRUSTED_PROXY: z.enum(['true', 'false']).default('false'),
       DEMO_MODE: z.enum(['true', 'false']).default('false'),
       DEMO_TMAX_SECONDS: intFrom(5),
       DEMO_FLUSH_TOKEN: z.string().optional(),
@@ -74,6 +77,7 @@ export function loadConfig(rawEnv: NodeJS.ProcessEnv): Config {
     keyRefs: { relayer: base.RELAYER_SIGNER_KEY_REF, receipt: base.RECEIPT_SIGNER_KEY_REF, arweave: base.ARWEAVE_SIGNER_KEY_REF, signatureEncryption: base.SIGNATURE_ENCRYPTION_KEY_REF },
     storageMode: base.STORAGE_MODE,
     webOrigins: base.WEB_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean),
+    trustedProxy: base.TRUSTED_PROXY === 'true',
     chains,
     demo: { enabled: demo, tmaxSeconds: base.DEMO_TMAX_SECONDS, flushToken: base.DEMO_FLUSH_TOKEN ?? null },
     limits: { postsPerSignerPerMinute: 10, requestsPerIpPerMinute: 120, postsPerDay: 10_000 },

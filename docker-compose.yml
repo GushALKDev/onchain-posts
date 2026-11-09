@@ -29,6 +29,7 @@ services:
       KMS_SIMULATOR_KEYSTORE_PATH: /data/keystore.json
       PORT: ${PORT:-8080}
       WEB_ORIGINS: ${WEB_ORIGINS:-}
+      TRUSTED_PROXY: ${TRUSTED_PROXY:-false}
       STORAGE_MODE: ${STORAGE_MODE:-turbo}
       DB_HMAC_SECRET: ${DB_HMAC_SECRET:?set DB_HMAC_SECRET in .env}
       SIGNER_MODE: ${SIGNER_MODE:-simulator}

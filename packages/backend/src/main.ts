@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server';
 import { getConnInfo } from '@hono/node-server/conninfo';
+import type { Context } from 'hono';
 import { createApp } from './app.ts';
 import { chainContext } from './chains.ts';
 import { loadConfig } from './config.ts';
@@ -10,6 +11,20 @@ import { log } from './log.ts';
 import { RateLimiter } from './rate-limit.ts';
 import { startWorkers } from './runner.ts';
 import { MemoryStorage, turboStorage } from './storage.ts';
+
+/**
+ * Client IP for the per-IP rate limit (ADR-018). Behind a reverse proxy every connection comes from the proxy, so the
+ * socket address would put every visitor in one bucket. The proxy appends the real client to X-Forwarded-For, so the
+ * last entry is the only one it wrote itself; earlier entries can be forged by the client. Without a trusted proxy
+ * the header is ignored, because anyone reaching the port directly could spoof it.
+ */
+function clientIp(trustedProxy: boolean) {
+  return (c: Context) => {
+    const forwarded = trustedProxy ? c.req.header('x-forwarded-for') : undefined;
+    const last = forwarded?.split(',').at(-1)?.trim();
+    return last || getConnInfo(c).remote.address || 'unknown';
+  };
+}
 
 /** Single process for the PoC: API + workers (ADR-016). */
 async function main() {
@@ -30,7 +45,7 @@ async function main() {
 
   const chains = config.chains.map((c) => chainContext(c, relayer));
   const workers = startWorkers(deps, storage, chains);
-  const app = createApp(deps, (c) => getConnInfo(c).remote.address ?? 'unknown', { devGateway: storage instanceof MemoryStorage ? storage : undefined });
+  const app = createApp(deps, clientIp(config.trustedProxy), { devGateway: storage instanceof MemoryStorage ? storage : undefined });
   const server = serve({ fetch: app.fetch, port: config.port });
   log.info('backend started', { port: config.port, chains: config.chains.map((c) => c.chainId).join(','), demo: config.demo.enabled });
 

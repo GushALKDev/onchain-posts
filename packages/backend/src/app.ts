@@ -17,7 +17,7 @@ const POST_HASH = /^0x[0-9a-fA-F]{64}$/;
 const sameSecret = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
 /**
- * HTTP API (ADR-016). `clientIp` comes from the socket in production and from a header in tests. `devGateway` serves
+ * HTTP API (ADR-016). `clientIp` comes from the socket or, behind a trusted proxy, from X-Forwarded-For (main.ts), and from a header in tests. `devGateway` serves
  * in-memory uploads like an Arweave gateway, for local runs with STORAGE_MODE=memory only.
  */
 export function createApp(deps: Deps, clientIp: (c: Context) => string, options: { devGateway?: MemoryStorage } = {}) {
