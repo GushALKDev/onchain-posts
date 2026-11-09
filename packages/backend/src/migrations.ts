@@ -97,4 +97,11 @@ ALTER TABLE batches ADD COLUMN settled_at bigint;
 CREATE INDEX posts_accepted_desc_idx ON posts (accepted_at DESC);
 `,
   },
+  {
+    version: '003_gas_limit',
+    sql: `
+-- Gas limit of the first transaction sent for a batch, reused by its replacements (ADR-008).
+ALTER TABLE batches ADD COLUMN gas_limit numeric;
+`,
+  },
 ];

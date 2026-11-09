@@ -14,6 +14,7 @@ type BatchRow = {
   post_count: number;
   nonce: string | null;
   tx_history: Hex[];
+  gas_limit: string | null;
   max_fee_per_gas: string | null;
   max_priority_fee: string | null;
   submitted_at: string | null;
@@ -82,6 +83,7 @@ async function submit(deps: Deps, ctx: ChainContext, batch: BatchRow) {
   }
   const nonce = await ctx.publicClient.getTransactionCount({ address: ctx.relayer.address, blockTag: 'pending' });
   const fees = await ctx.publicClient.estimateFeesPerGas();
+  const gasLimit = (gas * (100n + ANCHOR_POLICY.gasLimitMarginPercent)) / 100n;
   const hash = await ctx.walletClient.writeContract({
     address: ctx.contract,
     abi: postAnchorAbi,
@@ -90,13 +92,13 @@ async function submit(deps: Deps, ctx: ChainContext, batch: BatchRow) {
     account: ctx.relayer,
     chain: null,
     nonce,
-    gas: (gas * (100n + ANCHOR_POLICY.gasLimitMarginPercent)) / 100n,
+    gas: gasLimit,
     maxFeePerGas: fees.maxFeePerGas,
     maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
   });
   await deps.sql`
     UPDATE batches SET state = 'SUBMITTED', sender = ${Buffer.from(hexToBytes(ctx.relayer.address))}, nonce = ${nonce}, tx_hash = ${Buffer.from(hexToBytes(hash))},
-      tx_history = ${deps.sql.json([hash])}, max_fee_per_gas = ${fees.maxFeePerGas.toString()}, max_priority_fee = ${fees.maxPriorityFeePerGas.toString()},
+      tx_history = ${deps.sql.json([hash])}, gas_limit = ${gasLimit.toString()}, max_fee_per_gas = ${fees.maxFeePerGas.toString()}, max_priority_fee = ${fees.maxPriorityFeePerGas.toString()},
       submitted_at = ${deps.now()}, attempts = attempts + 1, updated_at = now()
     WHERE id = ${batch.id}`;
   log.info('anchor submitted', { chainId: ctx.config.chainId, batchId: Number(batch.id), nonce });
@@ -138,8 +140,9 @@ async function replace(deps: Deps, ctx: ChainContext, batch: BatchRow) {
   const root = bytesToHex(batch.root);
   const args = [root, arweaveIdToBytes32(batch.manifest_arweave_id), batch.post_count] as const;
   // Reuse the original gas limit: re-estimating would run against the pending state, where the original transaction
-  // has already anchored the root, and revert with AlreadyAnchored.
-  const original = await ctx.publicClient.getTransaction({ hash: batch.tx_history[0]! });
+  // has already anchored the root, and revert with AlreadyAnchored. It is read from the row, not from the original
+  // transaction, which the node may have dropped from its mempool. Batches submitted before migration 003 have no row value.
+  const gasLimit = batch.gas_limit === null ? (await ctx.publicClient.getTransaction({ hash: batch.tx_history[0]! })).gas : BigInt(batch.gas_limit);
   const hash = await ctx.walletClient.writeContract({
     address: ctx.contract,
     abi: postAnchorAbi,
@@ -148,7 +151,7 @@ async function replace(deps: Deps, ctx: ChainContext, batch: BatchRow) {
     account: ctx.relayer,
     chain: null,
     nonce: Number(batch.nonce),
-    gas: original.gas,
+    gas: gasLimit,
     maxFeePerGas,
     maxPriorityFeePerGas,
   });

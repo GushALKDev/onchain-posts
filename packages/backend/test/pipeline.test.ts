@@ -179,6 +179,29 @@ describe('anchor worker failure handling (ADR-008)', () => {
     }
   });
 
+  it('replaces a stuck transaction that the node has already dropped from its mempool', async () => {
+    const batch = await prepare();
+    await base.setAutomine(false);
+    try {
+      await anchorChain(deps, ctx(BASE));
+      const submitted = (await sql`SELECT * FROM batches WHERE id = ${batch.id}`)[0]!;
+      await base.dropTransaction(submitted.tx_history[0]); // the original is gone: its gas limit cannot be read back
+
+      clock += 61;
+      await anchorChain(deps, ctx(BASE));
+      const replaced = (await sql`SELECT * FROM batches WHERE id = ${batch.id}`)[0]!;
+      expect(replaced.tx_history).toHaveLength(2);
+      const replacement = await base.publicClient.getTransaction({ hash: replaced.tx_history[1] });
+      expect([replacement.nonce, replacement.gas]).toEqual([Number(submitted.nonce), BigInt(submitted.gas_limit)]);
+
+      await base.mine();
+      await anchorChain(deps, ctx(BASE));
+      expect((await sql`SELECT state FROM batches WHERE id = ${batch.id}`)[0]!.state).toBe('ANCHORED');
+    } finally {
+      await base.setAutomine(true);
+    }
+  });
+
   it('adopts a root already anchored on-chain instead of sending it again (crash after send)', async () => {
     const batch = await prepare();
     const root = `0x${batch.root.toString('hex')}` as Hex;

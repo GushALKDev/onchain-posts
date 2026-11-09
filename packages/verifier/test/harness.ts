@@ -26,6 +26,8 @@ export type TestChain = {
   increaseTime: (seconds: number) => Promise<void>;
   setAutomine: (enabled: boolean) => Promise<void>;
   mine: () => Promise<void>;
+  /** Removes a pending transaction from the node's mempool, as a node does when it evicts one. */
+  dropTransaction: (hash: Hex) => Promise<void>;
   head: () => Promise<number>;
   stop: () => void;
 };
@@ -76,6 +78,7 @@ export async function startChain(chainId: number): Promise<TestChain> {
     },
     setAutomine: (enabled) => testClient.setAutomine(enabled),
     mine: () => testClient.mine({ blocks: 1 }),
+    dropTransaction: (hash) => testClient.dropTransaction({ hash }),
     head: async () => Number((await publicClient.getBlock()).timestamp),
     stop: () => {
       anvil.kill();
