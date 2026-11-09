@@ -1,0 +1,7 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Static assets only: Cloudflare serves the Vite build, there is no Worker script.
+  "name": "onchain-posts",
+  "compatibility_date": "2026-10-19",
+  "assets": { "directory": "./dist" }
+}

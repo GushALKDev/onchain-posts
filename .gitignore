@@ -1,8 +1,11 @@
 node_modules
 .env
+.env.*
+!.env.example
 out
 cache
 broadcast
 dist
 coverage
 .keystore.json
+.wrangler

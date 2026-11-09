@@ -9,12 +9,13 @@
     "build": "pnpm --filter @onchain-posts/verifier build && tsc -p tsconfig.json && vite build",
     "typecheck": "pnpm --filter @onchain-posts/verifier build && tsc -p tsconfig.json",
     "test": "pnpm --filter @onchain-posts/verifier build && vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "pnpm run build && wrangler deploy"
   },
   "dependencies": {
-    "@openfort/openfort-js": "2.6.4",
     "@onchain-posts/core": "workspace:*",
     "@onchain-posts/verifier": "workspace:*",
+    "@openfort/openfort-js": "2.6.4",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "viem": "2.57.8"
@@ -25,6 +26,7 @@
     "@vitejs/plugin-react": "6.1.2",
     "typescript": "6.0.3",
     "vite": "8.3.5",
-    "vitest": "5.0.5"
+    "vitest": "5.0.5",
+    "wrangler": "4.152.0"
   }
 }

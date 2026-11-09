@@ -1,11 +1,14 @@
 packages:
   - "packages/*"
 
-# Native build scripts stay disabled: each of these packages ships a pure-JS fallback, and not running
-# install scripts from dependencies is the safer default.
+# Native build scripts stay disabled: each of these packages works without its install script (a pure-JS
+# fallback, or a platform binary shipped as an optional dependency), and not running install scripts from
+# dependencies is the safer default.
 allowBuilds:
   bigint-buffer: false
   bufferutil: false
+  esbuild: false
   keccak: false
   secp256k1: false
   utf-8-validate: false
+  workerd: false

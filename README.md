@@ -2,6 +2,8 @@
 
 Design exercise for EulerPhi (Phi): publish social posts on-chain as efficiently as possible, on up to three chains at once, without ever revealing the author's address.
 
+**Live demo (testnets, demo mode):** https://onchain-posts.gushalk.workers.dev
+
 > **How to read numbers in this repository.** Every number is labelled **Verified** (source URL and date checked), **Estimate** (with a one-line derivation), **To verify** (what must be checked) or **Illustrative** (worked examples). Limits and defaults we choose are marked "(design parameter)" and justified in the ADR that sets them.
 
 ## 1. TL;DR
@@ -220,7 +222,9 @@ docker compose up --build
 docker compose exec backend node dist/print-keys.js   # public relayer and receipt addresses for config/trusted-keys.json
 ```
 
-Web app (see [packages/web/README.md](packages/web/README.md)): the VITE_* variables of the root `.env`, then `pnpm --filter @onchain-posts/web dev` on http://localhost:5173. It signs with the Openfort embedded wallet when the Openfort keys are set, and with a development key otherwise. Demo URL: pending.
+Web app (see [packages/web/README.md](packages/web/README.md)): the VITE_* variables of the root `.env`, then `pnpm --filter @onchain-posts/web dev` on http://localhost:5173. It signs with the Openfort embedded wallet when the Openfort keys are set, and with a development key otherwise.
+
+**Deployment.** The live demo at https://onchain-posts.gushalk.workers.dev is the static web build served by Cloudflare Workers (`packages/web/wrangler.jsonc`, static assets only). The backend and Postgres run from this `docker-compose.yml` on a VPS with Dokploy, behind its Traefik proxy with HTTPS at https://onchain-posts-backend.tesselium.com. Steps: [packages/web/README.md](packages/web/README.md) and [packages/backend/README.md](packages/backend/README.md).
 
 **Deployment.** `PostAnchor` is live at `0xD0fB2A7F1D12C5AF80E49B31Bcb1B4983AD7C5dB` on the three testnets, with identical runtime bytecode (keccak `0x6b515179...d6d5`, equal to the local build):
 

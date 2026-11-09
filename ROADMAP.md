@@ -13,7 +13,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | Block B | Documentation-first scaffold: repo, README, ADRs, efficiency and threat model, diagrams | Done (2026-11-07) |
 | Tier 1 | The evidence and the reasoning: contract, invariant tests, benchmark, `packages/core`, verifier | Done, deployed on the three testnets; Timeline and Waterfall diagrams and some research items open |
 | Tier 2 | Minimal pipeline: backend, Postgres, Turbo uploads, anchoring on the 3 testnets | Done: first real post stored through Turbo and anchored on the three testnets (2026-11-08) |
-| Tier 3 | Minimal web: compose, per-stage status, Verify page | Done, with Openfort sign-in; public demo URL pending |
+| Tier 3 | Minimal web: compose, per-stage status, Verify page | Done, with Openfort sign-in; live at https://onchain-posts.gushalk.workers.dev |
 
 ## Block B: documentation-first scaffold
 
@@ -104,7 +104,7 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 - [x] Browser run in headless Chrome against a local stack: compose, publish on two chains, flush, VERIFIED (ADR-019)
 - [x] Openfort sign-in (email code or guest, EOA, password recovery); domain without `chainId` accepted and payload not leaving the iframe, both observed (ADR-011)
 - [x] Feed, public post page with every piece of evidence and its check, How it works page, composer preview (ADR-019 scope update)
-- [ ] Public demo URL in the README
+- [x] Public demo URL in the README: web on Cloudflare Workers, backend and Postgres on a VPS with Dokploy
 
 ## Log
 
@@ -120,3 +120,4 @@ Deadline: Friday 2026-11-13. Order of work follows the delivery priority in [REA
 | 2026-11-08 | Deployed `PostAnchor` on the three testnets, trusted the real relayer and receipt keys, published the first real post through Turbo and verified it from public sources; Openfort sign-in wired and checked. |
 | 2026-11-08 | Verifier reads several gateways in order and reports verified / pending / failed (a gateway 404 is pending, not invalid). Backend: `GET /posts` and `GET /posts/:postHash` with timeline columns. Web redesign: feed, post page with live checks, How it works, light and dark themes. |
 | 2026-11-08 | `PostAnchor` v2 deployed (`AlreadyAnchored` with parameters, same gas per batch) with new relayer, receipt and Arweave keys; neutral names: `Onchain-Posts` tag, `onchain-posts.*/1` schemas, "Onchain Posts" and "Onchain Receipts" EIP-712 domains; database emptied. |
+| 2026-11-09 | Deployed: the web app as static assets on Cloudflare Workers, the backend and Postgres with Dokploy behind Traefik with HTTPS; new production secrets, keys from the PoC keystore. |

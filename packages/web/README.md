@@ -31,6 +31,19 @@ pnpm --filter @onchain-posts/web dev                        # http://localhost:5
 
 The backend must list the web origin in `WEB_ORIGINS`. Arweave gateways come from `VITE_ARWEAVE_GATEWAYS` (comma-separated, tried in order; default `turbo-gateway.com`, `ardrive.net`, `arweave.net`). ar.io gateways serve a Turbo upload at once, while `arweave.net` lagged about 6 minutes on 2026-11-08 (ADR-002). With `STORAGE_MODE=memory`, set it to the backend's `/dev-gateway`. The post page also reads the ar.io GraphQL index (`VITE_ARWEAVE_GRAPHQL`) and Turbo's public status endpoint.
 
+## Deploying (Cloudflare Workers)
+
+The app is a static build served as Workers static assets: `wrangler.jsonc` declares the `dist` directory and no Worker script. Hash routes (`#post/...`) need no server-side routing.
+
+Production values go in `.env.production` at the repository root. It is not committed; Vite reads it on `vite build`, while the dev server keeps using `.env`. Every `VITE_*` value ends up in the browser bundle, so only public values belong there: `VITE_API_URL` of the deployed backend, the Openfort publishable keys, `VITE_DEMO_MODE` and `VITE_CHAINS`.
+
+```bash
+pnpm --filter @onchain-posts/web exec wrangler login   # once, opens the browser
+pnpm --filter @onchain-posts/web deploy                # vite build, then wrangler deploy
+```
+
+The deployed origin must be listed in the backend's `WEB_ORIGINS`, otherwise the browser blocks every API call (CORS), and allowed in the Openfort project. Wrangler is pinned (4.152.0); the install scripts of `esbuild` and `workerd` stay disabled because both ship their platform binary as an optional dependency.
+
 ## Tests and checks
 
 - `pnpm test`: 6 unit tests (submission building and signature recovery, base64 of large images, development signer, private bundle).

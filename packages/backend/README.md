@@ -45,6 +45,15 @@ The relayer address printed by `print-keys` needs testnet ETH on each enabled ch
 
 Without Docker: `pnpm --filter @onchain-posts/backend build && node packages/backend/dist/main.js` with the same variables.
 
+## Deploying (Dokploy)
+
+The live backend runs this repository's `docker-compose.yml` as a Dokploy Compose service, behind Dokploy's Traefik proxy:
+
+- **Environment.** The backend variables of `.env.example`, with new production secrets (`POSTGRES_PASSWORD`, `DB_HMAC_SECRET`, `DEMO_FLUSH_TOKEN`), `PORT` set to the port the proxy targets and `WEB_ORIGINS` set to the web origin. Never `DEPLOYER_PRIVATE_KEY` or `VITE_*`. Set it before adding the domain: Dokploy interpolates the compose file to list its services, and the required variables make that fail while they are missing. Environment changes apply on the next deploy.
+- **Domain.** On the `backend` service, container port equal to `PORT`, HTTPS with Let's Encrypt. Ports are published on loopback only; the proxy reaches the container over the Docker network. Postgres gets no domain.
+- **Keys.** The KMS simulator keystore lives in the `keystore` volume. To keep the funded relayer and the keys listed in `config/trusted-keys.json`, copy the keystore into the volume after the first deploy (`/data/keystore.json`, owned by `node`, mode 600), restart, and check that `node dist/print-keys.js` prints the trusted addresses. Otherwise the backend generates new keys, which must be funded and added to the trust root.
+- **One instance per relayer key.** Two backends with the same relayer key would race on its nonce.
+
 ## Tests
 
 `pnpm test` (37 tests) runs against a throwaway Postgres container (Docker) and, for the pipeline, two local anvil nodes with `PostAnchor` at its real CREATE2 address:
