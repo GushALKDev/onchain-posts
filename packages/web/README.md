@@ -39,7 +39,7 @@ Production values go in `.env.production` at the repository root. It is not comm
 
 ```bash
 pnpm --filter @onchain-posts/web exec wrangler login   # once, opens the browser
-pnpm --filter @onchain-posts/web deploy                # vite build, then wrangler deploy
+pnpm --filter @onchain-posts/web run deploy            # vite build, then wrangler deploy (plain "pnpm deploy" is pnpm's own command)
 ```
 
 The deployed origin must be listed in the backend's `WEB_ORIGINS`, otherwise the browser blocks every API call (CORS), and allowed in the Openfort project. Wrangler is pinned (4.152.0); the install scripts of `esbuild` and `workerd` stay disabled because both ship their platform binary as an optional dependency.
