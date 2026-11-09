@@ -1,6 +1,6 @@
 # onchain-posts
 
-Design exercise for EulerPhi (Phi): publish social posts on-chain as efficiently as possible, on up to three chains at once, without ever revealing the author's address.
+Design exercise for EulerPhi: publish social posts on-chain as efficiently as possible, on up to three chains at once, without ever revealing the author's address.
 
 **Author:** Gustavo Martín (individual submission).
 
@@ -41,7 +41,7 @@ Key benchmark numbers (measured 2026-11-07, gas only, Ethereum mainnet rules, [d
 | A2 | A decision log documenting every decision: decision, alternatives, trade-offs, reason. | Mine ([section 10](#10-decision-log)). |
 | A3 | A small working web app, minimal scope: compose, per-chain status, Verify page. | Mine ([ADR-019](docs/decisions/ADR-019-web-app-scope.md)). |
 
-Context only, not requirements: long term, Phi cares about account abstraction (Dynamic and smart accounts were mentioned), permissioned tokens, compliance in several countries, on/off ramps and monitoring. Gasless is mandatory in spirit: "instead of making people pay to post content on-chain, we need to find a way to make it gasless".
+Context only, not requirements: long term, EulerPhi cares about account abstraction (Dynamic and smart accounts were mentioned), permissioned tokens, compliance in several countries, on/off ramps and monitoring. Gasless is mandatory in spirit: "instead of making people pay to post content on-chain, we need to find a way to make it gasless".
 
 ## 3. Architecture
 

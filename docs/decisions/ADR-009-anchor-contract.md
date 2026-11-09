@@ -50,7 +50,7 @@ contract PostAnchor {
 
 - **Many writers are not a problem.** Records are isolated per sender; no shared counter and no loops; other writers pay for their own storage; the indexer filters by the indexed `sender` topic.
 - **Front-running cannot block the relayer.** Anyone who copies a root from the mempool and anchors it first only creates a record under their own address; the platform relayer's `anchor` still succeeds. With a global `root => timestamp` mapping, the same front-run would make the relayer's transaction revert with `AlreadyAnchored` (root squatting).
-- **Only risk: confusion** ("anchored on Phi's contract" by someone else). Every verification must include the trusted sender, and the UI shows it.
+- **Only risk: confusion** ("anchored on EulerPhi's contract" by someone else). Every verification must include the trusted sender, and the UI shows it.
 
 **Trusted platform keys are an explicit trust root, kept off-chain** in `config/trusted-keys.json`, versioned in the repo and read by the verifier. Without this file the verifier could only learn the receipt key from the backend, which would break the "untrusted hints" principle (ADR-014).
 
